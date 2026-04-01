@@ -1,0 +1,13 @@
+:root {
+  --color-paper: #fbfaf7;
+  --color-paper-strong: #f5f1e8;
+  --color-ink: #101010;
+  --color-ink-soft: #5f5a52;
+  --color-muted: #f2eee5;
+  --color-border: #dfd6c5;
+  --color-gold: #d8b77b;
+  --color-gold-deep: #cba764;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --shadow-soft: 0 12px 40px rgba(18, 16, 12, 0.08);
+}

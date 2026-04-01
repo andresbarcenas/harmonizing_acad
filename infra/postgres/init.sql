@@ -1,0 +1,1 @@
+-- Intentionally minimal. Prisma migrations manage application schema.

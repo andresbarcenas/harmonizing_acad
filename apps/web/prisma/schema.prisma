@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  NO_SHOW
+  RESCHEDULE_PENDING
+  CANCELLED
+}
+
+enum RescheduleStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VideoStatus {
+  PENDING
+  REVIEWED
+  FEEDBACK_GIVEN
+}
+
+enum NotificationType {
+  CLASS_REMINDER
+  RESCHEDULE_UPDATE
+  VIDEO_REVIEW
+  MESSAGE
+  SYSTEM
+}
+
+enum StudentLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role
+  locale        String    @default("es")
+  timezone      String    @default("America/New_York")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  sentMessages  Message[] @relation("MessageSender")
+  notifications Notification[]
+  progressUpdates ProgressRecord[] @relation("ProgressUpdatedBy")
+
+  @@index([role])
+}
+
+model StudentProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  phone              String?
+  bio                String?
+  preferredInstrument String?
+  joinedAt           DateTime @default(now())
+
+  user               User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment         TeacherAssignment?
+  subscriptions      ActiveSubscription[]
+  sessions           ClassSession[] @relation("SessionStudent")
+  practiceVideos     PracticeVideo[]
+  progressRecords    ProgressRecord[]
+  learnedSongs       LearnedSong[]
+  goals              Goal[]
+  studentThreads     MessageThread[] @relation("ThreadStudent")
+}
+
+model TeacherProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  specialty     String
+  bio           String?
+  zoomLink      String?
+  meetLink      String?
+
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students      TeacherAssignment[]
+  sessions      ClassSession[] @relation("SessionTeacher")
+  availability  TeacherAvailability[]
+  rescheduleRequests RescheduleRequest[] @relation("RequestHandledBy")
+  videosToReview PracticeVideo[] @relation("VideoTeacher")
+  videoFeedback VideoFeedback[]
+  teacherThreads MessageThread[] @relation("ThreadTeacher")
+}
+
+model TeacherAssignment {
+  id          String   @id @default(cuid())
+  studentId   String   @unique
+  teacherId   String
+  assignedAt  DateTime @default(now())
+  assignedBy  String?
+
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+model SubscriptionPlan {
+  id                String @id @default(cuid())
+  name              String
+  priceUsd          Int
+  monthlyClassCount Int
+  description       String?
+  active            Boolean @default(true)
+  createdAt         DateTime @default(now())
+
+  enrollments       ActiveSubscription[]
+}
+
+model ActiveSubscription {
+  id                String   @id @default(cuid())
+  studentId         String
+  planId            String
+  startsAt          DateTime
+  endsAt            DateTime?
+  monthlyClassLimit Int
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  student           StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([studentId, active])
+}
+
+model ClassSession {
+  id             String        @id @default(cuid())
+  studentId      String
+  teacherId      String
+  startsAtUtc    DateTime
+  endsAtUtc      DateTime
+  meetingUrl     String
+  status         SessionStatus @default(SCHEDULED)
+  lessonFocus    String?
+  lastClassNotes String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  student        StudentProfile @relation("SessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher        TeacherProfile @relation("SessionTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  rescheduleRequests RescheduleRequest[]
+
+  @@index([teacherId, startsAtUtc])
+  @@index([studentId, startsAtUtc])
+}
+
+model TeacherAvailability {
+  id               String @id @default(cuid())
+  teacherId        String
+  weekday          Int
+  startMinuteLocal Int
+  endMinuteLocal   Int
+  timezone         String
+  createdAt        DateTime @default(now())
+
+  teacher          TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, weekday])
+}
+
+model RescheduleRequest {
+  id               String           @id @default(cuid())
+  sessionId        String
+  requestedById    String
+  reviewedById     String?
+  proposedStartUtc DateTime
+  proposedEndUtc   DateTime
+  studentMessage   String?
+  teacherResponse  String?
+  status           RescheduleStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+  decidedAt        DateTime?
+
+  session          ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  reviewedBy       TeacherProfile? @relation("RequestHandledBy", fields: [reviewedById], references: [id])
+
+  @@index([sessionId, status])
+}
+
+model PracticeVideo {
+  id            String      @id @default(cuid())
+  studentId     String
+  teacherId     String
+  storageKey    String
+  originalName  String
+  durationSec   Int
+  status        VideoStatus @default(PENDING)
+  submittedAt   DateTime    @default(now())
+  reviewedAt    DateTime?
+
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher       TeacherProfile @relation("VideoTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  feedback      VideoFeedback[]
+
+  @@index([teacherId, status])
+  @@index([studentId, submittedAt])
+}
+
+model VideoFeedback {
+  id          String   @id @default(cuid())
+  videoId      String
+  teacherId    String
+  comment      String
+  reviewedAt   DateTime @default(now())
+
+  video        PracticeVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([videoId])
+}
+
+model ProgressRecord {
+  id            String @id @default(cuid())
+  studentId      String
+  level          StudentLevel
+  summary        String
+  updatedByUserId String
+  updatedAt      DateTime @default(now())
+
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  updatedBy      User @relation("ProgressUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: Cascade)
+}
+
+model LearnedSong {
+  id         String @id @default(cuid())
+  studentId  String
+  title      String
+  artist     String
+  learnedAt  DateTime @default(now())
+
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id         String @id @default(cuid())
+  studentId  String
+  title      String
+  targetDate DateTime
+  completed  Boolean @default(false)
+
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model MessageThread {
+  id         String @id @default(cuid())
+  studentId  String
+  teacherId  String
+  createdAt  DateTime @default(now())
+
+  student    StudentProfile @relation("ThreadStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher    TeacherProfile @relation("ThreadTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@unique([studentId, teacherId])
+}
+
+model Message {
+  id         String @id @default(cuid())
+  threadId   String
+  senderId   String
+  content    String
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
+
+  thread     MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender     User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+model Notification {
+  id         String @id @default(cuid())
+  userId     String
+  type       NotificationType
+  title      String
+  body       String
+  actionUrl  String?
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
