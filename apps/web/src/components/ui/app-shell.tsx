@@ -1,7 +1,13 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
+import { TimezoneSync } from "@/components/system/timezone-sync";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { APP_VERSION } from "@/lib/release";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -28,6 +34,8 @@ const teacherNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { href: "/admin/dashboard", label: "Resumen" },
+  { href: "/admin/teachers", label: "Docentes" },
+  { href: "/admin/students", label: "Estudiantes" },
   { href: "/admin/assignments", label: "Asignaciones" },
   { href: "/admin/availability", label: "Disponibilidad" },
   { href: "/notifications", label: "Notificaciones" },
@@ -40,7 +48,7 @@ function navByRole(role: Role): NavItem[] {
   return studentNav;
 }
 
-export function AppShell({
+export async function AppShell({
   role,
   activePath,
   userName,
@@ -52,38 +60,67 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const items = navByRole(role);
+  const notificationIndex = items.findIndex((item) => item.href === "/notifications");
+  const session = await getServerSession(authOptions);
+
+  let unreadCount = 0;
+  if (session?.user?.id) {
+    unreadCount = await db.notification.count({
+      where: { userId: session.user.id, readAt: null },
+    });
+  }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-8 pt-4 md:px-8">
-      <header className="mb-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)]/90 px-4 py-3 shadow-[var(--shadow-soft)] backdrop-blur">
-        <div className="flex items-center justify-between gap-3">
-          <Link href={role === Role.STUDENT ? "/dashboard" : role === Role.TEACHER ? "/teacher/dashboard" : "/admin/dashboard"}>
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 pb-10 pt-3 sm:px-4 md:px-8 md:pt-6">
+      <TimezoneSync />
+      <header className="mb-5 overflow-hidden rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(145deg,rgba(255,255,255,0.86),rgba(252,247,241,0.72))] px-3 py-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:px-4 md:mb-6 md:px-6 md:py-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <Link
+            href={role === Role.STUDENT ? "/dashboard" : role === Role.TEACHER ? "/teacher/dashboard" : "/admin/dashboard"}
+            className="min-w-0"
+          >
             <BrandLogo compact={false} />
           </Link>
-          <p className="text-xs text-[var(--color-ink-soft)] md:text-sm">{userName}</p>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 md:w-auto md:justify-end">
+            <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] md:self-auto">
+              <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
+              <span className="truncate">{userName}</span>
+            </div>
+            <SignOutButton compact />
+          </div>
         </div>
-        <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {items.map((item) => {
+        <nav className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 md:mt-5">
+          {items.map((item, index) => {
             const active = activePath === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-xl px-3 py-2 text-sm whitespace-nowrap transition",
+                  "rounded-full px-3.5 py-2.5 text-sm whitespace-nowrap transition-all duration-200 sm:px-4",
                   active
-                    ? "bg-[var(--color-ink)] text-[var(--color-paper)]"
-                    : "bg-[var(--color-muted)] text-[var(--color-ink)] hover:bg-[color-mix(in_srgb,var(--color-gold)_18%,white)]",
+                    ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
+                    : "bg-white/72 text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
                 )}
               >
-                {item.label}
+                <span className="inline-flex items-center gap-2">
+                  {item.label}
+                  {index === notificationIndex && unreadCount > 0 ? (
+                    <span className="rounded-full bg-white/88 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-gold-deep)]">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  ) : null}
+                </span>
               </Link>
             );
           })}
         </nav>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="page-stack flex-1">{children}</main>
+      <footer className="mt-6 pb-2 text-center text-xs tracking-[0.12em] text-[var(--color-ink-soft)] uppercase">
+        Harmonizing {APP_VERSION}
+      </footer>
     </div>
   );
 }

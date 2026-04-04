@@ -10,7 +10,9 @@ async function main() {
   const [adminUser, teacherUser, studentUser, studentTwoUser] = await Promise.all([
     prisma.user.upsert({
       where: { email: "admin@harmonizing.app" },
-      update: {},
+      update: {
+        image: "/demo/admin.svg",
+      },
       create: {
         name: "Sofia Morales",
         email: "admin@harmonizing.app",
@@ -23,7 +25,9 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "teacher@harmonizing.app" },
-      update: {},
+      update: {
+        image: "/demo/teacher.svg",
+      },
       create: {
         name: "Daniela Rojas",
         email: "teacher@harmonizing.app",
@@ -36,7 +40,9 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "student@harmonizing.app" },
-      update: {},
+      update: {
+        image: "/demo/student.svg",
+      },
       create: {
         name: "Camila Herrera",
         email: "student@harmonizing.app",
@@ -49,7 +55,9 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "student2@harmonizing.app" },
-      update: {},
+      update: {
+        image: "/demo/student-2.svg",
+      },
       create: {
         name: "Luis Castillo",
         email: "student2@harmonizing.app",
@@ -163,7 +171,7 @@ async function main() {
   nextClassStart.setUTCHours(23, 0, 0, 0);
   const nextClassEnd = addHours(nextClassStart, 1);
 
-  const [session1, session2, session3] = await Promise.all([
+  const [session1, session2, session3, session4, session5] = await Promise.all([
     prisma.classSession.upsert({
       where: { id: "session_upcoming" },
       update: {
@@ -210,6 +218,35 @@ async function main() {
         lessonFocus: "Dicción y resonancia",
       },
     }),
+    prisma.classSession.upsert({
+      where: { id: "session_completed_2" },
+      update: {},
+      create: {
+        id: "session_completed_2",
+        studentId: studentTwoProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: subDays(now, 3),
+        endsAtUtc: subDays(addHours(now, 1), 3),
+        meetingUrl: "https://meet.google.com/harmonizing-class",
+        status: SessionStatus.COMPLETED,
+        lessonFocus: "Respiración diafragmática",
+        lastClassNotes: "Mejor control de aire en frases largas.",
+      },
+    }),
+    prisma.classSession.upsert({
+      where: { id: "session_cancelled_1" },
+      update: {},
+      create: {
+        id: "session_cancelled_1",
+        studentId: studentProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: subDays(now, 15),
+        endsAtUtc: subDays(addHours(now, 1), 15),
+        meetingUrl: "https://zoom.us/j/1234567890",
+        status: SessionStatus.CANCELLED,
+        lessonFocus: "Revisión de repertorio",
+      },
+    }),
   ]);
 
   await prisma.rescheduleRequest.upsert({
@@ -223,6 +260,22 @@ async function main() {
       proposedEndUtc: addDays(nextClassEnd, 1),
       studentMessage: "¿Podemos mover la clase al jueves por la tarde?",
       status: RescheduleStatus.PENDING,
+    },
+  });
+  await prisma.rescheduleRequest.upsert({
+    where: { id: "reschedule_rejected_1" },
+    update: {},
+    create: {
+      id: "reschedule_rejected_1",
+      sessionId: session3.id,
+      requestedById: studentTwoUser.id,
+      proposedStartUtc: addDays(now, 2),
+      proposedEndUtc: addDays(addHours(now, 1), 2),
+      studentMessage: "Puedo moverla a esta hora?",
+      teacherResponse: "Ese bloque ya está reservado.",
+      status: RescheduleStatus.REJECTED,
+      decidedAt: subDays(now, 1),
+      reviewedById: teacherProfile.id,
     },
   });
 
@@ -307,6 +360,20 @@ async function main() {
       reviewedAt: subDays(now, 3),
     },
   });
+  await prisma.practiceVideo.upsert({
+    where: { id: "video_seed_2_pending" },
+    update: {},
+    create: {
+      id: "video_seed_2_pending",
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      storageKey: "seed/luis-practice.mp4",
+      originalName: "luis-practice.mp4",
+      durationSec: 96,
+      status: VideoStatus.PENDING,
+      submittedAt: subDays(now, 1),
+    },
+  });
 
   await prisma.notification.deleteMany();
   await prisma.notification.createMany({
@@ -339,6 +406,20 @@ async function main() {
         body: "Camila te escribió en el chat.",
         actionUrl: "/messages",
       },
+      {
+        userId: studentTwoUser.id,
+        type: NotificationType.CLASS_REMINDER,
+        title: "Clase de esta semana",
+        body: "Tu clase está confirmada para mañana.",
+        actionUrl: "/dashboard",
+      },
+      {
+        userId: adminUser.id,
+        type: NotificationType.SYSTEM,
+        title: "Estado semanal",
+        body: "Actualizamos métricas de ocupación y churn.",
+        actionUrl: "/admin/dashboard",
+      },
     ],
   });
 
@@ -347,7 +428,7 @@ async function main() {
     teacher: teacherUser.email,
     student: studentUser.email,
     student2: studentTwoUser.email,
-    sessionIds: [session1.id, session2.id, session3.id],
+    sessionIds: [session1.id, session2.id, session3.id, session4.id, session5.id],
   });
 }
 

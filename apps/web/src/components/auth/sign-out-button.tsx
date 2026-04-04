@@ -3,11 +3,23 @@
 import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function SignOutButton() {
+export function SignOutButton({
+  className,
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
   return (
-    <Button variant="outline" onClick={() => signOut({ callbackUrl: "/sign-in" })}>
-      Cerrar sesión
+    <Button
+      size={compact ? "sm" : "default"}
+      variant="outline"
+      className={cn(compact ? "px-3" : "", className)}
+      onClick={() => signOut({ callbackUrl: "/sign-in" })}
+    >
+      {compact ? "Salir" : "Cerrar sesión"}
     </Button>
   );
 }

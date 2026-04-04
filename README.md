@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.1.0`
+- Current version: `v0.0.1`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -22,7 +22,7 @@ Premium, mobile-first web app for an online music school serving Spanish-speakin
    - `docker compose up --build`
 
 App endpoints:
-- Web: `http://localhost:3001`
+- Web: `http://localhost:3010`
 - MailHog: `http://localhost:8025`
 - MinIO Console: `http://localhost:9011` (user/pass `minioadmin` / `minioadmin`)
 
@@ -56,9 +56,14 @@ Complete in this v1:
 Current placeholders / known simplifications:
 - Video playback URL is local path-style in UI; production should switch to signed/object URLs
 - Chat is request/response polling-style (no websockets yet)
-- Teacher class completion action is linked from dashboard to request workflow page (no inline note modal)
 - No external payment gateway by design (WhatsApp management only)
 - No production CDN, background jobs, or rate limiting yet
+
+## Deployment Notes
+- Local Docker runtime now builds and serves production output (`next build` + `next start`) for stability.
+- For fast local iteration outside Docker, use `npm run dev` from `apps/web`.
+- Optional dev mail preview: set `NOTIFICATION_SMTP_MIRROR=true` to mirror in-app notifications to MailHog inbox.
+- Vercel production should keep `NEXTAUTH_URL` as deployed URL and disable local-only hostnames/ports.
 
 ## Docs
 - Architecture: `docs/architecture.md`

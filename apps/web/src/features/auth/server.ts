@@ -10,6 +10,7 @@ export type AppViewer = {
   id: string;
   name: string;
   email: string;
+  image?: string | null;
   role: Role;
   timezone: string;
   studentProfileId?: string;
@@ -43,6 +44,7 @@ export async function requireViewer(expectedRoles?: Role[]): Promise<AppViewer> 
     id: dbUser.id,
     name: dbUser.name,
     email: dbUser.email,
+    image: dbUser.image,
     role: dbUser.role,
     timezone: dbUser.timezone,
     studentProfileId: dbUser.studentProfile?.id,
