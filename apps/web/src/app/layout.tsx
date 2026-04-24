@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-import { Providers } from "@/app/providers";
-
 const body = Manrope({
   variable: "--font-body",
   subsets: ["latin"],
@@ -22,9 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${body.variable} ${display.variable}`}>
-      <body className="min-h-screen antialiased">
-        <Providers>{children}</Providers>
-      </body>
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }

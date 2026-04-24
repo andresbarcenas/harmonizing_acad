@@ -1,13 +1,5 @@
 import { z } from "zod";
-
-function isValidIanaTimezone(timezone: string) {
-  try {
-    Intl.DateTimeFormat(undefined, { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 const passwordStrengthMessage =
   "La contraseña temporal debe tener mínimo 8 caracteres e incluir letras y números.";
@@ -16,7 +8,13 @@ const timezoneSchema = z
   .string()
   .min(2)
   .max(80)
-  .refine((value) => isValidIanaTimezone(value), { message: "Zona horaria inválida" });
+  .transform((value) => normalizeIanaTimezone(value));
+
+const optionalTimezoneSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
+}, timezoneSchema.optional());
 
 function optionalTrimmedString(maxLength: number) {
   return z.preprocess((value) => {
@@ -55,7 +53,6 @@ const teacherAvailabilityBlockSchema = z
     weekday: z.number().int().min(0).max(6),
     startMinuteLocal: z.number().int().min(0).max(23 * 60 + 59),
     endMinuteLocal: z.number().int().min(1).max(24 * 60),
-    timezone: timezoneSchema,
   })
   .refine((value) => value.endMinuteLocal > value.startMinuteLocal, {
     message: "Rango de horario inválido",
@@ -71,7 +68,7 @@ export const createStudentSchema = z.object({
     .max(72)
     .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, passwordStrengthMessage),
   teacherId: z.string().min(1),
-  timezone: timezoneSchema,
+  timezone: optionalTimezoneSchema,
   phone: z.string().max(40).optional(),
   preferredInstrument: z.string().max(100).optional(),
   bio: z.string().max(500).optional(),
@@ -87,7 +84,7 @@ export const createTeacherSchema = z.object({
     .max(72)
     .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, passwordStrengthMessage),
   specialty: z.string().min(2).max(120),
-  timezone: timezoneSchema,
+  timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
   zoomLink: optionalUrlString,
   meetLink: optionalUrlString,
@@ -98,7 +95,7 @@ export const createTeacherSchema = z.object({
 export const updateStudentSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email().max(180).transform((value) => value.toLowerCase().trim()),
-  timezone: timezoneSchema,
+  timezone: optionalTimezoneSchema,
   teacherId: z.string().min(1).optional(),
   phone: optionalTrimmedString(40),
   preferredInstrument: optionalTrimmedString(100),
@@ -110,7 +107,7 @@ export const updateTeacherSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email().max(180).transform((value) => value.toLowerCase().trim()),
   specialty: z.string().min(2).max(120),
-  timezone: timezoneSchema,
+  timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
   zoomLink: optionalUrlString,
   meetLink: optionalUrlString,
@@ -127,7 +124,6 @@ export const createAvailabilitySchema = z.object({
   weekday: z.number().int().min(0).max(6),
   startMinuteLocal: z.number().int().min(0).max(23 * 60 + 59),
   endMinuteLocal: z.number().int().min(1).max(24 * 60),
-  timezone: z.string().min(2).max(80),
 }).refine((value) => value.endMinuteLocal > value.startMinuteLocal, {
   message: "Rango de horario inválido",
   path: ["endMinuteLocal"],

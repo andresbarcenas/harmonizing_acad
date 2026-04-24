@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
 import { createTeacherSchema } from "@/lib/validators/admin";
 
@@ -21,16 +22,24 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
-  const existingUser = await db.user.findUnique({
-    where: { email: data.email },
-    select: { id: true },
-  });
+  const [existingUser, adminUser] = await Promise.all([
+    db.user.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    }),
+    db.user.findUnique({
+      where: { id: auth.user.id },
+      select: { timezone: true },
+    }),
+  ]);
 
   if (existingUser) {
     return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
   }
 
   try {
+    const adminTimezone = normalizeIanaTimezone(adminUser?.timezone ?? auth.user.timezone);
+    const teacherTimezone = normalizeIanaTimezone(data.timezone ?? adminTimezone);
     const passwordHash = await hash(data.temporaryPassword, 10);
 
     const created = await db.$transaction(async (tx) => {
@@ -41,7 +50,7 @@ export async function POST(req: Request) {
           passwordHash,
           role: Role.TEACHER,
           locale: "es",
-          timezone: data.timezone,
+          timezone: teacherTimezone,
           image: data.profileImage ?? null,
         },
       });
@@ -61,7 +70,7 @@ export async function POST(req: Request) {
         weekday: block.weekday,
         startMinuteLocal: block.startMinuteLocal,
         endMinuteLocal: block.endMinuteLocal,
-        timezone: block.timezone,
+        timezone: teacherTimezone,
       }));
 
       if (availabilityRows.length) {

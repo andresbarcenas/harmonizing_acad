@@ -23,6 +23,7 @@ export default withAuth(
         const protectedPrefix =
           path.startsWith("/dashboard") ||
           path.startsWith("/schedule") ||
+          path.startsWith("/invoices") ||
           path.startsWith("/videos") ||
           path.startsWith("/messages") ||
           path.startsWith("/teacher") ||
@@ -44,6 +45,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/schedule/:path*",
+    "/invoices/:path*",
     "/videos/:path*",
     "/messages/:path*",
     "/teacher/:path*",

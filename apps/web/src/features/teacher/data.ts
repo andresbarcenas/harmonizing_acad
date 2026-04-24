@@ -6,8 +6,9 @@ import { db } from "@/lib/db";
 export async function getTeacherDashboard(teacherProfileId: string) {
   const todayStart = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
+  const now = new Date();
 
-  const [teacher, classesToday, students, pendingRequests, pendingVideos] = await Promise.all([
+  const [teacher, classesToday, students, pendingRequests, pendingVideos, recurringSeries] = await Promise.all([
     db.teacherProfile.findUnique({
       where: { id: teacherProfileId },
       include: {
@@ -59,6 +60,23 @@ export async function getTeacherDashboard(teacherProfileId: string) {
       },
       orderBy: { submittedAt: "desc" },
     }),
+    db.recurringClassSeries.findMany({
+      where: {
+        teacherId: teacherProfileId,
+      },
+      include: {
+        student: { include: { user: true } },
+        sessions: {
+          where: {
+            startsAtUtc: { gte: now },
+            status: { not: SessionStatus.CANCELLED },
+          },
+          select: { id: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
   ]);
 
   const classStatusCounts = {
@@ -74,5 +92,6 @@ export async function getTeacherDashboard(teacherProfileId: string) {
     pendingRequests,
     pendingVideos,
     classStatusCounts,
+    recurringSeries,
   };
 }

@@ -3,26 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadProfileImageFile } from "@/lib/profile-upload";
 
 const weekdays = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const commonTimezones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Puerto_Rico",
-];
-
 type AvailabilityDraft = {
   id: string;
   weekday: number;
   start: string;
   end: string;
-  timezone: string;
 };
 
 type CreatedTeacherSummary = {
@@ -38,25 +30,27 @@ function toMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function makeRow(seed: number, timezone: string): AvailabilityDraft {
+function makeRow(seed: number): AvailabilityDraft {
   return {
     id: `slot-${seed}`,
     weekday: 1,
     start: "17:00",
     end: "18:00",
-    timezone,
   };
 }
 
 export function TeacherOnboardingForm() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedTeacherSummary | null>(null);
   const [availability, setAvailability] = useState<AvailabilityDraft[]>([]);
+  const [profileImage, setProfileImage] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
-  function addAvailabilityRow(timezone: string) {
-    setAvailability((previous) => [...previous, makeRow(Date.now(), timezone)]);
+  function addAvailabilityRow() {
+    setAvailability((previous) => [...previous, makeRow(Date.now())]);
   }
 
   function removeAvailabilityRow(id: string) {
@@ -68,15 +62,12 @@ export function TeacherOnboardingForm() {
     setError(null);
     setCreated(null);
 
-    const timezone = String(formData.get("timezone") ?? "America/New_York").trim();
-
     const payload = {
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       temporaryPassword: String(formData.get("temporaryPassword") ?? ""),
       specialty: String(formData.get("specialty") ?? "").trim(),
-      timezone,
-      profileImage: String(formData.get("profileImage") ?? "").trim() || undefined,
+      profileImage: profileImage.trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
       zoomLink: String(formData.get("zoomLink") ?? "").trim() || undefined,
       meetLink: String(formData.get("meetLink") ?? "").trim() || undefined,
@@ -84,7 +75,6 @@ export function TeacherOnboardingForm() {
         weekday: row.weekday,
         startMinuteLocal: toMinutes(row.start),
         endMinuteLocal: toMinutes(row.end),
-        timezone: row.timezone || timezone,
       })),
     };
 
@@ -119,6 +109,24 @@ export function TeacherOnboardingForm() {
     router.refresh();
   }
 
+  async function uploadImage() {
+    if (!uploadFile) {
+      setError("Selecciona una imagen para subir.");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const uploaded = await uploadProfileImageFile(uploadFile, { assign: false });
+      setProfileImage(uploaded.imageUrl);
+      setUploadFile(null);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <form action={onSubmit} className="space-y-4">
       <div className="grid gap-3 md:grid-cols-2">
@@ -136,7 +144,7 @@ export function TeacherOnboardingForm() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="temporaryPassword" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             Contraseña temporal
@@ -157,17 +165,6 @@ export function TeacherOnboardingForm() {
           </label>
           <Input id="specialty" name="specialty" placeholder="Técnica vocal y piano" required />
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="timezone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Zona horaria
-          </label>
-          <Input id="timezone" name="timezone" list="teacher-timezone-options" defaultValue="America/New_York" required />
-          <datalist id="teacher-timezone-options">
-            {commonTimezones.map((timezone) => (
-              <option key={timezone} value={timezone} />
-            ))}
-          </datalist>
-        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -186,10 +183,26 @@ export function TeacherOnboardingForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="profileImage" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+        <label htmlFor="teacher-profile-image-file" className="text-sm font-semibold text-[var(--color-ink-soft)]">
           Foto de perfil (opcional)
         </label>
-        <Input id="profileImage" name="profileImage" placeholder="https://... o /demo/teacher.svg" />
+        <div className="flex items-center gap-3">
+          <Avatar src={profileImage || undefined} alt="Preview docente" fallback="D" className="h-10 w-10 text-xs" />
+          <p className="text-xs text-[var(--color-ink-soft)]">Sube una imagen para aplicarla al crear el docente.</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            id="teacher-profile-image-file"
+            name="file"
+            type="file"
+            accept="image/*"
+            className="h-auto py-2"
+            onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+          />
+          <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
+            {uploading ? "Subiendo..." : "Subir foto"}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -209,7 +222,7 @@ export function TeacherOnboardingForm() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => addAvailabilityRow("America/New_York")}
+            onClick={addAvailabilityRow}
           >
             Agregar bloque
           </Button>
@@ -220,7 +233,7 @@ export function TeacherOnboardingForm() {
             {availability.map((row) => (
               <div
                 key={row.id}
-                className="grid gap-2 rounded-[1rem] border border-[var(--color-border)] bg-white/80 p-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto]"
+                className="grid gap-2 rounded-[1rem] border border-[var(--color-border)] bg-white/80 p-3 md:grid-cols-[1fr_1fr_1fr_auto]"
               >
                 <select
                   value={row.weekday}
@@ -254,15 +267,6 @@ export function TeacherOnboardingForm() {
                   onChange={(event) =>
                     setAvailability((previous) =>
                       previous.map((item) => (item.id === row.id ? { ...item, end: event.target.value } : item)),
-                    )
-                  }
-                />
-                <Input
-                  value={row.timezone}
-                  list="teacher-timezone-options"
-                  onChange={(event) =>
-                    setAvailability((previous) =>
-                      previous.map((item) => (item.id === row.id ? { ...item, timezone: event.target.value } : item)),
                     )
                   }
                 />

@@ -3,6 +3,7 @@ import { Prisma, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { updateTeacherSchema } from "@/lib/validators/admin";
 
 export async function PATCH(
@@ -49,7 +50,7 @@ export async function PATCH(
         data: {
           name: data.name,
           email: data.email,
-          timezone: data.timezone,
+          timezone: data.timezone ? normalizeIanaTimezone(data.timezone) : undefined,
           image: data.profileImage ?? null,
         },
       });

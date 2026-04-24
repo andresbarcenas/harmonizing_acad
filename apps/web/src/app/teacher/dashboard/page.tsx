@@ -1,6 +1,7 @@
 import { Role, SessionStatus } from "@prisma/client";
 
 import { TeacherSessionActions } from "@/components/teacher/session-actions";
+import { SeriesActions } from "@/components/teacher/series-actions";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,6 +12,8 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherDashboard } from "@/features/teacher/data";
 import { formatUtcToLocal } from "@/lib/timezone";
+
+const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 export default async function TeacherDashboardPage() {
   const viewer = await requireViewer([Role.TEACHER]);
@@ -57,6 +60,31 @@ export default async function TeacherDashboardPage() {
         </div>
       </Card>
 
+      <Card>
+        <CardTitle>Series recurrentes</CardTitle>
+        <CardDescription>Gestiona clases recurrentes activas o elimina series cuando sea necesario.</CardDescription>
+        <div className="mt-3 space-y-2">
+          {data.recurringSeries.map((series) => (
+            <div key={series.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">{series.student.user.name}</p>
+                <Badge variant={series.active ? "gold" : "default"}>{series.active ? "Activa" : "Detenida"}</Badge>
+              </div>
+              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                {series.weekdays.map((day) => dayNames[day] ?? day).join(", ")} · {series.startTimeLocal} · cada {series.intervalWeeks} semana(s)
+              </p>
+              <p className="text-xs text-[var(--color-ink-soft)]">
+                Próximas clases: {series.sessions.length} · Zona: {series.timezone}
+              </p>
+              <SeriesActions seriesId={series.id} isActive={series.active} />
+            </div>
+          ))}
+          {!data.recurringSeries.length ? (
+            <p className="text-sm text-[var(--color-ink-soft)]">No hay series recurrentes creadas.</p>
+          ) : null}
+        </div>
+      </Card>
+
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardTitle>Agenda de hoy</CardTitle>
@@ -75,7 +103,12 @@ export default async function TeacherDashboardPage() {
                   </div>
                   <Badge variant={session.status === SessionStatus.COMPLETED ? "success" : "default"}>{session.status}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatUtcToLocal(session.startsAtUtc, viewer.timezone)}</p>
+                <p className="text-[11px] text-[var(--color-ink-soft)]">
+                  Docente: {formatUtcToLocal(session.startsAtUtc, viewer.timezone)} ({viewer.timezone})
+                </p>
+                <p className="text-[11px] text-[var(--color-ink-soft)]">
+                  Estudiante: {formatUtcToLocal(session.startsAtUtc, session.student.user.timezone)} ({session.student.user.timezone})
+                </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <a href={session.meetingUrl} target="_blank" rel="noreferrer">
                     <Button size="sm" variant="gold">Join Class</Button>
@@ -156,6 +189,12 @@ export default async function TeacherDashboardPage() {
                 <p className="truncate text-sm font-medium">{request.session.student.user.name}</p>
               </div>
               <p className="text-xs text-[var(--color-ink-soft)]">{formatUtcToLocal(request.proposedStartUtc, viewer.timezone)}</p>
+              <p className="text-[11px] text-[var(--color-ink-soft)]">
+                Docente: {formatUtcToLocal(request.proposedStartUtc, viewer.timezone)} ({viewer.timezone})
+              </p>
+              <p className="text-[11px] text-[var(--color-ink-soft)]">
+                Estudiante: {formatUtcToLocal(request.proposedStartUtc, request.session.student.user.timezone)} ({request.session.student.user.timezone})
+              </p>
               {request.studentMessage ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
             </div>
           ))}

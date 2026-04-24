@@ -34,7 +34,7 @@ export function VideoReviewForm({ videoId }: { videoId: string }) {
   return (
     <div className="space-y-2">
       <Textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Escribe feedback personalizado" />
-      <Button onClick={submit} variant="outline" disabled={pending || comment.trim().length < 3}>
+      <Button onClick={submit} variant="gold" disabled={pending || comment.trim().length < 3} className="w-full sm:w-auto">
         {pending ? "Guardando..." : "Marcar como revisado"}
       </Button>
       {message ? <p className="text-xs text-[var(--color-ink-soft)]">{message}</p> : null}

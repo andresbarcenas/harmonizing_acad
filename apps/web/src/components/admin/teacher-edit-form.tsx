@@ -7,15 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-const commonTimezones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Puerto_Rico",
-];
+import { uploadProfileImageFile } from "@/lib/profile-upload";
 
 export function TeacherEditForm({
   teacherId,
@@ -23,10 +15,10 @@ export function TeacherEditForm({
 }: {
   teacherId: string;
   initial: {
+    userId: string;
     name: string;
     email: string;
     specialty: string;
-    timezone: string;
     bio?: string | null;
     zoomLink?: string | null;
     meetLink?: string | null;
@@ -38,6 +30,9 @@ export function TeacherEditForm({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [profileImage, setProfileImage] = useState(initial.profileImage ?? "");
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -48,11 +43,10 @@ export function TeacherEditForm({
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       specialty: String(formData.get("specialty") ?? "").trim(),
-      timezone: String(formData.get("timezone") ?? "America/New_York").trim(),
       bio: String(formData.get("bio") ?? "").trim() || undefined,
       zoomLink: String(formData.get("zoomLink") ?? "").trim() || undefined,
       meetLink: String(formData.get("meetLink") ?? "").trim() || undefined,
-      profileImage: String(formData.get("profileImage") ?? "").trim() || undefined,
+      profileImage: profileImage.trim() || undefined,
     };
 
     const response = await fetch(`/api/admin/teachers/${teacherId}`, {
@@ -83,6 +77,29 @@ export function TeacherEditForm({
     router.refresh();
   }
 
+  async function uploadImage() {
+    if (!uploadFile) {
+      setError("Selecciona una imagen para subir.");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const uploaded = await uploadProfileImageFile(uploadFile, {
+        targetUserId: initial.userId,
+        assign: true,
+      });
+      setProfileImage(uploaded.imageUrl);
+      setSuccess("Foto actualizada.");
+      setUploadFile(null);
+      router.refresh();
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="mt-2">
       <Button size="sm" variant="outline" onClick={() => setOpen((value) => !value)}>
@@ -93,7 +110,7 @@ export function TeacherEditForm({
         <form action={onSubmit} className="mt-3 space-y-3 rounded-[1rem] border border-[var(--color-border)] bg-white/82 p-3">
           <div className="flex items-center gap-2">
             <Avatar
-              src={initial.profileImage}
+              src={profileImage || undefined}
               alt={initial.name}
               fallback={initial.name.slice(0, 1).toUpperCase()}
               className="h-9 w-9 text-[10px]"
@@ -104,20 +121,26 @@ export function TeacherEditForm({
             <Input name="name" defaultValue={initial.name} required />
             <Input name="email" type="email" defaultValue={initial.email} required />
           </div>
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid gap-2 md:grid-cols-1">
             <Input name="specialty" defaultValue={initial.specialty} required />
-            <Input name="timezone" list="teacher-edit-timezones" defaultValue={initial.timezone} required />
-            <datalist id="teacher-edit-timezones">
-              {commonTimezones.map((timezone) => (
-                <option key={timezone} value={timezone} />
-              ))}
-            </datalist>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <Input name="zoomLink" type="url" defaultValue={initial.zoomLink ?? ""} placeholder="Zoom URL" />
             <Input name="meetLink" type="url" defaultValue={initial.meetLink ?? ""} placeholder="Google Meet URL" />
           </div>
-          <Input name="profileImage" defaultValue={initial.profileImage ?? ""} placeholder="URL foto de perfil" />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input
+              id={`teacher-edit-file-${teacherId}`}
+              name="file"
+              type="file"
+              accept="image/*"
+              className="h-auto py-2"
+              onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+            />
+            <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
+              {uploading ? "Subiendo..." : "Subir foto"}
+            </Button>
+          </div>
           <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder="Bio docente" />
           <Button type="submit" size="sm" variant="gold" disabled={pending}>
             {pending ? "Guardando..." : "Guardar cambios"}

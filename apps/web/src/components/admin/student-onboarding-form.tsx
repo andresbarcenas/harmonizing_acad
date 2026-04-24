@@ -3,18 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-const commonTimezones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Puerto_Rico",
-];
+import { uploadProfileImageFile } from "@/lib/profile-upload";
 
 type TeacherOption = {
   id: string;
@@ -37,8 +30,11 @@ export function StudentOnboardingForm({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedStudentSummary | null>(null);
+  const [profileImage, setProfileImage] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -50,8 +46,7 @@ export function StudentOnboardingForm({
       email: String(formData.get("email") ?? "").trim(),
       temporaryPassword: String(formData.get("temporaryPassword") ?? ""),
       teacherId: String(formData.get("teacherId") ?? ""),
-      timezone: String(formData.get("timezone") ?? "America/New_York").trim(),
-      profileImage: String(formData.get("profileImage") ?? "").trim() || undefined,
+      profileImage: profileImage.trim() || undefined,
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
@@ -86,6 +81,24 @@ export function StudentOnboardingForm({
     router.refresh();
   }
 
+  async function uploadImage() {
+    if (!uploadFile) {
+      setError("Selecciona una imagen para subir.");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const uploaded = await uploadProfileImageFile(uploadFile, { assign: false });
+      setProfileImage(uploaded.imageUrl);
+      setUploadFile(null);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <form action={onSubmit} className="space-y-4">
       <div className="grid gap-3 md:grid-cols-2">
@@ -103,7 +116,7 @@ export function StudentOnboardingForm({
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="temporaryPassword" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             Contraseña temporal
@@ -136,17 +149,6 @@ export function StudentOnboardingForm({
             ))}
           </select>
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="timezone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Zona horaria
-          </label>
-          <Input id="timezone" name="timezone" list="timezone-options" defaultValue="America/New_York" required />
-          <datalist id="timezone-options">
-            {commonTimezones.map((timezone) => (
-              <option key={timezone} value={timezone} />
-            ))}
-          </datalist>
-        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -165,10 +167,26 @@ export function StudentOnboardingForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="profileImage" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+        <label htmlFor="student-profile-image-file" className="text-sm font-semibold text-[var(--color-ink-soft)]">
           Foto de perfil (opcional)
         </label>
-        <Input id="profileImage" name="profileImage" placeholder="https://... o /demo/student.svg" />
+        <div className="flex items-center gap-3">
+          <Avatar src={profileImage || undefined} alt="Preview estudiante" fallback="E" className="h-10 w-10 text-xs" />
+          <p className="text-xs text-[var(--color-ink-soft)]">Sube una imagen para aplicarla al crear el estudiante.</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            id="student-profile-image-file"
+            name="file"
+            type="file"
+            accept="image/*"
+            className="h-auto py-2"
+            onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+          />
+          <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
+            {uploading ? "Subiendo..." : "Subir foto"}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-1.5">

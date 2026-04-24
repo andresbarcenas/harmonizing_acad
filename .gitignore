@@ -21,3 +21,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .vercel
+
+# macOS
+.DS_Store
+**/.DS_Store

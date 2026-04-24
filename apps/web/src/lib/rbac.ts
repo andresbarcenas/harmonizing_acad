@@ -6,7 +6,7 @@ const roleToPrefix: Record<Role, string> = {
   ADMIN: "/admin/dashboard",
 };
 
-export const studentOnlyPrefixes = ["/dashboard", "/schedule", "/videos", "/messages"];
+export const studentOnlyPrefixes = ["/dashboard", "/schedule", "/invoices", "/videos", "/messages"];
 export const teacherOnlyPrefixes = ["/teacher"];
 export const adminOnlyPrefixes = ["/admin"];
 

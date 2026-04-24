@@ -1,4 +1,15 @@
-import { PrismaClient, Role, SessionStatus, StudentLevel, NotificationType, RescheduleStatus, VideoStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  SessionStatus,
+  StudentLevel,
+  NotificationType,
+  RescheduleStatus,
+  VideoStatus,
+  InvoiceContactLinkStrategy,
+  InvoiceSyncScope,
+  InvoiceSyncStatus,
+} from "@prisma/client";
 import { hash } from "bcryptjs";
 import { addDays, addHours, subDays } from "date-fns";
 
@@ -10,9 +21,7 @@ async function main() {
   const [adminUser, teacherUser, studentUser, studentTwoUser] = await Promise.all([
     prisma.user.upsert({
       where: { email: "admin@harmonizing.app" },
-      update: {
-        image: "/demo/admin.svg",
-      },
+      update: {},
       create: {
         name: "Sofia Morales",
         email: "admin@harmonizing.app",
@@ -25,9 +34,7 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "teacher@harmonizing.app" },
-      update: {
-        image: "/demo/teacher.svg",
-      },
+      update: {},
       create: {
         name: "Daniela Rojas",
         email: "teacher@harmonizing.app",
@@ -40,9 +47,7 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "student@harmonizing.app" },
-      update: {
-        image: "/demo/student.svg",
-      },
+      update: {},
       create: {
         name: "Camila Herrera",
         email: "student@harmonizing.app",
@@ -55,9 +60,7 @@ async function main() {
     }),
     prisma.user.upsert({
       where: { email: "student2@harmonizing.app" },
-      update: {
-        image: "/demo/student-2.svg",
-      },
+      update: {},
       create: {
         name: "Luis Castillo",
         email: "student2@harmonizing.app",
@@ -422,6 +425,280 @@ async function main() {
       },
     ],
   });
+
+  const demoInvoiceRows = [
+    {
+      id: "invoice_camila_2025_11",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2025_11",
+      invoiceNumber: "HMZ-2025-11-001",
+      issueDate: new Date("2025-11-01T12:00:00.000Z"),
+      dueDate: new Date("2025-11-10T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_camila_2025_12",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2025_12",
+      invoiceNumber: "HMZ-2025-12-001",
+      issueDate: new Date("2025-12-01T12:00:00.000Z"),
+      dueDate: new Date("2025-12-10T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_camila_2026_01",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2026_01",
+      invoiceNumber: "HMZ-2026-01-001",
+      issueDate: new Date("2026-01-01T12:00:00.000Z"),
+      dueDate: new Date("2026-01-10T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_camila_2026_02",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2026_02",
+      invoiceNumber: "HMZ-2026-02-001",
+      issueDate: new Date("2026-02-01T12:00:00.000Z"),
+      dueDate: new Date("2026-02-10T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_camila_2026_03",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2026_03",
+      invoiceNumber: "HMZ-2026-03-001",
+      issueDate: new Date("2026-03-01T12:00:00.000Z"),
+      dueDate: new Date("2026-03-10T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_camila_2026_04",
+      studentId: studentProfile.id,
+      alegraInvoiceId: "demo_inv_camila_2026_04",
+      invoiceNumber: "HMZ-2026-04-001",
+      issueDate: new Date("2026-04-01T12:00:00.000Z"),
+      dueDate: new Date("2026-04-10T12:00:00.000Z"),
+      status: "PENDING",
+      totalAmount: 90,
+      balanceAmount: 90,
+      currency: "USD",
+    },
+    {
+      id: "invoice_luis_2026_01",
+      studentId: studentTwoProfile.id,
+      alegraInvoiceId: "demo_inv_luis_2026_01",
+      invoiceNumber: "HMZ-2026-01-002",
+      issueDate: new Date("2026-01-01T12:00:00.000Z"),
+      dueDate: new Date("2026-01-12T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_luis_2026_02",
+      studentId: studentTwoProfile.id,
+      alegraInvoiceId: "demo_inv_luis_2026_02",
+      invoiceNumber: "HMZ-2026-02-002",
+      issueDate: new Date("2026-02-01T12:00:00.000Z"),
+      dueDate: new Date("2026-02-12T12:00:00.000Z"),
+      status: "PAID",
+      totalAmount: 90,
+      balanceAmount: 0,
+      currency: "USD",
+    },
+    {
+      id: "invoice_luis_2026_03",
+      studentId: studentTwoProfile.id,
+      alegraInvoiceId: "demo_inv_luis_2026_03",
+      invoiceNumber: "HMZ-2026-03-002",
+      issueDate: new Date("2026-03-01T12:00:00.000Z"),
+      dueDate: new Date("2026-03-12T12:00:00.000Z"),
+      status: "OVERDUE",
+      totalAmount: 90,
+      balanceAmount: 90,
+      currency: "USD",
+    },
+    {
+      id: "invoice_luis_2026_04",
+      studentId: studentTwoProfile.id,
+      alegraInvoiceId: "demo_inv_luis_2026_04",
+      invoiceNumber: "HMZ-2026-04-002",
+      issueDate: new Date("2026-04-01T12:00:00.000Z"),
+      dueDate: new Date("2026-04-12T12:00:00.000Z"),
+      status: "PARTIAL",
+      totalAmount: 90,
+      balanceAmount: 30,
+      currency: "USD",
+    },
+  ];
+
+  for (const row of demoInvoiceRows) {
+    await prisma.invoice.upsert({
+      where: { alegraInvoiceId: row.alegraInvoiceId },
+      update: {
+        studentId: row.studentId,
+        invoiceNumber: row.invoiceNumber,
+        issueDate: row.issueDate,
+        dueDate: row.dueDate,
+        status: row.status,
+        currency: row.currency,
+        totalAmount: row.totalAmount,
+        balanceAmount: row.balanceAmount,
+        lastSyncedAt: now,
+        rawPayload: {
+          source: "seed-demo",
+          alegraInvoiceId: row.alegraInvoiceId,
+          invoiceNumber: row.invoiceNumber,
+        },
+      },
+      create: {
+        id: row.id,
+        studentId: row.studentId,
+        alegraInvoiceId: row.alegraInvoiceId,
+        invoiceNumber: row.invoiceNumber,
+        issueDate: row.issueDate,
+        dueDate: row.dueDate,
+        status: row.status,
+        currency: row.currency,
+        totalAmount: row.totalAmount,
+        balanceAmount: row.balanceAmount,
+        lastSyncedAt: now,
+        rawPayload: {
+          source: "seed-demo",
+          alegraInvoiceId: row.alegraInvoiceId,
+          invoiceNumber: row.invoiceNumber,
+        },
+      },
+    });
+  }
+
+  await Promise.all([
+    prisma.invoiceContactLink.upsert({
+      where: { studentId: studentProfile.id },
+      update: {
+        strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
+        alegraContactId: "demo_contact_camila",
+        lastResolvedAt: now,
+        lastError: null,
+      },
+      create: {
+        studentId: studentProfile.id,
+        strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
+        alegraContactId: "demo_contact_camila",
+        lastResolvedAt: now,
+        lastError: null,
+      },
+    }),
+    prisma.invoiceContactLink.upsert({
+      where: { studentId: studentTwoProfile.id },
+      update: {
+        strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
+        alegraContactId: "demo_contact_luis",
+        lastResolvedAt: now,
+        lastError: null,
+      },
+      create: {
+        studentId: studentTwoProfile.id,
+        strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
+        alegraContactId: "demo_contact_luis",
+        lastResolvedAt: now,
+        lastError: null,
+      },
+    }),
+  ]);
+
+  await prisma.invoiceSyncRun.upsert({
+    where: { id: "invoice_sync_demo_all" },
+    update: {
+      status: InvoiceSyncStatus.SUCCESS,
+      scope: InvoiceSyncScope.ALL,
+      startedAt: subDays(now, 1),
+      finishedAt: subDays(now, 1),
+      studentsProcessed: 2,
+      studentsFailed: 0,
+      invoicesUpserted: demoInvoiceRows.length,
+      errorSummary: null,
+    },
+    create: {
+      id: "invoice_sync_demo_all",
+      status: InvoiceSyncStatus.SUCCESS,
+      scope: InvoiceSyncScope.ALL,
+      startedAt: subDays(now, 1),
+      finishedAt: subDays(now, 1),
+      studentsProcessed: 2,
+      studentsFailed: 0,
+      invoicesUpserted: demoInvoiceRows.length,
+      errorSummary: null,
+    },
+  });
+
+  await Promise.all([
+    prisma.invoiceSyncRun.upsert({
+      where: { id: "invoice_sync_demo_student_camila" },
+      update: {
+        status: InvoiceSyncStatus.SUCCESS,
+        scope: InvoiceSyncScope.STUDENT,
+        studentId: studentProfile.id,
+        startedAt: subDays(now, 1),
+        finishedAt: subDays(now, 1),
+        studentsProcessed: 1,
+        studentsFailed: 0,
+        invoicesUpserted: 2,
+      },
+      create: {
+        id: "invoice_sync_demo_student_camila",
+        status: InvoiceSyncStatus.SUCCESS,
+        scope: InvoiceSyncScope.STUDENT,
+        studentId: studentProfile.id,
+        startedAt: subDays(now, 1),
+        finishedAt: subDays(now, 1),
+        studentsProcessed: 1,
+        studentsFailed: 0,
+        invoicesUpserted: 2,
+      },
+    }),
+    prisma.invoiceSyncRun.upsert({
+      where: { id: "invoice_sync_demo_student_luis" },
+      update: {
+        status: InvoiceSyncStatus.SUCCESS,
+        scope: InvoiceSyncScope.STUDENT,
+        studentId: studentTwoProfile.id,
+        startedAt: subDays(now, 1),
+        finishedAt: subDays(now, 1),
+        studentsProcessed: 1,
+        studentsFailed: 0,
+        invoicesUpserted: 1,
+      },
+      create: {
+        id: "invoice_sync_demo_student_luis",
+        status: InvoiceSyncStatus.SUCCESS,
+        scope: InvoiceSyncScope.STUDENT,
+        studentId: studentTwoProfile.id,
+        startedAt: subDays(now, 1),
+        finishedAt: subDays(now, 1),
+        studentsProcessed: 1,
+        studentsFailed: 0,
+        invoicesUpserted: 1,
+      },
+    }),
+  ]);
 
   console.log("Seed completed", {
     admin: adminUser.email,

@@ -69,10 +69,10 @@ export default async function AdminTeachersPage() {
                 <TeacherEditForm
                   teacherId={teacher.id}
                   initial={{
+                    userId: teacher.user.id,
                     name: teacher.user.name,
                     email: teacher.user.email,
                     specialty: teacher.specialty,
-                    timezone: teacher.user.timezone,
                     bio: teacher.bio,
                     zoomLink: teacher.zoomLink,
                     meetLink: teacher.meetLink,

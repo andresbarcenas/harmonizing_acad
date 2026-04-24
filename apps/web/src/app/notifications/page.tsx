@@ -1,6 +1,7 @@
 import { NotificationList } from "@/components/notifications/notification-list";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 
@@ -15,7 +16,12 @@ export default async function NotificationsPage() {
 
   return (
     <AppShell role={viewer.role} activePath="/notifications" userName={viewer.name}>
-      <Card className="mb-4">
+      <PageIntro
+        eyebrow="Centro de alertas"
+        title="Todo lo importante, en un solo vistazo."
+        description="Sigue recordatorios, cambios de horario y novedades recientes sin abandonar tu espacio principal."
+      />
+      <Card>
         <CardTitle>Centro de notificaciones</CardTitle>
       </Card>
       <NotificationList

@@ -109,9 +109,9 @@ export default async function AdminStudentsPage() {
                     name: teacher.user.name,
                   }))}
                   initial={{
+                    userId: student.user.id,
                     name: student.user.name,
                     email: student.user.email,
-                    timezone: student.user.timezone,
                     teacherId: student.assignment?.teacher.id,
                     phone: student.phone,
                     preferredInstrument: student.preferredInstrument,

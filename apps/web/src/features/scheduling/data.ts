@@ -1,7 +1,8 @@
 import { addDays, startOfDay } from "date-fns";
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { RescheduleStatus, SessionStatus } from "@prisma/client";
 
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { db } from "@/lib/db";
 
 export async function getStudentSchedule(studentProfileId: string) {
@@ -72,28 +73,32 @@ type Availability = {
 };
 
 function buildWeekSlots(availability: Availability[], defaultTz: string) {
-  const today = startOfDay(new Date());
+  const now = new Date();
   const slots: { startUtc: Date; endUtc: Date }[] = [];
+  const seen = new Set<string>();
+  const normalizedDefaultTimezone = normalizeIanaTimezone(defaultTz);
 
-  for (let i = 0; i < 7; i += 1) {
-    const date = addDays(today, i);
-    const day = date.getDay();
+  for (const window of availability) {
+    const timezone = normalizeIanaTimezone(window.timezone || normalizedDefaultTimezone);
+    const zoneStart = startOfDay(toZonedTime(now, timezone));
 
-    const matching = availability.filter((entry) => entry.weekday === day);
+    for (let i = 0; i < 7; i += 1) {
+      const localDate = addDays(zoneStart, i);
+      if (localDate.getDay() !== window.weekday) continue;
 
-    for (const window of matching) {
-      const timezone = window.timezone || defaultTz;
       for (let minute = window.startMinuteLocal; minute + 60 <= window.endMinuteLocal; minute += 60) {
-        const localSlot = new Date(date);
+        const localSlot = new Date(localDate);
         localSlot.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
         const startUtc = fromZonedTime(localSlot, timezone);
+        const dedupeKey = startUtc.toISOString();
+        if (startUtc <= now || seen.has(dedupeKey)) continue;
+
         const endUtc = new Date(startUtc.getTime() + 60 * 60 * 1000);
-        if (startUtc > new Date()) {
-          slots.push({ startUtc, endUtc });
-        }
+        slots.push({ startUtc, endUtc });
+        seen.add(dedupeKey);
       }
     }
   }
 
-  return slots.slice(0, 12);
+  return slots.sort((a, b) => a.startUtc.getTime() - b.startUtc.getTime()).slice(0, 12);
 }

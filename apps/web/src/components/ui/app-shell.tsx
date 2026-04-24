@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
 import { TimezoneSync } from "@/components/system/timezone-sync";
+import { canUseAlegra } from "@/lib/alegra/client";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { APP_VERSION } from "@/lib/release";
@@ -18,6 +19,7 @@ type NavItem = {
 const studentNav: NavItem[] = [
   { href: "/dashboard", label: "Inicio" },
   { href: "/schedule", label: "Agenda" },
+  { href: "/invoices", label: "Facturas" },
   { href: "/videos", label: "Prácticas" },
   { href: "/messages", label: "Mensajes" },
   { href: "/notifications", label: "Notificaciones" },
@@ -34,6 +36,7 @@ const teacherNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { href: "/admin/dashboard", label: "Resumen" },
+  { href: "/admin/invoices", label: "Facturación" },
   { href: "/admin/teachers", label: "Docentes" },
   { href: "/admin/students", label: "Estudiantes" },
   { href: "/admin/assignments", label: "Asignaciones" },
@@ -62,6 +65,7 @@ export async function AppShell({
   const items = navByRole(role);
   const notificationIndex = items.findIndex((item) => item.href === "/notifications");
   const session = await getServerSession(authOptions);
+  const alegraConfigured = canUseAlegra();
 
   let unreadCount = 0;
   if (session?.user?.id) {
@@ -82,6 +86,22 @@ export async function AppShell({
             <BrandLogo compact={false} />
           </Link>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 md:w-auto md:justify-end">
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase",
+                alegraConfigured
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-amber-200 bg-amber-50 text-amber-700",
+              )}
+              title={
+                alegraConfigured
+                  ? "Facturación conectada en modo live con Alegra."
+                  : "Facturación en modo demo (sin credenciales Alegra)."
+              }
+            >
+              <span className={cn("h-2 w-2 rounded-full", alegraConfigured ? "bg-emerald-500" : "bg-amber-500")} />
+              <span>Facturación {alegraConfigured ? "Live" : "Demo"}</span>
+            </div>
             <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] md:self-auto">
               <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
               <span className="truncate">{userName}</span>

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { NotificationType, Role, SessionStatus } from "@prisma/client";
-import { addMinutes, addWeeks } from "date-fns";
+import { addDays, addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
+import { randomUUID } from "crypto";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
 import { createRecurringSessionsSchema } from "@/lib/validators/sessions";
 
@@ -72,6 +74,11 @@ function pad2(value: number) {
   return String(value).padStart(2, "0");
 }
 
+function toMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
@@ -94,6 +101,9 @@ export async function POST(req: Request) {
       studentId: data.studentId,
     },
     include: {
+      teacher: {
+        include: { user: { select: { timezone: true } } },
+      },
       student: {
         include: { user: true },
       },
@@ -103,14 +113,21 @@ export async function POST(req: Request) {
   if (!assignment) {
     return NextResponse.json({ error: "El estudiante no está asignado a esta docente." }, { status: 400 });
   }
+  const recurrenceTimezone = normalizeIanaTimezone(data.timezone ?? assignment.teacher.user.timezone);
 
   const { year, month, day } = parseDateParts(data.startsOnDate);
   const baseDate = new Date(Date.UTC(year, month - 1, day));
   if (Number.isNaN(baseDate.getTime())) {
     return NextResponse.json({ error: "Fecha de inicio inválida." }, { status: 400 });
   }
+  const now = new Date();
+
+  const weekdays = Array.from(new Set(data.weekdays)).sort((a, b) => a - b);
+  const startMinuteLocal = toMinutes(data.startTimeLocal);
+  const weekAnchor = addDays(baseDate, -baseDate.getUTCDay());
 
   const sessionsToCreate: Array<{
+    recurrenceId: string;
     studentId: string;
     teacherId: string;
     startsAtUtc: Date;
@@ -121,48 +138,58 @@ export async function POST(req: Request) {
   }> = [];
 
   const conflictWindows: string[] = [];
+  const recurrenceId = randomUUID();
 
-  for (let index = 0; index < data.occurrences; index += 1) {
-    const weekDate = addWeeks(baseDate, index * data.intervalWeeks);
-    const localDateTime = `${weekDate.getUTCFullYear()}-${pad2(weekDate.getUTCMonth() + 1)}-${pad2(weekDate.getUTCDate())}T${data.startTimeLocal}:00`;
-    const startsAtUtc = fromZonedTime(localDateTime, data.timezone);
-    const endsAtUtc = addMinutes(startsAtUtc, data.durationMin);
+  for (let weekIndex = 0; weekIndex < data.horizonWeeks; weekIndex += 1) {
+    if (weekIndex % data.intervalWeeks !== 0) continue;
+    const thisWeekStart = addDays(weekAnchor, weekIndex * 7);
 
-    const [teacherConflict, studentConflict] = await Promise.all([
-      db.classSession.findFirst({
-        where: {
-          teacherId: teacherProfileId,
-          status: { not: SessionStatus.CANCELLED },
-          startsAtUtc: { lt: endsAtUtc },
-          endsAtUtc: { gt: startsAtUtc },
-        },
-        select: { id: true },
-      }),
-      db.classSession.findFirst({
-        where: {
-          studentId: data.studentId,
-          status: { not: SessionStatus.CANCELLED },
-          startsAtUtc: { lt: endsAtUtc },
-          endsAtUtc: { gt: startsAtUtc },
-        },
-        select: { id: true },
-      }),
-    ]);
+    for (const weekday of weekdays) {
+      const localDate = addDays(thisWeekStart, weekday);
+      if (localDate < baseDate) continue;
 
-    if (teacherConflict || studentConflict) {
-      conflictWindows.push(localDateTime);
-      continue;
+      const localDateTime = `${localDate.getUTCFullYear()}-${pad2(localDate.getUTCMonth() + 1)}-${pad2(localDate.getUTCDate())}T${data.startTimeLocal}:00`;
+      const startsAtUtc = fromZonedTime(localDateTime, recurrenceTimezone);
+      const endsAtUtc = addMinutes(startsAtUtc, data.durationMin);
+      if (endsAtUtc <= now) continue;
+
+      const [teacherConflict, studentConflict] = await Promise.all([
+        db.classSession.findFirst({
+          where: {
+            teacherId: teacherProfileId,
+            status: { not: SessionStatus.CANCELLED },
+            startsAtUtc: { lt: endsAtUtc },
+            endsAtUtc: { gt: startsAtUtc },
+          },
+          select: { id: true },
+        }),
+        db.classSession.findFirst({
+          where: {
+            studentId: data.studentId,
+            status: { not: SessionStatus.CANCELLED },
+            startsAtUtc: { lt: endsAtUtc },
+            endsAtUtc: { gt: startsAtUtc },
+          },
+          select: { id: true },
+        }),
+      ]);
+
+      if (teacherConflict || studentConflict) {
+        conflictWindows.push(localDateTime);
+        continue;
+      }
+
+      sessionsToCreate.push({
+        recurrenceId,
+        studentId: data.studentId,
+        teacherId: teacherProfileId,
+        startsAtUtc,
+        endsAtUtc,
+        meetingUrl: data.meetingUrl,
+        lessonFocus: data.lessonFocus,
+        status: SessionStatus.SCHEDULED,
+      });
     }
-
-    sessionsToCreate.push({
-      studentId: data.studentId,
-      teacherId: teacherProfileId,
-      startsAtUtc,
-      endsAtUtc,
-      meetingUrl: data.meetingUrl,
-      lessonFocus: data.lessonFocus,
-      status: SessionStatus.SCHEDULED,
-    });
   }
 
   if (!sessionsToCreate.length) {
@@ -172,20 +199,42 @@ export async function POST(req: Request) {
     );
   }
 
-  await db.classSession.createMany({
-    data: sessionsToCreate,
+  await db.$transaction(async (tx) => {
+    await tx.recurringClassSeries.create({
+      data: {
+        id: recurrenceId,
+        studentId: data.studentId,
+        teacherId: teacherProfileId,
+        timezone: recurrenceTimezone,
+        startsOnDate: baseDate,
+        startTimeLocal: data.startTimeLocal,
+        startMinuteLocal,
+        durationMin: data.durationMin,
+        intervalWeeks: data.intervalWeeks,
+        horizonWeeks: data.horizonWeeks,
+        weekdays,
+        meetingUrl: data.meetingUrl,
+        lessonFocus: data.lessonFocus,
+        active: true,
+      },
+    });
+
+    await tx.classSession.createMany({
+      data: sessionsToCreate,
+    });
   });
 
   await createNotification({
     userId: assignment.student.userId,
     type: NotificationType.CLASS_REMINDER,
-    title: "Nuevas clases agendadas",
-    body: `Tu docente programó ${sessionsToCreate.length} clase(s) recurrente(s).`,
+    title: "Nuevas clases recurrentes",
+    body: `Tu docente programó ${sessionsToCreate.length} clase(s) en una nueva serie.`,
     actionUrl: "/schedule",
   });
 
   return NextResponse.json({
     ok: true,
+    seriesId: recurrenceId,
     created: sessionsToCreate.length,
     conflicts: conflictWindows,
   });

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 type StudentOption = {
   id: string;
@@ -13,13 +14,14 @@ type StudentOption = {
   instrument?: string | null;
 };
 
-const commonTimezones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Puerto_Rico",
+const weekdayOptions = [
+  { value: 0, label: "Dom" },
+  { value: 1, label: "Lun" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mié" },
+  { value: 4, label: "Jue" },
+  { value: 5, label: "Vie" },
+  { value: 6, label: "Sáb" },
 ];
 
 export function RecurringClassForm({
@@ -36,6 +38,8 @@ export function RecurringClassForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<string[]>([]);
+  const [weekdays, setWeekdays] = useState<number[]>([1]);
+  const normalizedDefaultTimezone = normalizeIanaTimezone(defaultTimezone);
 
   const initialDate = useMemo(() => {
     const value = new Date();
@@ -53,9 +57,9 @@ export function RecurringClassForm({
       studentId: String(formData.get("studentId") ?? ""),
       startsOnDate: String(formData.get("startsOnDate") ?? ""),
       startTimeLocal: String(formData.get("startTimeLocal") ?? ""),
-      timezone: String(formData.get("timezone") ?? defaultTimezone),
+      weekdays,
       durationMin: Number(formData.get("durationMin") ?? 60),
-      occurrences: Number(formData.get("occurrences") ?? 8),
+      horizonWeeks: Number(formData.get("horizonWeeks") ?? 8),
       intervalWeeks: Number(formData.get("intervalWeeks") ?? 1),
       meetingUrl: String(formData.get("meetingUrl") ?? "").trim(),
       lessonFocus: String(formData.get("lessonFocus") ?? "").trim() || undefined,
@@ -127,7 +131,7 @@ export function RecurringClassForm({
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="startsOnDate" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             Fecha inicial
@@ -140,17 +144,39 @@ export function RecurringClassForm({
           </label>
           <Input id="startTimeLocal" name="startTimeLocal" type="time" defaultValue="18:00" required />
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="timezone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Zona horaria
-          </label>
-          <Input id="timezone" name="timezone" list="recurring-timezones" defaultValue={defaultTimezone} required />
-          <datalist id="recurring-timezones">
-            {commonTimezones.map((timezone) => (
-              <option key={timezone} value={timezone} />
-            ))}
-          </datalist>
+      </div>
+      <p className="text-xs text-[var(--color-ink-soft)]">
+        Esta serie se crea en tu zona horaria docente:{" "}
+        <span className="font-semibold text-[var(--color-ink)]">{normalizedDefaultTimezone}</span>. El estudiante la verá convertida automáticamente a su hora local.
+      </p>
+
+      <div className="space-y-1.5">
+        <p className="text-sm font-semibold text-[var(--color-ink-soft)]">Días de la semana</p>
+        <div className="flex flex-wrap gap-2">
+          {weekdayOptions.map((day) => {
+            const active = weekdays.includes(day.value);
+            return (
+              <Button
+                key={day.value}
+                type="button"
+                size="sm"
+                variant={active ? "gold" : "outline"}
+                onClick={() =>
+                  setWeekdays((previous) => {
+                    if (previous.includes(day.value)) {
+                      const next = previous.filter((value) => value !== day.value);
+                      return next.length ? next : previous;
+                    }
+                    return [...previous, day.value].sort((a, b) => a - b);
+                  })
+                }
+              >
+                {day.label}
+              </Button>
+            );
+          })}
         </div>
+        <p className="text-xs text-[var(--color-ink-soft)]">Selecciona al menos un día (ej: Lun y Mié).</p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -161,10 +187,10 @@ export function RecurringClassForm({
           <Input id="durationMin" name="durationMin" type="number" min={30} max={180} defaultValue={60} required />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="occurrences" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Repeticiones
+          <label htmlFor="horizonWeeks" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+            Horizonte (semanas)
           </label>
-          <Input id="occurrences" name="occurrences" type="number" min={1} max={24} defaultValue={8} required />
+          <Input id="horizonWeeks" name="horizonWeeks" type="number" min={1} max={26} defaultValue={8} required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="intervalWeeks" className="text-sm font-semibold text-[var(--color-ink-soft)]">

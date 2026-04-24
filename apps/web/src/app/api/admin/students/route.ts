@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
 import { createStudentSchema } from "@/lib/validators/admin";
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
 
-  const [existingUser, teacher, plan] = await Promise.all([
+  const [existingUser, teacher, plan, adminUser] = await Promise.all([
     db.user.findUnique({
       where: { email: data.email },
       select: { id: true },
@@ -51,6 +52,10 @@ export async function POST(req: Request) {
       include: { user: true },
     }),
     resolveDefaultPlan(),
+    db.user.findUnique({
+      where: { id: auth.user.id },
+      select: { timezone: true },
+    }),
   ]);
 
   if (existingUser) {
@@ -66,6 +71,8 @@ export async function POST(req: Request) {
   }
 
   try {
+    const adminTimezone = normalizeIanaTimezone(adminUser?.timezone ?? auth.user.timezone);
+    const studentTimezone = normalizeIanaTimezone(data.timezone ?? adminTimezone);
     const passwordHash = await hash(data.temporaryPassword, 10);
 
     const created = await db.$transaction(async (tx) => {
@@ -76,7 +83,7 @@ export async function POST(req: Request) {
           passwordHash,
           role: Role.STUDENT,
           locale: "es",
-          timezone: data.timezone,
+          timezone: studentTimezone,
           image: data.profileImage ?? null,
         },
       });

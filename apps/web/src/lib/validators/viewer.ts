@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 export const viewerTimezoneSchema = z.object({
-  timezone: z.string().min(2).max(80),
+  timezone: z.string().min(2).max(80).transform((value) => normalizeIanaTimezone(value)),
 });
 
 function isValidProfileImage(value: string) {

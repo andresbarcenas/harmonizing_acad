@@ -1,10 +1,11 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
-import { Role, VideoStatus } from "@prisma/client";
+import { NotificationType, Role, VideoStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { mediaBucket, minioClient } from "@/lib/minio";
+import { createNotification } from "@/lib/notifications";
 import { reviewVideoSchema } from "@/lib/validators/videos";
 
 export async function GET() {
@@ -82,14 +83,12 @@ export async function POST(req: Request) {
     },
   });
 
-  await db.notification.create({
-    data: {
-      userId: assignment.teacher.userId,
-      type: "VIDEO_REVIEW",
-      title: "Nuevo video semanal",
-      body: `${auth.user.name} subió una nueva práctica.`,
-      actionUrl: "/teacher/videos",
-    },
+  await createNotification({
+    userId: assignment.teacher.userId,
+    type: NotificationType.VIDEO_REVIEW,
+    title: "Nuevo video semanal",
+    body: `${auth.user.name} subió una nueva práctica.`,
+    actionUrl: "/teacher/videos",
   });
 
   return NextResponse.json({ video });
@@ -102,6 +101,7 @@ export async function PATCH(req: Request) {
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const teacherProfileId = auth.user.teacherProfile.id;
 
   const parsed = reviewVideoSchema.safeParse(await req.json());
 
@@ -114,7 +114,7 @@ export async function PATCH(req: Request) {
   const video = await db.practiceVideo.findFirst({
     where: {
       id: videoId,
-      teacherId: auth.user.teacherProfile.id,
+      teacherId: teacherProfileId,
     },
   });
 
@@ -122,20 +122,22 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Video no encontrado" }, { status: 404 });
   }
 
-  await db.practiceVideo.update({
-    where: { id: video.id },
-    data: {
-      status: VideoStatus.FEEDBACK_GIVEN,
-      reviewedAt: new Date(),
-    },
-  });
+  await db.$transaction(async (tx) => {
+    await tx.practiceVideo.update({
+      where: { id: video.id },
+      data: {
+        status: VideoStatus.FEEDBACK_GIVEN,
+        reviewedAt: new Date(),
+      },
+    });
 
-  await db.videoFeedback.create({
-    data: {
-      videoId: video.id,
-      teacherId: auth.user.teacherProfile.id,
-      comment,
-    },
+    await tx.videoFeedback.create({
+      data: {
+        videoId: video.id,
+        teacherId: teacherProfileId,
+        comment,
+      },
+    });
   });
 
   const student = await db.studentProfile.findUnique({
@@ -144,14 +146,12 @@ export async function PATCH(req: Request) {
   });
 
   if (student) {
-    await db.notification.create({
-      data: {
-        userId: student.userId,
-        type: "VIDEO_REVIEW",
-        title: "Tu video fue revisado",
-        body: "Ya tienes feedback de tu profesora.",
-        actionUrl: "/videos",
-      },
+    await createNotification({
+      userId: student.userId,
+      type: NotificationType.VIDEO_REVIEW,
+      title: "Tu video fue revisado",
+      body: "Ya tienes feedback de tu profesora.",
+      actionUrl: "/videos",
     });
   }
 
