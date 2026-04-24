@@ -21,6 +21,7 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         const protectedPrefix =
+          path.startsWith("/student") ||
           path.startsWith("/dashboard") ||
           path.startsWith("/schedule") ||
           path.startsWith("/invoices") ||
@@ -43,6 +44,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
+    "/student/:path*",
     "/dashboard/:path*",
     "/schedule/:path*",
     "/invoices/:path*",

@@ -1,5 +1,5 @@
 import { Role, VideoStatus } from "@prisma/client";
-import { endOfWeek, startOfWeek } from "date-fns";
+import Link from "next/link";
 
 import { VideoReviewForm } from "@/components/videos/video-review-form";
 import { AppShell } from "@/components/ui/app-shell";
@@ -7,36 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { db } from "@/lib/db";
-import { getPublicMediaBaseUrl } from "@/lib/media-url";
+import { getTeacherVideosData } from "@/lib/data";
+import { cn } from "@/lib/utils";
+import { getVideoPublicUrl } from "@/lib/storage";
 
-export default async function TeacherVideosPage() {
+type TeacherVideosPageProps = {
+  searchParams?: {
+    estado?: string;
+  };
+};
+
+export default async function TeacherVideosPage({ searchParams }: TeacherVideosPageProps) {
   const viewer = await requireViewer([Role.TEACHER]);
-  const mediaBase = getPublicMediaBaseUrl() ?? "http://localhost:9010/harmonizing-media";
-
-  const [videos, assignedStudents] = await Promise.all([
-    db.practiceVideo.findMany({
-      where: { teacherId: viewer.teacherProfileId! },
-      include: {
-        student: { include: { user: true } },
-        feedback: true,
-      },
-      orderBy: { submittedAt: "desc" },
-    }),
-    db.teacherAssignment.findMany({
-      where: { teacherId: viewer.teacherProfileId! },
-      include: { student: { include: { user: true } } },
-    }),
-  ]);
-
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-  const submittedThisWeek = new Set(
-    videos
-      .filter((video) => video.submittedAt >= weekStart && video.submittedAt <= weekEnd)
-      .map((video) => video.studentId),
-  );
-  const missingThisWeek = assignedStudents.filter((assignment) => !submittedThisWeek.has(assignment.studentId));
+  const selectedFilter = searchParams?.estado === "pending" || searchParams?.estado === "reviewed" ? searchParams.estado : "all";
+  const { videos, missingThisWeek } = await getTeacherVideosData(viewer, selectedFilter);
 
   return (
     <AppShell role={viewer.role} activePath="/teacher/videos" userName={viewer.name}>
@@ -49,6 +33,27 @@ export default async function TeacherVideosPage() {
       <Card>
         <CardTitle>Prácticas semanales</CardTitle>
         <CardDescription>{missingThisWeek.length} estudiante(s) aún no subieron su video esta semana.</CardDescription>
+        <div className="mt-3 inline-flex rounded-full border border-[var(--color-border)] bg-white/76 p-1">
+          {[
+            { key: "all", label: "Todas" },
+            { key: "pending", label: "Pendientes" },
+            { key: "reviewed", label: "Revisadas" },
+          ].map((option) => {
+            const active = selectedFilter === option.key;
+            return (
+              <Link
+                key={option.key}
+                href={option.key === "all" ? "/teacher/videos" : `/teacher/videos?estado=${option.key}`}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                  active ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)]",
+                )}
+              >
+                {option.label}
+              </Link>
+            );
+          })}
+        </div>
         {missingThisWeek.length ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {missingThisWeek.map((assignment) => (
@@ -68,8 +73,8 @@ export default async function TeacherVideosPage() {
                 <p className="text-sm font-semibold">{video.student.user.name}</p>
                 <p className="break-all text-xs text-[var(--color-ink-soft)]">{video.originalName} · {Math.floor(video.durationSec / 60)}:{`${video.durationSec % 60}`.padStart(2, "0")}</p>
               </div>
-              <Badge variant={video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
-                {video.status === VideoStatus.FEEDBACK_GIVEN ? "Revisado" : "Pendiente"}
+              <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
+                {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "Revisado" : "Pendiente"}
               </Badge>
             </div>
             <div className="mt-3">
@@ -77,13 +82,13 @@ export default async function TeacherVideosPage() {
                 controls
                 preload="metadata"
                 className="w-full rounded-xl border border-[var(--color-border)] bg-black/90"
-                src={`${mediaBase}/${video.storageKey}`}
+                src={getVideoPublicUrl(video.storageKey)}
               >
                 <track kind="captions" />
               </video>
             </div>
             <div className="mt-3">
-              <VideoReviewForm videoId={video.id} />
+              <VideoReviewForm videoId={video.id} disabled={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN} />
             </div>
           </Card>
         ))}

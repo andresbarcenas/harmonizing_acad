@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 export async function requireApiUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
+    return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) } as const;
   }
 
   const user = await db.user.findUnique({
@@ -19,7 +19,7 @@ export async function requireApiUser() {
   });
 
   if (!user) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
+    return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) } as const;
   }
 
   return { user } as const;

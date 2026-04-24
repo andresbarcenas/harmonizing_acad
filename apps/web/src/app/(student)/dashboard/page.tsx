@@ -9,13 +9,13 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { requireViewer } from "@/features/auth/server";
-import { getStudentDashboard } from "@/features/student/data";
+import { getStudentDashboardData } from "@/lib/data";
 import { formatUtcToLocal } from "@/lib/timezone";
 import { buildWhatsAppPlanLink } from "@/lib/whatsapp";
 
 export default async function StudentDashboardPage() {
   const viewer = await requireViewer([Role.STUDENT]);
-  const data = await getStudentDashboard(viewer.studentProfileId!);
+  const data = await getStudentDashboardData(viewer);
 
   const teacher = data.student?.assignment?.teacher;
 

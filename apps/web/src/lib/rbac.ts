@@ -1,12 +1,12 @@
 import { Role } from "@prisma/client";
 
 const roleToPrefix: Record<Role, string> = {
-  STUDENT: "/dashboard",
-  TEACHER: "/teacher/dashboard",
-  ADMIN: "/admin/dashboard",
+  STUDENT: "/student",
+  TEACHER: "/teacher",
+  ADMIN: "/admin",
 };
 
-export const studentOnlyPrefixes = ["/dashboard", "/schedule", "/invoices", "/videos", "/messages"];
+export const studentOnlyPrefixes = ["/student", "/dashboard", "/schedule", "/invoices", "/videos", "/messages"];
 export const teacherOnlyPrefixes = ["/teacher"];
 export const adminOnlyPrefixes = ["/admin"];
 

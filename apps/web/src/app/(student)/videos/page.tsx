@@ -6,16 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { db } from "@/lib/db";
+import { getStudentVideosData } from "@/lib/data";
+import { getVideoPublicUrl } from "@/lib/storage";
 
 export default async function StudentVideosPage() {
   const viewer = await requireViewer([Role.STUDENT]);
-
-  const videos = await db.practiceVideo.findMany({
-    where: { studentId: viewer.studentProfileId! },
-    include: { feedback: true },
-    orderBy: { submittedAt: "desc" },
-  });
+  const videos = await getStudentVideosData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/videos" userName={viewer.name}>
@@ -36,11 +32,21 @@ export default async function StudentVideosPage() {
                 {index < videos.length - 1 ? <span className="absolute left-6 top-[calc(100%+2px)] h-5 w-px bg-[var(--color-border)]" /> : null}
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="break-all text-sm font-medium">{video.originalName}</p>
-                  <Badge variant={video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
-                    {video.status === VideoStatus.FEEDBACK_GIVEN ? "Con feedback" : "En revisión"}
+                  <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
+                    {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "Revisado" : "En revisión"}
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{new Date(video.submittedAt).toLocaleDateString("es-US")}</p>
+                <div className="mt-2">
+                  <video
+                    controls
+                    preload="metadata"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-black/90"
+                    src={getVideoPublicUrl(video.storageKey)}
+                  >
+                    <track kind="captions" />
+                  </video>
+                </div>
                 <div className="mt-2 rounded-xl border border-[var(--color-border)] bg-white/80 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
                   <p>1) Enviado</p>
                   <p>2) Revisado por docente</p>

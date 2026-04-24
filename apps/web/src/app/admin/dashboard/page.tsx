@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { getAdminDashboard } from "@/features/admin/data";
+import { getAdminDashboardData } from "@/lib/data";
 
 export default async function AdminDashboardPage() {
   const viewer = await requireViewer([Role.ADMIN]);
-  const data = await getAdminDashboard();
+  const data = await getAdminDashboardData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/admin/dashboard" userName={viewer.name}>

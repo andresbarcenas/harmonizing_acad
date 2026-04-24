@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
+const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
+const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+type FileValidationResult = { valid: true } | { valid: false; message: string };
+
 export function VideoUploadForm() {
+  const router = useRouter();
   const [status, setStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [pending, setPending] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
@@ -33,6 +41,19 @@ export function VideoUploadForm() {
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
     setRecordedUrl(null);
     setRecordedFile(null);
+  }
+
+  function validateFile(file: File | null): FileValidationResult {
+    if (!file) {
+      return { valid: false, message: "Selecciona un archivo antes de continuar." };
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return { valid: false, message: "Formato no permitido. Usa MP4, MOV o WEBM." };
+    }
+    if (file.size > MAX_VIDEO_SIZE_BYTES) {
+      return { valid: false, message: "El archivo supera el límite de 100MB." };
+    }
+    return { valid: true };
   }
 
   async function startRecording() {
@@ -82,22 +103,28 @@ export function VideoUploadForm() {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const activeFile = recordedFile ?? selectedFile;
-    if (!activeFile) {
-      setStatus({ kind: "error", message: "Selecciona o graba un video antes de subirlo." });
+    const validation = validateFile(activeFile);
+    if (!validation.valid) {
+      setStatus({ kind: "error", message: validation.message });
       return;
     }
 
     setPending(true);
+    setUploadProgress(0);
     setStatus(null);
 
     const formData = new FormData();
-    formData.set("file", activeFile);
+    formData.set("file", activeFile as File);
     formData.set("durationSec", `${Math.max(recordedSeconds, 60)}`);
 
-    const response = await fetch("/api/videos", {
-      method: "POST",
-      body: formData,
-    });
+    let response: Response;
+    try {
+      response = await uploadWithProgress(formData, (progress) => setUploadProgress(progress));
+    } catch {
+      setStatus({ kind: "error", message: "No pudimos subir el video. Revisa tu conexión e inténtalo otra vez." });
+      setPending(false);
+      return;
+    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -110,6 +137,8 @@ export function VideoUploadForm() {
     setSelectedFile(null);
     resetRecordedPreview();
     setPending(false);
+    setUploadProgress(100);
+    router.refresh();
   }
 
   return (
@@ -151,10 +180,56 @@ export function VideoUploadForm() {
         required={!recordedFile}
         onChange={(event) => {
           const file = event.target.files?.[0] ?? null;
+          const validation = validateFile(file);
+          if (!validation.valid) {
+            setStatus({ kind: "error", message: validation.message });
+            setSelectedFile(null);
+            return;
+          }
+          setStatus(null);
           setSelectedFile(file);
         }}
         className="block w-full rounded-[1.2rem] border border-[var(--color-border)] bg-white/76 p-4 text-sm text-[var(--color-ink-soft)] file:mr-3 file:rounded-full file:border file:border-[var(--color-border)] file:bg-[var(--color-gold-soft)] file:px-4 file:py-2 file:font-semibold file:text-[var(--color-gold-deep)]"
       />
+      <div
+        className={`rounded-[1.2rem] border border-dashed p-4 text-sm transition ${isDragging ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)]" : "border-[var(--color-border)] bg-white/72"}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          const file = event.dataTransfer.files?.[0] ?? null;
+          const validation = validateFile(file);
+          if (!validation.valid) {
+            setStatus({ kind: "error", message: validation.message });
+            return;
+          }
+          setStatus(null);
+          setSelectedFile(file);
+        }}
+      >
+        {selectedFile ? (
+          <p className="text-[var(--color-ink-soft)]">
+            Archivo listo: <span className="font-semibold text-[var(--color-ink)]">{selectedFile.name}</span>
+          </p>
+        ) : (
+          <p className="text-[var(--color-ink-soft)]">Arrastra y suelta tu archivo MP4/MOV aquí o usa el selector.</p>
+        )}
+      </div>
+      {pending ? (
+        <div className="space-y-1">
+          <p className="text-xs text-[var(--color-ink-soft)]">Subiendo... {uploadProgress}%</p>
+          <div className="h-2 rounded-full bg-[var(--color-gold-soft)]">
+            <div className="h-2 rounded-full bg-[var(--color-gold)] transition-all" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        </div>
+      ) : null}
       <Button type="submit" variant="gold" disabled={pending} className="w-full sm:w-auto">
         {pending ? "Subiendo..." : "Subir mi práctica semanal"}
       </Button>
@@ -163,4 +238,26 @@ export function VideoUploadForm() {
       ) : null}
     </form>
   );
+}
+
+function uploadWithProgress(formData: FormData, onProgress: (value: number) => void) {
+  return new Promise<Response>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", "/api/videos");
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    };
+    request.onerror = () => reject(new Error("UPLOAD_FAILED"));
+    request.onload = () => {
+      onProgress(100);
+      resolve(
+        new Response(request.responseText, {
+          status: request.status,
+          headers: { "Content-Type": request.getResponseHeader("content-type") || "application/json" },
+        }),
+      );
+    };
+    request.send(formData);
+  });
 }

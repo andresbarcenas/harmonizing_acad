@@ -6,6 +6,8 @@ import {
   NotificationType,
   RescheduleStatus,
   VideoStatus,
+  TeacherStatus,
+  LogEntryType,
   InvoiceContactLinkStrategy,
   InvoiceSyncScope,
   InvoiceSyncStatus,
@@ -16,15 +18,16 @@ import { addDays, addHours, subDays } from "date-fns";
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await hash("Harmonizing123!", 10);
+  // Security-sensitive: never store plaintext passwords, only bcrypt hashes.
+  const passwordHash = await hash("demo123", 12);
 
   const [adminUser, teacherUser, studentUser, studentTwoUser] = await Promise.all([
     prisma.user.upsert({
-      where: { email: "admin@harmonizing.app" },
+      where: { email: "admin@harmonizing.com" },
       update: {},
       create: {
         name: "Sofia Morales",
-        email: "admin@harmonizing.app",
+        email: "admin@harmonizing.com",
         passwordHash,
         role: Role.ADMIN,
         locale: "es",
@@ -33,11 +36,11 @@ async function main() {
       },
     }),
     prisma.user.upsert({
-      where: { email: "teacher@harmonizing.app" },
+      where: { email: "maria@harmonizing.com" },
       update: {},
       create: {
-        name: "Daniela Rojas",
-        email: "teacher@harmonizing.app",
+        name: "María Rojas",
+        email: "maria@harmonizing.com",
         passwordHash,
         role: Role.TEACHER,
         locale: "es",
@@ -46,11 +49,11 @@ async function main() {
       },
     }),
     prisma.user.upsert({
-      where: { email: "student@harmonizing.app" },
+      where: { email: "isabella@harmonizing.com" },
       update: {},
       create: {
-        name: "Camila Herrera",
-        email: "student@harmonizing.app",
+        name: "Isabella Herrera",
+        email: "isabella@harmonizing.com",
         passwordHash,
         role: Role.STUDENT,
         locale: "es",
@@ -59,11 +62,11 @@ async function main() {
       },
     }),
     prisma.user.upsert({
-      where: { email: "student2@harmonizing.app" },
+      where: { email: "luis@harmonizing.com" },
       update: {},
       create: {
         name: "Luis Castillo",
-        email: "student2@harmonizing.app",
+        email: "luis@harmonizing.com",
         passwordHash,
         role: Role.STUDENT,
         locale: "es",
@@ -75,13 +78,17 @@ async function main() {
 
   const teacherProfile = await prisma.teacherProfile.upsert({
     where: { userId: teacherUser.id },
-    update: {},
+    update: {
+      status: TeacherStatus.ACTIVE,
+      statusUpdatedAt: new Date(),
+    },
     create: {
       userId: teacherUser.id,
       specialty: "Técnica vocal y piano contemporáneo",
       bio: "Más de 10 años acompañando estudiantes hispanos en EE.UU.",
       zoomLink: "https://zoom.us/j/1234567890",
       meetLink: "https://meet.google.com/harmonizing-class",
+      status: TeacherStatus.ACTIVE,
     },
   });
 
@@ -318,6 +325,40 @@ async function main() {
     ],
   });
 
+  await prisma.studentLogEntry.deleteMany({
+    where: {
+      studentId: { in: [studentProfile.id, studentTwoProfile.id] },
+    },
+  });
+  await prisma.studentLogEntry.createMany({
+    data: [
+      {
+        studentId: studentProfile.id,
+        authorId: teacherUser.id,
+        type: LogEntryType.FEEDBACK,
+        title: "Mejor control del aire",
+        content: "Aumentó la estabilidad en notas largas. Mantener 10 minutos diarios de respiración guiada.",
+        occurredAt: subDays(now, 2),
+      },
+      {
+        studentId: studentProfile.id,
+        authorId: teacherUser.id,
+        type: LogEntryType.GOAL_UPDATE,
+        title: "Meta técnica actualizada",
+        content: "Nueva meta semanal enfocada en independencia de manos en compases lentos.",
+        occurredAt: subDays(now, 1),
+      },
+      {
+        studentId: studentTwoProfile.id,
+        authorId: teacherUser.id,
+        type: LogEntryType.ATTENDANCE,
+        title: "Asistencia registrada",
+        content: "Clase completada y seguimiento de tarea enviado por chat.",
+        occurredAt: subDays(now, 3),
+      },
+    ],
+  });
+
   const thread = await prisma.messageThread.upsert({
     where: { studentId_teacherId: { studentId: studentProfile.id, teacherId: teacherProfile.id } },
     update: {},
@@ -424,6 +465,26 @@ async function main() {
         actionUrl: "/admin/dashboard",
       },
     ],
+  });
+
+  await prisma.invitation.upsert({
+    where: { token: "invite_student_preview_token" },
+    update: {
+      email: "nuevo.estudiante@harmonizing.com",
+      role: Role.STUDENT,
+      invitedByUserId: adminUser.id,
+      studentId: studentProfile.id,
+      expiresAt: addDays(now, 7),
+      revokedAt: null,
+    },
+    create: {
+      token: "invite_student_preview_token",
+      email: "nuevo.estudiante@harmonizing.com",
+      role: Role.STUDENT,
+      invitedByUserId: adminUser.id,
+      studentId: studentProfile.id,
+      expiresAt: addDays(now, 7),
+    },
   });
 
   const demoInvoiceRows = [

@@ -1,53 +1,13 @@
-import { Role } from "@prisma/client";
-
 import { MessagesPanel } from "@/components/messaging/messages-panel";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { db } from "@/lib/db";
+import { getMessagesThreadForViewer } from "@/lib/data";
 
 export default async function MessagesPage() {
   const viewer = await requireViewer();
-
-  let thread = null;
-
-  if (viewer.role === Role.STUDENT && viewer.studentProfileId) {
-    const assignment = await db.teacherAssignment.findUnique({ where: { studentId: viewer.studentProfileId } });
-
-    if (assignment) {
-      thread = await db.messageThread.findUnique({
-        where: {
-          studentId_teacherId: {
-            studentId: viewer.studentProfileId,
-            teacherId: assignment.teacherId,
-          },
-        },
-        include: {
-          messages: { include: { sender: true }, orderBy: { createdAt: "asc" } },
-        },
-      });
-    }
-  }
-
-  if (viewer.role === Role.TEACHER && viewer.teacherProfileId) {
-    thread = await db.messageThread.findFirst({
-      where: { teacherId: viewer.teacherProfileId },
-      include: {
-        messages: { include: { sender: true }, orderBy: { createdAt: "asc" } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  if (viewer.role === Role.ADMIN) {
-    thread = await db.messageThread.findFirst({
-      include: {
-        messages: { include: { sender: true }, orderBy: { createdAt: "asc" } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
+  const thread = await getMessagesThreadForViewer(viewer);
 
   if (!thread) {
     return (

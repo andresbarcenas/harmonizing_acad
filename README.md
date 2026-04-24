@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.2.0`
+- Current version: `v0.3.0`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -28,9 +28,9 @@ App endpoints:
 - MinIO Console: `http://localhost:9011` (user/pass `minioadmin` / `minioadmin`)
 
 ## Demo Credentials
-- Student: `student@harmonizing.app` / `Harmonizing123!`
-- Teacher: `teacher@harmonizing.app` / `Harmonizing123!`
-- Admin: `admin@harmonizing.app` / `Harmonizing123!`
+- Student: `isabella@harmonizing.com` / `demo123`
+- Teacher: `maria@harmonizing.com` / `demo123`
+- Admin: `admin@harmonizing.com` / `demo123`
 
 ## Phase Checklist
 - [x] Phase 1 — Foundation / Architecture / Design System
@@ -77,7 +77,7 @@ Required environment variables:
 - `CRON_SECRET` (required for `/api/cron/invoices/sync`)
 
 Demo fallback details:
-- Seed creates sample invoices for demo students (`student@harmonizing.app`, `student2@harmonizing.app`)
+- Seed creates sample invoices for demo students (`isabella@harmonizing.com`, `luis@harmonizing.com`)
 - Student and admin invoice screens display a “modo demo” warning when credentials are missing
 - Manual sync still works in demo mode and refreshes cache timestamps without external API calls
 

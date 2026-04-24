@@ -1,11 +1,10 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { NotificationType, Role, VideoStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { mediaBucket, minioClient } from "@/lib/minio";
 import { createNotification } from "@/lib/notifications";
+import { ALLOWED_VIDEO_MIME_TYPES, MAX_VIDEO_SIZE_BYTES, isAllowedVideoType, storePracticeVideo } from "@/lib/storage";
 import { reviewVideoSchema } from "@/lib/validators/videos";
 
 export async function GET() {
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "No tienes permisos para subir videos." }, { status: 403 });
   }
 
   const formData = await req.formData();
@@ -49,6 +48,15 @@ export async function POST(req: Request) {
 
   if (!file) {
     return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
+  }
+  if (!isAllowedVideoType(file.type)) {
+    return NextResponse.json(
+      { error: `Formato no permitido. Usa MP4, MOV o WEBM (${ALLOWED_VIDEO_MIME_TYPES.join(", ")}).` },
+      { status: 400 },
+    );
+  }
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    return NextResponse.json({ error: "El archivo supera el límite de 100MB." }, { status: 400 });
   }
 
   const assignment = await db.teacherAssignment.findUnique({
@@ -60,25 +68,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No tienes profesora asignada" }, { status: 400 });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const key = `${auth.user.studentProfile.id}/${Date.now()}-${file.name}`;
-
-  await minioClient.send(
-    new PutObjectCommand({
-      Bucket: mediaBucket,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type || "video/mp4",
-    }),
-  );
+  const durationValue = Number(formData.get("durationSec") ?? 120);
+  const safeDuration = Number.isFinite(durationValue) ? Math.max(1, Math.min(600, Math.round(durationValue))) : 120;
+  const stored = await storePracticeVideo(file, auth.user.studentProfile.id);
 
   const video = await db.practiceVideo.create({
     data: {
       studentId: auth.user.studentProfile.id,
       teacherId: assignment.teacherId,
-      storageKey: key,
+      storageKey: stored.storageKey,
       originalName: file.name,
-      durationSec: Number(formData.get("durationSec") ?? 120),
+      durationSec: safeDuration,
       status: VideoStatus.PENDING,
     },
   });
@@ -99,14 +99,15 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "No tienes permisos para revisar videos." }, { status: 403 });
   }
   const teacherProfileId = auth.user.teacherProfile.id;
 
   const parsed = reviewVideoSchema.safeParse(await req.json());
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const firstIssue = parsed.error.issues[0]?.message ?? "Datos inválidos para registrar feedback.";
+    return NextResponse.json({ error: firstIssue }, { status: 400 });
   }
 
   const { videoId, comment } = parsed.data;
@@ -126,7 +127,7 @@ export async function PATCH(req: Request) {
     await tx.practiceVideo.update({
       where: { id: video.id },
       data: {
-        status: VideoStatus.FEEDBACK_GIVEN,
+        status: VideoStatus.REVIEWED,
         reviewedAt: new Date(),
       },
     });

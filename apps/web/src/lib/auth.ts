@@ -12,7 +12,10 @@ export const authOptions: NextAuthOptions = {
     signIn: "/sign-in",
   },
   session: {
+    // Security-sensitive: session tokens live in httpOnly cookies and are validated on the server.
     strategy: "jwt",
+    maxAge: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
   },
   providers: [
     CredentialsProvider({
@@ -26,12 +29,14 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await db.user.findUnique({ where: { email: credentials.email } });
+        const email = credentials.email.toLowerCase().trim();
+        const user = await db.user.findUnique({ where: { email } });
 
         if (!user?.passwordHash) {
           return null;
         }
 
+        // Security-sensitive: compare hashed password server-side only.
         const isValid = await compare(credentials.password, user.passwordHash);
         if (!isValid) {
           return null;

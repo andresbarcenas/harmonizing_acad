@@ -18,15 +18,24 @@ export function SignInForm() {
   async function onSubmit(formData: FormData) {
     setError(null);
     setSubmitting(true);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    if (!email || !password) {
+      setError("Ingresa tu correo y contraseña para continuar.");
+      setSubmitting(false);
+      return;
+    }
 
     const result = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email,
+      password,
       redirect: false,
     });
 
-    if (result?.error) {
-      setError("Credenciales inválidas");
+    if (result?.error || !result?.ok) {
+      // Security-sensitive: keep message generic to avoid leaking whether an email exists.
+      setError("No pudimos iniciar sesión. Verifica tus credenciales.");
       setSubmitting(false);
       return;
     }
@@ -47,7 +56,7 @@ export function SignInForm() {
           <Input
             type="email"
             name="email"
-            defaultValue="student@harmonizing.app"
+            defaultValue="isabella@harmonizing.com"
             placeholder="tu@email.com"
             required
             className="pl-12"
@@ -67,8 +76,8 @@ export function SignInForm() {
         {!isPending && !submitting ? <ArrowRight className="h-4 w-4" /> : null}
       </Button>
       <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/72 px-4 py-3 text-xs leading-5 text-[var(--color-ink-soft)]">
-        Acceso demo: <span className="font-semibold text-[var(--color-ink)]">student@harmonizing.app</span> /{" "}
-        <span className="font-semibold text-[var(--color-ink)]">Harmonizing123!</span>
+        Acceso demo: <span className="font-semibold text-[var(--color-ink)]">isabella@harmonizing.com</span> /{" "}
+        <span className="font-semibold text-[var(--color-ink)]">demo123</span>
       </div>
       <Link
         href="/forgot-password"

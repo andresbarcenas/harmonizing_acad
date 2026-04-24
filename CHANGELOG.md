@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-04-24
+
+### Added
+- Secure role entry routes (`/student`, `/teacher`, `/admin`) with server-side redirects to role workspaces.
+- Centralized server-side data access layer under `apps/web/src/lib/data/*` for admin, teacher, student, and messaging views.
+- Configurable video storage layer (`STORAGE_PROVIDER=s3|local`) with local filesystem fallback and shared media URL resolver.
+- Real practice upload UX improvements: drag-and-drop, file validation, upload progress, and auto-refresh after submit.
+
+### Changed
+- Auth hardening with Prisma-backed credential checks, bcrypt validation safeguards, and Spanish-safe login/API error messaging.
+- Demo seed credentials updated to `@harmonizing.com` accounts with hashed password `demo123` for local development.
+- Role dashboards/pages now consume the new server data layer instead of direct page-level query wiring.
+- Teacher video review flow now supports `all/pending/reviewed` filtering and persists reviewed status + feedback loop for students.
+
 ## [0.2.0] - 2026-04-24
 
 ### Added

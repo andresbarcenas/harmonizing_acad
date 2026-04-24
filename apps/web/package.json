@@ -1,6 +1,6 @@
 {
   "name": "harmonizing-web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",

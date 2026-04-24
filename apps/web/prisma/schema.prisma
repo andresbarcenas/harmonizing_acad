@@ -13,7 +13,23 @@ enum Role {
   ADMIN
 }
 
+// Compatibility enums reserved for naming convergence in future refactors.
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
 enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  NO_SHOW
+  RESCHEDULE_PENDING
+  CANCELLED
+}
+
+// Compatibility enum reserved for naming convergence in future refactors.
+enum ClassStatus {
   SCHEDULED
   COMPLETED
   NO_SHOW
@@ -46,6 +62,20 @@ enum StudentLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum LogEntryType {
+  NOTE
+  FEEDBACK
+  ATTENDANCE
+  GOAL_UPDATE
+  MILESTONE
 }
 
 enum InvoiceContactLinkStrategy {
@@ -86,6 +116,9 @@ model User {
   notifications Notification[]
   progressUpdates ProgressRecord[] @relation("ProgressUpdatedBy")
   triggeredInvoiceSyncRuns InvoiceSyncRun[] @relation("InvoiceSyncTriggeredBy")
+  studentLogEntries StudentLogEntry[] @relation("StudentLogAuthor")
+  sentInvitations Invitation[] @relation("InvitationSender")
+  acceptedInvitations Invitation[] @relation("InvitationAcceptedBy")
 
   @@index([role])
 }
@@ -111,6 +144,8 @@ model StudentProfile {
   invoices           Invoice[]
   invoiceContactLink InvoiceContactLink?
   invoiceSyncRuns    InvoiceSyncRun[]
+  logEntries         StudentLogEntry[]
+  invitations        Invitation[]
 }
 
 model TeacherProfile {
@@ -120,6 +155,8 @@ model TeacherProfile {
   bio           String?
   zoomLink      String?
   meetLink      String?
+  status        TeacherStatus @default(ACTIVE)
+  statusUpdatedAt DateTime    @default(now())
 
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
   students      TeacherAssignment[]
@@ -319,6 +356,50 @@ model Goal {
   completed  Boolean @default(false)
 
   student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentLogEntry {
+  id            String       @id @default(cuid())
+  studentId     String
+  authorId      String
+  type          LogEntryType @default(NOTE)
+  title         String
+  content       String
+  metadata      Json?
+  occurredAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  author        User           @relation("StudentLogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([type, createdAt])
+}
+
+model Invitation {
+  id               String    @id @default(cuid())
+  email            String
+  role             Role
+  token            String    @unique
+  invitedByUserId  String
+  acceptedByUserId String?
+  studentId        String?
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  invitedBy        User           @relation("InvitationSender", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  acceptedBy       User?          @relation("InvitationAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  student          StudentProfile? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([email, role])
+  @@index([invitedByUserId, createdAt])
+  @@index([studentId, createdAt])
+  @@index([expiresAt])
 }
 
 model MessageThread {

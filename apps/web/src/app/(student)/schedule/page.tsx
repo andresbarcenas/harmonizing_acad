@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { getStudentSchedule } from "@/features/scheduling/data";
+import { getStudentScheduleData } from "@/lib/data";
 import { formatUtcToLocal } from "@/lib/timezone";
 
 export default async function StudentSchedulePage() {
   const viewer = await requireViewer([Role.STUDENT]);
-  const data = await getStudentSchedule(viewer.studentProfileId!);
+  const data = await getStudentScheduleData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/schedule" userName={viewer.name}>

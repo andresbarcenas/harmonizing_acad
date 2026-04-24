@@ -1,4 +1,4 @@
-import { Role, RescheduleStatus } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -6,26 +6,12 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { RequestActions } from "@/components/schedule/request-actions";
 import { requireViewer } from "@/features/auth/server";
-import { db } from "@/lib/db";
+import { getTeacherRequestsData } from "@/lib/data";
 import { formatUtcToLocal } from "@/lib/timezone";
 
 export default async function TeacherRequestsPage() {
   const viewer = await requireViewer([Role.TEACHER]);
-
-  const requests = await db.rescheduleRequest.findMany({
-    where: {
-      status: RescheduleStatus.PENDING,
-      session: { teacherId: viewer.teacherProfileId! },
-    },
-    include: {
-      session: {
-        include: {
-          student: { include: { user: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const requests = await getTeacherRequestsData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/teacher/requests" userName={viewer.name}>

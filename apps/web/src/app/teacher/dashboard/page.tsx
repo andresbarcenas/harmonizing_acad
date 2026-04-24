@@ -10,14 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
-import { getTeacherDashboard } from "@/features/teacher/data";
+import { getTeacherDashboardData } from "@/lib/data";
 import { formatUtcToLocal } from "@/lib/timezone";
 
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 export default async function TeacherDashboardPage() {
   const viewer = await requireViewer([Role.TEACHER]);
-  const data = await getTeacherDashboard(viewer.teacherProfileId!);
+  const data = await getTeacherDashboardData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/teacher/dashboard" userName={viewer.name}>

@@ -1,11 +1,20 @@
 import { Sparkles } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand/logo";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { Card } from "@/components/ui/card";
+import { authOptions } from "@/lib/auth";
+import { defaultRouteForRole } from "@/lib/rbac";
 import { APP_VERSION } from "@/lib/release";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role) {
+    redirect(defaultRouteForRole(session.user.role));
+  }
+
   return (
     <div className="relative isolate min-h-screen overflow-hidden px-3 py-6 sm:px-4 md:px-6 md:py-12">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-xl flex-col items-center justify-center">
