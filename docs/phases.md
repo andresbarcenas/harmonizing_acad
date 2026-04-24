@@ -8,4 +8,5 @@
 - [x] Messaging + notifications: assignment-bound chat, polling refresh, unread counters, reminder simulation
 - [x] Admin operations: metrics, reassignment tools, occupancy analytics, availability management controls
 - [x] Polish/QA: responsive empty/loading states, accessibility-focused forms, richer seeded demo content, updated docs
+- [x] Premium visual refresh: app-wide calm-luxury redesign from auth reference across shared primitives and role surfaces
 - [x] Alegra invoicing v1: read-only student invoices, cached sync engine, admin monitoring/relink controls

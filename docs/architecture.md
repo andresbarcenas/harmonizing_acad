@@ -7,6 +7,12 @@
 - `apps/web/src/lib`: auth, database, RBAC, timezone, notifications, validators, utilities
 - `apps/web/prisma`: schema, SQL migration, seed
 
+## Visual System
+- Shared design tokens define the premium neutral palette, amber accents, elevation, and radii.
+- Core primitives (`card`, `button`, `input`, `textarea`, `badge`, `avatar`) carry the visual language across all routes.
+- `AppShell` + `PageIntro` enforce consistent high-level composition for student, teacher, admin, settings, and notifications surfaces.
+- Auth routes (`/sign-in`, `/forgot-password`) follow the same system with denser visual hierarchy and softer atmospheric backgrounds.
+
 ## Auth and Roles
 - NextAuth credentials provider with Prisma adapter
 - User roles: `STUDENT`, `TEACHER`, `ADMIN`

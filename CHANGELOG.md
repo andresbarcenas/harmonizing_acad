@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-04-24
+
+### Added
+- New premium auth experience based on the provided visual reference, including refreshed `/sign-in` composition and a polished `/forgot-password` support route.
+- Shared `PageIntro` section component for consistent premium hero treatment across student, teacher, admin, settings, and notifications views.
+- Refined tokenized design language (ivory canvas, amber accent, soft-glass cards, stronger spacing rhythm) applied across app surfaces.
+
+### Changed
+- Unified core UI primitives (`card`, `button`, `input`, `textarea`, `badge`, `avatar`, shell navigation, logo) to the new premium style system.
+- Updated authenticated and public pages to align with the refreshed visual identity while preserving existing RBAC and business logic.
+- Local Docker entrypoint now runs development server after Prisma setup for stable local iteration (`docker compose up --build` + live route debugging).
+
 ## [0.0.1] - 2026-04-03
 
 ### Added

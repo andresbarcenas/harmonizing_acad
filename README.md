@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.0.1`
+- Current version: `v0.2.0`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -82,8 +82,8 @@ Demo fallback details:
 - Manual sync still works in demo mode and refreshes cache timestamps without external API calls
 
 ## Deployment Notes
-- Local Docker runtime now builds and serves production output (`next build` + `next start`) for stability.
-- For fast local iteration outside Docker, use `npm run dev` from `apps/web`.
+- Local Docker runtime starts the app in development mode after Prisma setup for fast iteration.
+- For production verification before deploy, use `npm run build && npm run start` from `apps/web`.
 - Optional dev mail preview: set `NOTIFICATION_SMTP_MIRROR=true` to mirror in-app notifications to MailHog inbox.
 - Vercel production should keep `NEXTAUTH_URL` as deployed URL and disable local-only hostnames/ports.
 
