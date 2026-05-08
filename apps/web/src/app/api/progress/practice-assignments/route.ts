@@ -3,7 +3,15 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { assertTeacherCanAccessStudent } from "@/lib/data/progress";
+import {
+  assertActiveSkillCategories,
+  assertClassSessionForTeacherStudent,
+  assertLessonNoteForTeacherStudent,
+  assertPracticeAssignmentForTeacherStudent,
+  assertRepertoireForTeacherStudent,
+  assertTeacherCanAccessStudent,
+  getProgressErrorResponse,
+} from "@/lib/data/progress";
 import { practiceAssignmentStatusSchema, upsertPracticeAssignmentSchema } from "@/lib/validators/progress";
 
 export async function POST(req: Request) {
@@ -14,11 +22,17 @@ export async function POST(req: Request) {
   const parsed = upsertPracticeAssignmentSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
   const input = parsed.data;
-  await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);
-
-  if (input.assignmentId) {
-    const existing = await db.practiceAssignment.findFirst({ where: { id: input.assignmentId, studentId: input.studentId, teacherId: auth.user.teacherProfile.id } });
-    if (!existing) return NextResponse.json({ error: auth.user.locale === "es" ? "Asignación no encontrada." : "Assignment not found." }, { status: 404 });
+  try {
+    await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);
+    await assertPracticeAssignmentForTeacherStudent(auth.user.teacherProfile.id, input.studentId, input.assignmentId);
+    await assertClassSessionForTeacherStudent(auth.user.teacherProfile.id, input.studentId, input.classSessionId);
+    await assertLessonNoteForTeacherStudent(auth.user.teacherProfile.id, input.studentId, input.lessonNoteId);
+    await assertRepertoireForTeacherStudent(auth.user.teacherProfile.id, input.studentId, input.repertoireItemId);
+    await assertActiveSkillCategories([input.skillCategoryId]);
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
   }
 
   const createOrUpdate = {

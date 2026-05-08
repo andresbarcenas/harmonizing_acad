@@ -43,6 +43,7 @@ export async function PATCH(req: Request) {
     where: { id: session.id },
     data: {
       status,
+      completedAt: status === SessionStatus.COMPLETED ? new Date() : null,
       lastClassNotes: notes,
     },
   });

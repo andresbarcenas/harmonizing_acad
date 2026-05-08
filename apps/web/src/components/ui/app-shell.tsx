@@ -195,7 +195,7 @@ export async function AppShell({
 function withTeacherStudentContext(href: string, role: Role, studentId?: string | null) {
   if (role !== Role.TEACHER || !studentId) return href;
 
-  const contextualRoutes = ["/teacher/dashboard", "/teacher/requests", "/teacher/videos", "/messages"];
+  const contextualRoutes = ["/teacher/dashboard", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/messages"];
   if (!contextualRoutes.includes(href)) return href;
 
   const separator = href.includes("?") ? "&" : "?";

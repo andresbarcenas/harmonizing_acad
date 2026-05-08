@@ -1,6 +1,5 @@
 import { Role, SessionStatus } from "@prisma/client";
 
-import { TeacherSessionActions } from "@/components/teacher/session-actions";
 import { SeriesActions } from "@/components/teacher/series-actions";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
@@ -129,11 +128,10 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                   <a href={withStudentContext("/teacher/requests", data.selectedStudentId)}>
                     <Button size="sm" variant="outline">{dictionary.teacher.viewRequests}</Button>
                   </a>
-                  <a href={withStudentContext("/teacher/progress", session.studentId)}>
-                    <Button size="sm" variant="outline">{viewer.locale === "es" ? "Nota estructurada" : "Structured note"}</Button>
+                  <a href={`/teacher/classes/${session.id}/complete`}>
+                    <Button size="sm" variant="outline">{viewer.locale === "es" ? "Completar clase" : "Complete class"}</Button>
                   </a>
                 </div>
-                <TeacherSessionActions sessionId={session.id} initialNotes={session.lastClassNotes} locale={viewer.locale} />
               </div>
             ))}
             {!data.classesToday.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noClassesToday}</p> : null}

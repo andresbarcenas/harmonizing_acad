@@ -1,4 +1,4 @@
-import { PracticeAssignmentStatus, ProgressReportStatus, RepertoireStatus } from "@prisma/client";
+import { PracticeAssignmentStatus, ProgressReportStatus, RepertoireStatus, SessionStatus } from "@prisma/client";
 import { z } from "zod";
 
 const optionalString = (max = 2000) => z.preprocess((value) => {
@@ -13,12 +13,102 @@ const optionalDateString = z.preprocess((value) => {
   return trimmed.length ? trimmed : undefined;
 }, z.string().datetime().optional());
 
+const optionalId = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
+}, z.string().min(1).optional());
+
 const ratingSchema = z.number().int().min(1).max(5);
+const optionalPositiveInt = (max = 600) => z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}, z.number().int().min(1).max(max).optional());
+
+const optionalPercent = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}, z.number().int().min(0).max(100).optional());
+
+const completionText = (max = 2000) => z.preprocess((value) => {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}, z.string().max(max));
 
 export const skillRatingInputSchema = z.object({
   skillCategoryId: z.string().min(1),
   rating: ratingSchema,
   note: optionalString(500),
+});
+
+const completionStatuses = [
+  SessionStatus.COMPLETED,
+  SessionStatus.NO_SHOW,
+  SessionStatus.CANCELLED,
+  SessionStatus.RESCHEDULE_PENDING,
+] as const;
+
+export const completeClassWorkflowSchema = z.object({
+  status: z.enum(completionStatuses),
+  notifyStudent: z.boolean().default(true),
+  lessonNote: z.object({
+    summary: completionText(2000),
+    taughtToday: completionText(2000),
+    studentDidWell: completionText(2000),
+    needsImprovement: completionText(2000),
+    homework: completionText(2000),
+    nextLessonFocus: completionText(1000),
+    teacherPrivateNote: completionText(2000),
+    studentVisibleNote: completionText(2000),
+    preparednessRating: ratingSchema.optional(),
+    focusRating: ratingSchema.optional(),
+    effortRating: ratingSchema.optional(),
+    overallLessonRating: ratingSchema.optional(),
+  }),
+  skillRatings: z.array(skillRatingInputSchema).max(24).default([]),
+  repertoireUpdates: z.array(z.object({
+    repertoireItemId: z.string().min(1),
+    status: z.nativeEnum(RepertoireStatus).optional(),
+    masteryPercent: optionalPercent,
+    currentFocusSection: optionalString(180),
+    currentTempo: optionalPositiveInt(400),
+    targetTempo: optionalPositiveInt(400),
+    teacherNotes: optionalString(2000),
+    studentVisibleNotes: optionalString(2000),
+    completedDate: optionalDateString,
+  })).max(12).default([]),
+  newRepertoireItems: z.array(z.object({
+    title: z.string().trim().min(2).max(180),
+    composerOrArtist: optionalString(160),
+    instrument: z.string().trim().min(1).max(80),
+    level: optionalString(80),
+    status: z.nativeEnum(RepertoireStatus).default(RepertoireStatus.ASSIGNED),
+    masteryPercent: z.number().int().min(0).max(100).default(0),
+    currentFocusSection: optionalString(180),
+    currentTempo: optionalPositiveInt(400),
+    targetTempo: optionalPositiveInt(400),
+    teacherNotes: optionalString(2000),
+    studentVisibleNotes: optionalString(2000),
+  })).max(3).default([]),
+  assignments: z.array(z.object({
+    title: z.string().trim().min(2).max(180),
+    instructions: z.string().trim().min(3).max(3000),
+    dueDate: optionalDateString,
+    expectedMinutes: optionalPositiveInt(600),
+    repertoireItemId: optionalId,
+    skillCategoryId: optionalId,
+    requiresVideo: z.boolean().default(false),
+  })).max(6).default([]),
+}).superRefine((value, ctx) => {
+  if (value.status === SessionStatus.COMPLETED && value.lessonNote.summary.length < 3) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["lessonNote", "summary"],
+      message: "Lesson summary is required when completing a class.",
+    });
+  }
 });
 
 export const upsertLessonNoteSchema = z.object({
@@ -39,7 +129,7 @@ export const upsertLessonNoteSchema = z.object({
 });
 
 export const upsertRepertoireSchema = z.object({
-  repertoireItemId: z.string().optional(),
+  repertoireItemId: optionalId,
   studentId: z.string().min(1),
   title: z.string().min(2).max(180),
   composerOrArtist: optionalString(160),
@@ -58,12 +148,12 @@ export const upsertRepertoireSchema = z.object({
 });
 
 export const upsertPracticeAssignmentSchema = z.object({
-  assignmentId: z.string().optional(),
+  assignmentId: optionalId,
   studentId: z.string().min(1),
-  lessonNoteId: z.string().optional(),
-  classSessionId: z.string().optional(),
-  repertoireItemId: z.string().optional(),
-  skillCategoryId: z.string().optional(),
+  lessonNoteId: optionalId,
+  classSessionId: optionalId,
+  repertoireItemId: optionalId,
+  skillCategoryId: optionalId,
   title: z.string().min(2).max(180),
   instructions: z.string().min(3).max(3000),
   assignedDate: optionalDateString,
@@ -80,9 +170,9 @@ export const practiceAssignmentStatusSchema = z.object({
 });
 
 export const createPracticeLogSchema = z.object({
-  assignmentId: z.string().optional(),
-  repertoireItemId: z.string().optional(),
-  skillCategoryId: z.string().optional(),
+  assignmentId: optionalId,
+  repertoireItemId: optionalId,
+  skillCategoryId: optionalId,
   practicedOn: z.string().datetime(),
   minutesPracticed: z.number().int().min(1).max(600),
   notes: optionalString(2000),

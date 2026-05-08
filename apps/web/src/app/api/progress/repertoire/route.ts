@@ -3,7 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { assertTeacherCanAccessStudent } from "@/lib/data/progress";
+import { assertRepertoireForTeacherStudent, assertTeacherCanAccessStudent, getProgressErrorResponse } from "@/lib/data/progress";
 import { upsertRepertoireSchema } from "@/lib/validators/progress";
 
 export async function POST(req: Request) {
@@ -14,11 +14,13 @@ export async function POST(req: Request) {
   const parsed = upsertRepertoireSchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
   const input = parsed.data;
-  await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);
-
-  if (input.repertoireItemId) {
-    const existing = await db.repertoireItem.findFirst({ where: { id: input.repertoireItemId, studentId: input.studentId, teacherId: auth.user.teacherProfile.id } });
-    if (!existing) return NextResponse.json({ error: auth.user.locale === "es" ? "Repertorio no encontrado." : "Repertoire item not found." }, { status: 404 });
+  try {
+    await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);
+    await assertRepertoireForTeacherStudent(auth.user.teacherProfile.id, input.studentId, input.repertoireItemId);
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
   }
 
   const createOrUpdate = {

@@ -18,6 +18,7 @@ const routes = [
   "/teacher/requests",
   "/teacher/videos",
   "/teacher/progress",
+  "/teacher/classes/demo-class/complete",
   "/admin",
   "/admin/dashboard",
   "/admin/students",

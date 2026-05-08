@@ -101,6 +101,11 @@ function SelectedStudentProgress({
                       {!session.lessonNote ? <Badge className="ml-2">{isSpanish ? "Falta nota" : "Missing note"}</Badge> : null}
                     </summary>
                     <div className="mt-3">
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <Link href={`/teacher/classes/${session.id}/complete`}>
+                          <Button size="sm" variant="gold">{isSpanish ? "Completar / actualizar clase" : "Complete / update class"}</Button>
+                        </Link>
+                      </div>
                       <LessonNoteForm
                         sessionId={session.id}
                         initial={session.lessonNote}

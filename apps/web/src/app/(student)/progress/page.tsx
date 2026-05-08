@@ -31,6 +31,11 @@ export default async function StudentProgressPage() {
                         <p className="text-sm font-semibold">{assignment.title}</p>
                         <p className="text-xs text-[var(--color-ink-soft)]">{assignment.instructions}</p>
                         <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{assignment.repertoireItem?.title ?? assignment.skillCategory?.name ?? ""}</p>
+                        {assignment.requiresVideo ? (
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-gold-deep)]">
+                            {isSpanish ? "Esta tarea requiere video de práctica." : "This assignment requires a practice video."}
+                          </p>
+                        ) : null}
                       </div>
                       <Badge>{assignment.status}</Badge>
                     </div>

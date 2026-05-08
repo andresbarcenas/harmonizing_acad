@@ -3,6 +3,7 @@ import { NotificationType, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { assertActiveSkillCategories, getProgressErrorResponse } from "@/lib/data/progress";
 import { createNotification } from "@/lib/notifications";
 import { upsertLessonNoteSchema } from "@/lib/validators/progress";
 
@@ -19,6 +20,13 @@ export async function POST(req: Request) {
   const input = parsed.data;
   const session = await db.classSession.findFirst({ where: { id: input.sessionId, teacherId: auth.user.teacherProfile.id }, include: { student: true } });
   if (!session) return NextResponse.json({ error: auth.user.locale === "es" ? "Clase no encontrada." : "Class not found." }, { status: 404 });
+  try {
+    await assertActiveSkillCategories(input.skillRatings.map((rating) => rating.skillCategoryId));
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
+  }
 
   const teacherProfileId = auth.user.teacherProfile.id;
   const note = await db.$transaction(async (tx) => {

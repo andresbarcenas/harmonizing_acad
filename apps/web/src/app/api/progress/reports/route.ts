@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ProgressReportStatus, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { assertTeacherCanAccessStudent, calculateProgressReportMetrics } from "@/lib/data/progress";
+import { assertStudentExists, assertTeacherCanAccessStudent, calculateProgressReportMetrics, getProgressErrorResponse } from "@/lib/data/progress";
 import { db } from "@/lib/db";
 import { generateProgressReportSchema } from "@/lib/validators/progress";
 
@@ -15,7 +15,17 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
   const input = parsed.data;
   const teacherId = auth.user.teacherProfile?.id;
-  if (auth.user.role === Role.TEACHER) await assertTeacherCanAccessStudent(teacherId!, input.studentId);
+  try {
+    if (auth.user.role === Role.TEACHER) {
+      await assertTeacherCanAccessStudent(teacherId!, input.studentId);
+    } else {
+      await assertStudentExists(input.studentId);
+    }
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
+  }
 
   const startDate = new Date(input.startDate);
   const endDate = new Date(input.endDate);

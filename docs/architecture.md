@@ -79,6 +79,6 @@ Core entities:
 
 ## Progress Intelligence
 
-The progress subsystem adds structured lesson evidence around existing sessions, videos, goals, songs, and logs. Teachers create `LessonNote` records for classes, rate `SkillCategory` items, manage `RepertoireItem` records, assign `PracticeAssignment` work, and generate deterministic `ProgressReport` snapshots. Students can view visible notes/reports, update assignment status, log practice minutes, and link practice videos to assignments, repertoire, and skills. Admins can monitor missing lesson notes, low practice activity, report status, and seeded skill categories.
+The progress subsystem adds structured lesson evidence around existing sessions, videos, goals, songs, and logs. Teachers can use the fast after-class workflow at `/teacher/classes/[classId]/complete` to mark class status, record `completedAt`, upsert one structured `LessonNote`, rate `SkillCategory` items, update `RepertoireItem` records, assign `PracticeAssignment` work, and notify students. Teachers can also generate deterministic `ProgressReport` snapshots. Students can view visible notes/reports, update assignment status, log practice minutes, and link practice videos to assignments, repertoire, and skills. Admins can monitor missing lesson notes, recent completions, low practice activity, report status, and seeded skill categories.
 
 See `docs/progress-intelligence.md` for the detailed workflow and report calculations.

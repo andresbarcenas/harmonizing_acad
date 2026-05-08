@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { assertTeacherCanAccessStudent } from "@/lib/data/progress";
+import { assertTeacherCanAccessStudent, getProgressErrorResponse } from "@/lib/data/progress";
 import { db } from "@/lib/db";
 import { updateProgressReportSchema } from "@/lib/validators/progress";
 
@@ -15,7 +15,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ report
 
   if (auth.user.role === Role.TEACHER) {
     if (!auth.user.teacherProfile) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, report.studentId);
+    try {
+      await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, report.studentId);
+    } catch (error) {
+      const progressError = getProgressErrorResponse(error, auth.user.locale);
+      if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+      throw error;
+    }
   } else if (auth.user.role !== Role.ADMIN) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

@@ -58,6 +58,26 @@ export default async function AdminProgressPage() {
         </Card>
 
         <Card>
+          <CardTitle>{isSpanish ? "Clases actualizadas recientemente" : "Recently updated classes"}</CardTitle>
+          <div className="mt-3 space-y-2">
+            {data.recentCompletedSessions.map((session) => (
+              <div key={session.id} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">{session.student.user.name} · {session.teacher.user.name}</p>
+                  <Badge variant={session.lessonNote ? "gold" : "default"}>{session.status}</Badge>
+                </div>
+                <p className="text-xs text-[var(--color-ink-soft)]">
+                  {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)}
+                  {session.completedAt ? ` · ${isSpanish ? "completada" : "completed"} ${formatDateTimeInZone(session.completedAt, viewer.timezone, viewer.locale)}` : ""}
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonNote?.summary ?? session.lastClassNotes ?? (isSpanish ? "Sin nota visible." : "No visible note.")}</p>
+              </div>
+            ))}
+            {!data.recentCompletedSessions.length ? <CardDescription>{isSpanish ? "Aún no hay clases actualizadas." : "No updated classes yet."}</CardDescription> : null}
+          </div>
+        </Card>
+
+        <Card>
           <CardTitle>{isSpanish ? "Categorías de habilidad" : "Skill categories"}</CardTitle>
           <div className="mt-3 flex flex-wrap gap-2">
             {data.skillCategories.map((skill) => <Badge key={skill.id} variant={skill.active ? "gold" : "default"}>{skill.instrument} · {skill.name}</Badge>)}

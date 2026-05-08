@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { NotificationType, Role, VideoStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
+import {
+  assertActiveSkillCategories,
+  assertPracticeAssignmentForStudent,
+  assertPracticeVideoForTeacher,
+  assertRepertoireForStudent,
+  getProgressErrorResponse,
+} from "@/lib/data/progress";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { ALLOWED_VIDEO_MIME_TYPES, MAX_VIDEO_SIZE_BYTES, isAllowedVideoType, storePracticeVideo } from "@/lib/storage";
@@ -74,23 +81,14 @@ export async function POST(req: Request) {
   const repertoireItemId = optionalFormId(formData.get("repertoireItemId"));
   const skillCategoryId = optionalFormId(formData.get("skillCategoryId"));
 
-  if (practiceAssignmentId) {
-    const practiceAssignment = await db.practiceAssignment.findFirst({
-      where: { id: practiceAssignmentId, studentId: auth.user.studentProfile.id },
-      select: { id: true },
-    });
-    if (!practiceAssignment) {
-      return NextResponse.json({ error: auth.user.locale === "es" ? "La tarea seleccionada no existe." : "The selected assignment does not exist." }, { status: 400 });
-    }
-  }
-  if (repertoireItemId) {
-    const repertoireItem = await db.repertoireItem.findFirst({
-      where: { id: repertoireItemId, studentId: auth.user.studentProfile.id },
-      select: { id: true },
-    });
-    if (!repertoireItem) {
-      return NextResponse.json({ error: auth.user.locale === "es" ? "El repertorio seleccionado no existe." : "The selected repertoire item does not exist." }, { status: 400 });
-    }
+  try {
+    await assertPracticeAssignmentForStudent(auth.user.studentProfile.id, practiceAssignmentId);
+    await assertRepertoireForStudent(auth.user.studentProfile.id, repertoireItemId);
+    await assertActiveSkillCategories([skillCategoryId]);
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
   }
   const stored = await storePracticeVideo(file, auth.user.studentProfile.id);
 
@@ -137,15 +135,14 @@ export async function PATCH(req: Request) {
 
   const { videoId, comment, skillRatings = [] } = parsed.data;
 
-  const video = await db.practiceVideo.findFirst({
-    where: {
-      id: videoId,
-      teacherId: teacherProfileId,
-    },
-  });
-
-  if (!video) {
-    return NextResponse.json({ error: auth.user.locale === "es" ? "Video no encontrado" : "Video not found." }, { status: 404 });
+  let video;
+  try {
+    video = await assertPracticeVideoForTeacher(teacherProfileId, videoId);
+    await assertActiveSkillCategories(skillRatings.map((rating) => rating.skillCategoryId));
+  } catch (error) {
+    const progressError = getProgressErrorResponse(error, auth.user.locale);
+    if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
+    throw error;
   }
 
   await db.$transaction(async (tx) => {

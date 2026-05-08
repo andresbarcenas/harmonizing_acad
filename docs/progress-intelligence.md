@@ -29,6 +29,18 @@ Teacher workflow:
 6. Review student practice logs and videos.
 7. Generate a deterministic progress report for a date range.
 
+Fast after-class workflow:
+
+1. From the teacher dashboard or a selected student's progress workspace, open `/teacher/classes/[classId]/complete`.
+2. Choose the class status: completed, student absent, cancelled, or needs reschedule.
+3. If completed, add the lesson summary, worked topics, strengths, improvement areas, next focus, private note, and student/parent-visible note.
+4. Rate relevant piano, voice, or general skills from 1-5.
+5. Update active repertoire progress or add one new song/piece.
+6. Create one or more practice assignments, optionally requiring a practice video.
+7. Review the Spanish summary and save. The app updates the class, upserts the one-per-class `LessonNote`, writes skill ratings/repertoire/assignments in a transaction, and creates an in-app notification for the student.
+
+The workflow records `ClassSession.completedAt` when a class is saved as completed. Non-completed statuses do not create lesson notes or assignments from this fast flow.
+
 Student workflow:
 
 1. Open `/progress`.
@@ -71,3 +83,51 @@ Teacher/admin text fields remain editable and manual: summary, strengths, improv
 ## Future AI Extension Points
 
 The structured data can later support AI-generated summaries, risk indicators, recommended practice plans, and academy-level analytics. AI should read from structured lesson notes, skill ratings, assignments, practice logs, videos, and reports, but should not replace teacher-authored feedback.
+
+## Migration Baseline And Deployment
+
+The Prisma migration history was squashed into a single baseline migration after the Progress Intelligence foundation. This corrects the earlier local-development history where the initial migration was empty and local Docker relied on `prisma db push`.
+
+Current intent:
+
+- Fresh staging/production databases should use `npm run db:deploy` from `apps/web`, which runs `prisma migrate deploy`.
+- Local Docker remains compatible with the existing boot flow, which still uses `prisma db push` for fast local iteration.
+- Existing local databases that were created before the baseline may continue working with `db push`; for a clean migration-style reset, use a fresh database or reset Docker volumes.
+- Migration correctness should be checked with:
+
+```bash
+npx prisma migrate diff \
+  --from-migrations prisma/migrations \
+  --to-schema-datamodel prisma/schema.prisma \
+  --shadow-database-url "$SHADOW_DATABASE_URL" \
+  --script
+```
+
+Expected output is an empty migration.
+
+## Progress Foundation Verification Checklist
+
+Use this checklist before adding more progress features:
+
+- `npm run db:generate` succeeds.
+- `npm run db:deploy` succeeds against a fresh database/schema.
+- `npm run db:seed` creates piano, voice, lesson note, skill rating, repertoire, assignment, practice log, video link, and report demo data.
+- `npm run typecheck`, `npm run lint`, and `npm run build` pass.
+- `/teacher/classes/[classId]/complete` only opens for the teacher assigned to that class and student.
+- Completing a class twice updates the existing `LessonNote`; it should not create a duplicate note.
+- Teacher APIs reject records for students not assigned to that teacher.
+- Practice assignment creation rejects linked sessions, lesson notes, repertoire items, or skills that do not belong to the selected student/teacher context.
+- Student practice logging rejects assignments or repertoire items owned by another student.
+- Video upload rejects assignment/repertoire links not owned by the logged-in student.
+- Video feedback rejects inactive or missing skill categories.
+- Progress report generation uses deterministic database calculations only; no AI is involved.
+
+## Stricter RBAC Boundaries
+
+Progress writes validate ownership before data reaches Prisma foreign-key constraints:
+
+- Teachers must be assigned to a student before creating lesson notes, repertoire, practice assignments, or reports for that student.
+- Linked class sessions and lesson notes must belong to the same assigned student and teacher.
+- Linked repertoire and practice assignments must belong to the same student context.
+- Students can only log practice against their own assignments/repertoire and only update their own assignment status.
+- Admins can view progress globally and generate reports, but broad edit flows remain intentionally limited until a dedicated admin progress-management pass.

@@ -17,7 +17,110 @@ export async function resolveAssignedStudentForTeacher(teacherProfileId: string,
 
 export async function assertTeacherCanAccessStudent(teacherProfileId: string, studentId: string) {
   const assignment = await db.teacherAssignment.findFirst({ where: { teacherId: teacherProfileId, studentId }, select: { id: true } });
-  if (!assignment) throw new Error("UNAUTHORIZED_STUDENT");
+  if (!assignment) throw new ProgressDataError("STUDENT_NOT_ASSIGNED", 403);
+}
+
+export type ProgressErrorCode =
+  | "STUDENT_NOT_ASSIGNED"
+  | "STUDENT_NOT_FOUND"
+  | "SESSION_NOT_FOUND"
+  | "LESSON_NOTE_NOT_FOUND"
+  | "REPERTOIRE_NOT_FOUND"
+  | "ASSIGNMENT_NOT_FOUND"
+  | "SKILL_NOT_FOUND"
+  | "VIDEO_NOT_FOUND";
+
+export class ProgressDataError extends Error {
+  constructor(
+    public code: ProgressErrorCode,
+    public status = 400,
+  ) {
+    super(code);
+    this.name = "ProgressDataError";
+  }
+}
+
+export function getProgressErrorResponse(error: unknown, locale = "en") {
+  if (!(error instanceof ProgressDataError)) return null;
+  const es = locale === "es";
+  const messages: Record<ProgressErrorCode, string> = {
+    STUDENT_NOT_ASSIGNED: es ? "El estudiante no está asignado a esta docente." : "The student is not assigned to this teacher.",
+    STUDENT_NOT_FOUND: es ? "Estudiante no encontrado." : "Student not found.",
+    SESSION_NOT_FOUND: es ? "Clase no encontrada para este estudiante." : "Class not found for this student.",
+    LESSON_NOTE_NOT_FOUND: es ? "Nota de clase no encontrada para este estudiante." : "Lesson note not found for this student.",
+    REPERTOIRE_NOT_FOUND: es ? "Repertorio no encontrado para este estudiante." : "Repertoire item not found for this student.",
+    ASSIGNMENT_NOT_FOUND: es ? "Tarea no encontrada para este estudiante." : "Assignment not found for this student.",
+    SKILL_NOT_FOUND: es ? "Una habilidad seleccionada no existe o no está activa." : "A selected skill does not exist or is inactive.",
+    VIDEO_NOT_FOUND: es ? "Video no encontrado para esta docente." : "Video not found for this teacher.",
+  };
+  return { status: error.status, message: messages[error.code] };
+}
+
+export async function assertStudentExists(studentId: string) {
+  const student = await db.studentProfile.findUnique({ where: { id: studentId }, select: { id: true } });
+  if (!student) throw new ProgressDataError("STUDENT_NOT_FOUND", 404);
+}
+
+export async function assertActiveSkillCategories(skillCategoryIds: Array<string | null | undefined>) {
+  const ids = Array.from(new Set(skillCategoryIds.filter((id): id is string => Boolean(id))));
+  if (!ids.length) return;
+
+  const count = await db.skillCategory.count({ where: { id: { in: ids }, active: true } });
+  if (count !== ids.length) throw new ProgressDataError("SKILL_NOT_FOUND", 400);
+}
+
+export async function assertClassSessionForTeacherStudent(teacherProfileId: string, studentId: string, classSessionId?: string | null) {
+  if (!classSessionId) return;
+  const session = await db.classSession.findFirst({
+    where: { id: classSessionId, teacherId: teacherProfileId, studentId },
+    select: { id: true },
+  });
+  if (!session) throw new ProgressDataError("SESSION_NOT_FOUND", 404);
+}
+
+export async function assertLessonNoteForTeacherStudent(teacherProfileId: string, studentId: string, lessonNoteId?: string | null) {
+  if (!lessonNoteId) return;
+  const note = await db.lessonNote.findFirst({
+    where: { id: lessonNoteId, teacherId: teacherProfileId, studentId },
+    select: { id: true },
+  });
+  if (!note) throw new ProgressDataError("LESSON_NOTE_NOT_FOUND", 404);
+}
+
+export async function assertRepertoireForTeacherStudent(teacherProfileId: string, studentId: string, repertoireItemId?: string | null) {
+  if (!repertoireItemId) return;
+  const item = await db.repertoireItem.findFirst({
+    where: { id: repertoireItemId, studentId, OR: [{ teacherId: teacherProfileId }, { teacherId: null }] },
+    select: { id: true },
+  });
+  if (!item) throw new ProgressDataError("REPERTOIRE_NOT_FOUND", 404);
+}
+
+export async function assertPracticeAssignmentForTeacherStudent(teacherProfileId: string, studentId: string, assignmentId?: string | null) {
+  if (!assignmentId) return;
+  const assignment = await db.practiceAssignment.findFirst({
+    where: { id: assignmentId, studentId, teacherId: teacherProfileId },
+    select: { id: true },
+  });
+  if (!assignment) throw new ProgressDataError("ASSIGNMENT_NOT_FOUND", 404);
+}
+
+export async function assertRepertoireForStudent(studentId: string, repertoireItemId?: string | null) {
+  if (!repertoireItemId) return;
+  const item = await db.repertoireItem.findFirst({ where: { id: repertoireItemId, studentId }, select: { id: true } });
+  if (!item) throw new ProgressDataError("REPERTOIRE_NOT_FOUND", 404);
+}
+
+export async function assertPracticeAssignmentForStudent(studentId: string, assignmentId?: string | null) {
+  if (!assignmentId) return;
+  const assignment = await db.practiceAssignment.findFirst({ where: { id: assignmentId, studentId }, select: { id: true } });
+  if (!assignment) throw new ProgressDataError("ASSIGNMENT_NOT_FOUND", 404);
+}
+
+export async function assertPracticeVideoForTeacher(teacherProfileId: string, videoId: string) {
+  const video = await db.practiceVideo.findFirst({ where: { id: videoId, teacherId: teacherProfileId } });
+  if (!video) throw new ProgressDataError("VIDEO_NOT_FOUND", 404);
+  return video;
 }
 
 export async function getTeacherProgressData(viewer: AppViewer, options: { studentId?: string | null } = {}) {
@@ -117,6 +220,49 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
   };
 }
 
+export async function getTeacherClassCompletionData(viewer: AppViewer, classId: string) {
+  if (viewer.role !== Role.TEACHER || !viewer.teacherProfileId) {
+    throw new Error("Unauthorized: teacher role required");
+  }
+
+  const session = await db.classSession.findFirst({
+    where: {
+      id: classId,
+      teacherId: viewer.teacherProfileId,
+      student: { assignment: { teacherId: viewer.teacherProfileId } },
+    },
+    include: {
+      teacher: { include: { user: true } },
+      student: { include: { user: true } },
+      lessonNote: {
+        include: {
+          skillRatings: { include: { skillCategory: true }, orderBy: { skillCategory: { sortOrder: "asc" } } },
+          practiceAssignments: { include: { repertoireItem: true, skillCategory: true }, orderBy: { createdAt: "desc" } },
+        },
+      },
+    },
+  });
+
+  if (!session) throw new ProgressDataError("SESSION_NOT_FOUND", 404);
+
+  const instruments = inferSkillInstruments(session.student.preferredInstrument);
+  const [skillCategories, repertoireItems] = await Promise.all([
+    db.skillCategory.findMany({
+      where: { active: true, instrument: { in: instruments } },
+      orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }],
+    }),
+    db.repertoireItem.findMany({
+      where: {
+        studentId: session.studentId,
+        OR: [{ teacherId: viewer.teacherProfileId }, { teacherId: null }],
+      },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+    }),
+  ]);
+
+  return { session, skillCategories, repertoireItems };
+}
+
 export async function getStudentProgressData(viewer: AppViewer) {
   if (viewer.role !== Role.STUDENT || !viewer.studentProfileId) {
     throw new Error("Unauthorized: student role required");
@@ -150,7 +296,7 @@ export async function getAdminProgressData(viewer: AppViewer) {
   }
 
   const since = subDays(new Date(), 14);
-  const [students, missingLessonNotes, reports, skillCategories] = await Promise.all([
+  const [students, missingLessonNotes, recentCompletedSessions, reports, skillCategories] = await Promise.all([
     db.studentProfile.findMany({
       include: {
         user: true,
@@ -165,6 +311,16 @@ export async function getAdminProgressData(viewer: AppViewer) {
       include: { student: { include: { user: true } }, teacher: { include: { user: true } } },
       orderBy: { startsAtUtc: "desc" },
       take: 20,
+    }),
+    db.classSession.findMany({
+      where: { status: { in: [SessionStatus.COMPLETED, SessionStatus.NO_SHOW, SessionStatus.CANCELLED, SessionStatus.RESCHEDULE_PENDING] } },
+      include: {
+        student: { include: { user: true } },
+        teacher: { include: { user: true } },
+        lessonNote: true,
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 12,
     }),
     db.progressReport.findMany({
       include: { student: { include: { user: true } }, teacher: { include: { user: true } } },
@@ -182,7 +338,7 @@ export async function getAdminProgressData(viewer: AppViewer) {
     }))
     .filter((item) => item.minutes < 30);
 
-  return { students, missingLessonNotes, lowPracticeStudents, reports, skillCategories };
+  return { students, missingLessonNotes, recentCompletedSessions, lowPracticeStudents, reports, skillCategories };
 }
 
 export async function calculateProgressReportMetrics(studentId: string, startDate: Date, endDate: Date) {
@@ -242,4 +398,24 @@ export async function calculateProgressReportMetrics(studentId: string, startDat
 function average(values: number[]) {
   if (!values.length) return null;
   return values.reduce((total, value) => total + value, 0) / values.length;
+}
+
+function inferSkillInstruments(preferredInstrument?: string | null) {
+  const normalized = (preferredInstrument ?? "").toLocaleLowerCase();
+  const instruments = new Set(["GENERAL"]);
+
+  if (normalized.includes("piano") || normalized.includes("teclado") || normalized.includes("keyboard")) {
+    instruments.add("PIANO");
+  }
+
+  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing")) {
+    instruments.add("VOICE");
+  }
+
+  if (instruments.size === 1) {
+    instruments.add("PIANO");
+    instruments.add("VOICE");
+  }
+
+  return Array.from(instruments);
 }
