@@ -1,12 +1,13 @@
 import "server-only";
 
-import { RescheduleStatus, SessionStatus } from "@prisma/client";
+import { ClassRequestStatus, RescheduleStatus, SessionStatus } from "@prisma/client";
 import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
+import { overlapsRange } from "@/lib/scheduling";
 
 export async function getStudentDashboardData(viewer: AppViewer) {
   if (viewer.role !== "STUDENT" || !viewer.studentProfileId) {
@@ -102,7 +103,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
   const studentTimezone = normalizeIanaTimezone(viewer.timezone);
   const week = resolveScheduleWeek(studentTimezone, options.week);
 
-  const [student, sessions, nextUpcomingSession, pendingRequests] = await Promise.all([
+  const [student, sessions, nextUpcomingSession, pendingRequests, classRequests] = await Promise.all([
     db.studentProfile.findUnique({
       where: { id: studentProfileId },
       include: {
@@ -125,7 +126,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
           gte: week.startUtc,
           lt: week.endUtc,
         },
-        status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+        status: { not: SessionStatus.CANCELLED },
       },
       orderBy: { startsAtUtc: "asc" },
     }),
@@ -144,12 +145,42 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
       },
       orderBy: { createdAt: "desc" },
     }),
+    db.classRequest.findMany({
+      where: {
+        studentId: studentProfileId,
+        status: ClassRequestStatus.PENDING,
+      },
+      include: {
+        teacher: { include: { user: true } },
+        createdSession: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const teacher = student?.assignment?.teacher;
-  const slots = teacher
+  let slots = teacher
     ? buildWeekSlots(teacher.availability, teacher.user.timezone ?? "America/New_York", week.startUtc, week.endUtc)
     : [];
+
+  if (teacher && slots.length) {
+    const busySessions = await db.classSession.findMany({
+      where: {
+        teacherId: teacher.id,
+        status: { not: SessionStatus.CANCELLED },
+        startsAtUtc: { lt: week.endUtc },
+        endsAtUtc: { gt: week.startUtc },
+      },
+      select: {
+        startsAtUtc: true,
+        endsAtUtc: true,
+      },
+    });
+
+    slots = slots.filter((slot) =>
+      !busySessions.some((session) => overlapsRange(slot.startUtc, slot.endUtc, session.startsAtUtc, session.endsAtUtc)),
+    );
+  }
 
   return {
     assignedTeacher: teacher ?? null,
@@ -157,6 +188,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
     nextUpcomingSession,
     slots,
     pendingRequests,
+    classRequests,
     week,
   };
 }

@@ -33,6 +33,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
   ];
   const teacherNav: NavItem[] = [
     { href: "/teacher/dashboard", label: nav.today },
+    { href: "/teacher/schedule", label: nav.schedule },
     { href: "/teacher/requests", label: nav.reschedules },
     { href: "/teacher/videos", label: nav.videos },
     { href: "/teacher/progress", label: nav.progress },
@@ -41,6 +42,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
   ];
   const adminNav: NavItem[] = [
     { href: "/admin/dashboard", label: nav.overview },
+    { href: "/admin/schedule", label: nav.schedule },
     { href: "/admin/invoices", label: nav.billing },
     { href: "/admin/teachers", label: nav.teachers },
     { href: "/admin/students", label: nav.students },
@@ -195,7 +197,7 @@ export async function AppShell({
 function withTeacherStudentContext(href: string, role: Role, studentId?: string | null) {
   if (role !== Role.TEACHER || !studentId) return href;
 
-  const contextualRoutes = ["/teacher/dashboard", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/messages"];
+  const contextualRoutes = ["/teacher/dashboard", "/teacher/schedule", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/messages"];
   if (!contextualRoutes.includes(href)) return href;
 
   const separator = href.includes("?") ? "&" : "?";

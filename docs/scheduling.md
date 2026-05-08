@@ -1,0 +1,171 @@
+# Harmonizing Scheduling
+
+## Overview
+
+Harmonizing supports two scheduling patterns:
+
+- **Recurring class series** for fixed weekly lessons.
+- **Single classes** for one-off bookings such as trial classes, makeup lessons, extra practice, evaluations, replacements, or manual admin bookings.
+
+Both patterns produce `ClassSession` rows, so every class can later connect to lesson notes, progress records, assignments, videos, attendance, and reports.
+
+## Data Model
+
+`RecurringClassSeries` stores the recurring rule:
+
+- student
+- teacher
+- timezone
+- local start time
+- weekday list
+- duration
+- horizon and interval
+
+`ClassSession` stores the actual scheduled lesson instance. Single classes are `ClassSession` records with no `recurrenceId`.
+
+`ClassSession.type` identifies the booking type:
+
+- `RECURRING`
+- `SINGLE`
+- `TRIAL`
+- `MAKEUP`
+- `EXTRA`
+- `EVALUATION`
+- `REPLACEMENT`
+
+`ClassRequest` stores student-requested one-off classes. Requests use a simple lifecycle:
+
+- `PENDING`
+- `ACCEPTED`
+- `REJECTED`
+- `CANCELLED`
+
+When a request is accepted, the app creates a linked `ClassSession` through `classRequestId`.
+
+## Conflict Detection
+
+All conflict checks happen server-side in `src/lib/scheduling.ts`.
+
+A new class conflicts when:
+
+```txt
+newStart < existingEnd AND newEnd > existingStart
+```
+
+The app checks:
+
+- teacher overlapping classes
+- student overlapping classes
+- invalid date/time
+- invalid duration
+- teacher availability, when availability windows exist
+
+Cancelled classes do not block future scheduling.
+
+## Timezone Rules
+
+The app stores scheduled class times in UTC:
+
+- `startsAtUtc`
+- `endsAtUtc`
+
+Forms collect a local date/time plus an IANA timezone. The server converts that local time into UTC before saving.
+
+The saved `ClassSession.timezone` keeps the booking timezone visible for audit/debugging. Display should always use the viewer/student/teacher timezone through the existing i18n formatting helpers.
+
+## Permissions
+
+Admin can:
+
+- book a single class for any student and teacher
+- view all classes
+- approve/reject class requests
+
+Teacher can:
+
+- book one-off classes only for assigned students
+- view assigned recurring and single classes
+- approve/reject requests for assigned students
+- complete a class through the after-class workflow
+
+Student can:
+
+- view their own recurring and single classes
+- request a one-off class with their assigned teacher
+- view pending class requests
+
+## Notifications
+
+When a single class is booked:
+
+- student receives an in-app notification
+- teacher receives an in-app notification when an admin booked it
+
+When a student requests a class:
+
+- assigned teacher receives an in-app notification
+- admins receive an in-app notification
+
+When a request is accepted or rejected:
+
+- student receives an in-app notification
+- accepted requests link to the created class detail when available
+
+## Routes
+
+Admin:
+
+- `/admin/schedule` creates one-off classes, lists all sessions, and reviews requests.
+
+Teacher:
+
+- `/teacher/schedule` creates one-off classes for assigned students, lists assigned sessions, and reviews requests.
+
+Student:
+
+- `/schedule` shows recurring and single classes, pending reschedules, and one-off class requests.
+
+Shared:
+
+- `/classes/[classId]` shows class detail with role-aware visibility.
+
+## Manual Test Plan
+
+Admin:
+
+1. Sign in as `admin@harmonizing.com / demo123`.
+2. Open `/admin/schedule`.
+3. Create a trial class for Luis and María.
+4. Try to create an overlapping class and confirm it is blocked.
+5. Confirm the class appears in the admin schedule list with a type badge.
+6. Approve and reject a pending student request.
+
+Teacher:
+
+1. Sign in as `maria@harmonizing.com / demo123`.
+2. Open `/teacher/schedule`.
+3. Select Isabella in the top student selector.
+4. Create a makeup class for Isabella.
+5. Confirm unassigned students are not available in the teacher form.
+6. Open the class detail.
+7. Use `Completar` to enter the after-class workflow.
+
+Student:
+
+1. Sign in as `isabella@harmonizing.com / demo123`.
+2. Open `/schedule`.
+3. Confirm recurring and single classes appear together.
+4. Submit a makeup or extra-class request.
+5. Confirm the pending request appears.
+6. After teacher/admin approval, confirm the approved class appears in schedule and class detail.
+7. Confirm rejected request copy is shown through notifications when rejected.
+
+Quality checks:
+
+```bash
+cd apps/web
+npm run db:generate
+npm run typecheck
+npm run lint
+npm run build
+```

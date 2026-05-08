@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { NotificationType, Role, SessionStatus } from "@prisma/client";
+import { ClassSessionType, NotificationType, Role, SessionStatus } from "@prisma/client";
 import { addDays, addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { randomUUID } from "crypto";
@@ -135,6 +135,9 @@ export async function POST(req: Request) {
     endsAtUtc: Date;
     meetingUrl: string;
     lessonFocus?: string;
+    type: ClassSessionType;
+    timezone: string;
+    instrument?: string | null;
     status: SessionStatus;
   }> = [];
 
@@ -188,6 +191,9 @@ export async function POST(req: Request) {
         endsAtUtc,
         meetingUrl: data.meetingUrl,
         lessonFocus: data.lessonFocus,
+        type: ClassSessionType.RECURRING,
+        timezone: recurrenceTimezone,
+        instrument: assignment.student.preferredInstrument,
         status: SessionStatus.SCHEDULED,
       });
     }

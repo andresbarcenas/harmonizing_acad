@@ -53,10 +53,17 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
       </div>
 
       <Card>
-        <CardTitle>{dictionary.teacher.recurringTitle}</CardTitle>
-        <CardDescription>
-          {dictionary.teacher.recurringDescription}
-        </CardDescription>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>{dictionary.teacher.recurringTitle}</CardTitle>
+            <CardDescription>
+              {dictionary.teacher.recurringDescription}
+            </CardDescription>
+          </div>
+          <a href={withStudentContext("/teacher/schedule", data.selectedStudentId)}>
+            <Button size="sm" variant="outline">{viewer.locale === "es" ? "Agendar clase individual" : "Book one-time class"}</Button>
+          </a>
+        </div>
         <div className="mt-4">
           <RecurringClassForm
             students={data.students.map((assignment) => ({

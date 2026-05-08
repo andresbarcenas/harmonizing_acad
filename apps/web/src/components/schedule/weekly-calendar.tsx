@@ -1,4 +1,5 @@
 import { buildWeekInTimezone, dayKeyInTimezone, labelDay, labelTime } from "@/components/schedule/calendar-utils";
+import { classTypeLabel } from "@/lib/class-session-labels";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ type SessionItem = {
   id: string;
   startsAtUtc: Date;
   lessonFocus: string | null;
+  type?: string;
 };
 
 type SlotItem = {
@@ -69,8 +71,15 @@ export function WeeklyCalendar({
             <p className="mt-1 text-[11px] text-[var(--color-ink-soft)]">{dictionary.schedule.spaces}</p>
           </div>
           {daySessions[0] ? (
-            <div className="rounded-full bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)]">
-              {labelTime(daySessions[0].startsAtUtc, timezone, locale)}
+            <div className="text-right">
+              <div className="rounded-full bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)]">
+                {labelTime(daySessions[0].startsAtUtc, timezone, locale)}
+              </div>
+              {daySessions[0].type ? (
+                <p className="mt-1 max-w-[5.8rem] truncate text-[10px] font-semibold text-[var(--color-ink-soft)]">
+                  {classTypeLabel(daySessions[0].type, locale)}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>

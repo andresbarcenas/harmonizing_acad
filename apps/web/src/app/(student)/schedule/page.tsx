@@ -1,6 +1,7 @@
-import { Role } from "@prisma/client";
+import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
 import Link from "next/link";
 
+import { ClassRequestForm } from "@/components/schedule/class-request-form";
 import { RescheduleWidget } from "@/components/schedule/reschedule-widget";
 import { WeeklyCalendar } from "@/components/schedule/weekly-calendar";
 import { AppShell } from "@/components/ui/app-shell";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
+import { classRequestStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 import { getStudentScheduleData } from "@/lib/data";
 import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 
@@ -20,7 +22,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
   const dictionary = getDictionary(viewer.locale);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const data = await getStudentScheduleData(viewer, { week: resolvedSearchParams.week });
-  const reschedulableSession = data.sessions.find((session) => session.startsAtUtc >= new Date()) ?? null;
+  const reschedulableSession = data.sessions.find((session) => session.startsAtUtc >= new Date() && (session.status === SessionStatus.SCHEDULED || session.status === SessionStatus.RESCHEDULE_PENDING)) ?? null;
   const nextUpcomingWeekHref = data.nextUpcomingSession
     ? scheduleWeekHref(data.nextUpcomingSession.startsAtUtc, viewer.timezone)
     : null;
@@ -103,6 +105,37 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           </CardDescription>
         </Card>
       )}
+
+      <Card>
+        <CardTitle>{viewer.locale === "es" ? "Solicitar clase individual" : "Request one-time class"}</CardTitle>
+        <CardDescription>
+          {viewer.locale === "es"
+            ? "Para reposiciones, práctica extra o una evaluación breve. Tu docente o la academia aprobará la solicitud antes de confirmar."
+            : "For makeup lessons, extra practice, or a quick evaluation. Your teacher or academy will approve before confirmation."}
+        </CardDescription>
+        <div className="mt-4">
+          <ClassRequestForm timezone={viewer.timezone} locale={viewer.locale} />
+        </div>
+      </Card>
+
+      {data.classRequests.length ? (
+        <Card>
+          <CardTitle>{viewer.locale === "es" ? "Solicitudes de clases individuales" : "One-time class requests"}</CardTitle>
+          <CardDescription>{viewer.locale === "es" ? "Estas solicitudes aún no se convierten en clases hasta que sean aprobadas." : "These requests become classes only after approval."}</CardDescription>
+          <div className="mt-3 space-y-2">
+            {data.classRequests.map((request) => (
+              <div key={request.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold">{classTypeLabel(request.type, viewer.locale)}</p>
+                  <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(request.preferredStartUtc, viewer.timezone, viewer.locale)} · {request.durationMin} min</p>
+                  {request.studentMessage ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
+                </div>
+                <Badge variant={request.status === ClassRequestStatus.PENDING ? "warning" : "default"}>{classRequestStatusLabel(request.status, viewer.locale)}</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       {data.pendingRequests.length ? (
         <Card>

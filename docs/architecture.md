@@ -82,3 +82,7 @@ Core entities:
 The progress subsystem adds structured lesson evidence around existing sessions, videos, goals, songs, and logs. Teachers can use the fast after-class workflow at `/teacher/classes/[classId]/complete` to mark class status, record `completedAt`, upsert one structured `LessonNote`, rate `SkillCategory` items, update `RepertoireItem` records, assign `PracticeAssignment` work, and notify students. Teachers can also generate deterministic `ProgressReport` snapshots. Students/parents use `/progress` as the progress portal for next class, last visible lesson summary, active assignments, practice logging, repertoire, pending video requests, skill snapshots, recent feedback, and reports. Students can update assignment status with a completion note, log practice minutes, and link practice videos to assignments, repertoire, and skills. Admins can monitor missing lesson notes, recent completions, low practice activity, report status, and seeded skill categories.
 
 See `docs/progress-intelligence.md` for the detailed workflow and report calculations.
+
+## Scheduling Management
+
+Single-class booking is now modeled alongside recurring class series. See [scheduling.md](./scheduling.md) for class types, request lifecycles, conflict detection, timezone rules, permissions, and manual QA.
