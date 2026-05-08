@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { intlLocale, type AppLocale } from "@/lib/i18n/locales";
 
 type AdminInvoiceRow = {
   studentId: string;
@@ -43,6 +44,7 @@ export function AdminInvoicesPanel({
   rows,
   latestAllRun,
   isDemoMode,
+  locale = "en",
 }: {
   rows: AdminInvoiceRow[];
   latestAllRun: {
@@ -55,6 +57,7 @@ export function AdminInvoicesPanel({
     errorSummary: string | null;
   } | null;
   isDemoMode?: boolean;
+  locale?: AppLocale;
 }) {
   const router = useRouter();
   const [pendingGlobal, setPendingGlobal] = useState(false);
@@ -78,12 +81,12 @@ export function AdminInvoicesPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setState({ kind: "error", message: payload?.error ?? "No se pudo sincronizar." });
+      setState({ kind: "error", message: payload?.error ?? (locale === "es" ? "No se pudo sincronizar." : "Could not sync.") });
       setPendingGlobal(false);
       return;
     }
 
-    setState({ kind: "success", message: "Sincronización global finalizada." });
+    setState({ kind: "success", message: locale === "es" ? "Sincronización global finalizada." : "Global sync completed." });
     setPendingGlobal(false);
     router.refresh();
   }
@@ -100,12 +103,12 @@ export function AdminInvoicesPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setState({ kind: "error", message: payload?.error ?? "No se pudo sincronizar el estudiante." });
+      setState({ kind: "error", message: payload?.error ?? (locale === "es" ? "No se pudo sincronizar el estudiante." : "Could not sync the student.") });
       setPendingByStudent((previous) => ({ ...previous, [studentId]: false }));
       return;
     }
 
-    setState({ kind: "success", message: "Sincronización individual completada." });
+    setState({ kind: "success", message: locale === "es" ? "Sincronización individual completada." : "Student sync completed." });
     setPendingByStudent((previous) => ({ ...previous, [studentId]: false }));
     router.refresh();
   }
@@ -124,12 +127,12 @@ export function AdminInvoicesPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setState({ kind: "error", message: payload?.error ?? "No se pudo actualizar el enlace de contacto." });
+      setState({ kind: "error", message: payload?.error ?? (locale === "es" ? "No se pudo actualizar el enlace de contacto." : "Could not update the contact link.") });
       setPendingByStudent((previous) => ({ ...previous, [studentId]: false }));
       return;
     }
 
-    setState({ kind: "success", message: "Enlace de contacto actualizado." });
+    setState({ kind: "success", message: locale === "es" ? "Enlace de contacto actualizado." : "Contact link updated." });
     setPendingByStudent((previous) => ({ ...previous, [studentId]: false }));
     router.refresh();
   }
@@ -139,27 +142,27 @@ export function AdminInvoicesPanel({
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-[var(--color-ink)]">Panel de sincronización Alegra</p>
+            <p className="text-sm font-semibold text-[var(--color-ink)]">{locale === "es" ? "Panel de sincronización Alegra" : "Alegra sync panel"}</p>
             <p className="text-xs text-[var(--color-ink-soft)]">
-              Estudiantes con cache vencido: {staleCount} / {rows.length}
+              {locale === "es" ? "Estudiantes con cache vencido" : "Students with stale cache"}: {staleCount} / {rows.length}
             </p>
             {isDemoMode ? (
               <p className="mt-1 text-xs text-amber-700">
-                Modo demo: sincronizar utiliza cache local hasta configurar credenciales de Alegra.
+                {locale === "es" ? "Modo demo: sincronizar utiliza cache local hasta configurar credenciales de Alegra." : "Demo mode: sync uses local cache until Alegra credentials are configured."}
               </p>
             ) : null}
           </div>
           <Button variant="gold" size="sm" onClick={syncAll} disabled={pendingGlobal} className="w-full sm:w-auto">
-            {pendingGlobal ? "Sincronizando..." : "Sincronizar todos"}
+            {pendingGlobal ? (locale === "es" ? "Sincronizando..." : "Syncing...") : locale === "es" ? "Sincronizar todos" : "Sync all"}
           </Button>
         </div>
         {latestAllRun ? (
           <div className="mt-3 rounded-[1rem] border border-[var(--color-border)] bg-white/72 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
             <p>
-              Última corrida global: {new Date(latestAllRun.startedAt).toLocaleString("es-US")} · Procesados: {latestAllRun.studentsProcessed} · Fallidos: {latestAllRun.studentsFailed}
+              {locale === "es" ? "Última corrida global" : "Latest global run"}: {new Date(latestAllRun.startedAt).toLocaleString(intlLocale(locale))} · {locale === "es" ? "Procesados" : "Processed"}: {latestAllRun.studentsProcessed} · {locale === "es" ? "Fallidos" : "Failed"}: {latestAllRun.studentsFailed}
             </p>
             <p>
-              Facturas actualizadas: {latestAllRun.invoicesUpserted} · Estado: {latestAllRun.status}
+              {locale === "es" ? "Facturas actualizadas" : "Updated invoices"}: {latestAllRun.invoicesUpserted} · {locale === "es" ? "Estado" : "Status"}: {latestAllRun.status}
             </p>
           </div>
         ) : null}
@@ -182,13 +185,13 @@ export function AdminInvoicesPanel({
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{row.name}</p>
                 <p className="truncate text-xs text-[var(--color-ink-soft)]">{row.email}</p>
-                <p className="text-xs text-[var(--color-ink-soft)]">Docente: {row.teacherName}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">{locale === "es" ? "Docente" : "Teacher"}: {row.teacherName}</p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={row.isStale ? "warning" : "success"}>{row.isStale ? "Stale" : "Actualizada"}</Badge>
-              <Badge variant="default">{row.invoiceCount} factura(s)</Badge>
+              <Badge variant={row.isStale ? "warning" : "success"}>{row.isStale ? "Stale" : locale === "es" ? "Actualizada" : "Updated"}</Badge>
+              <Badge variant="default">{row.invoiceCount} {locale === "es" ? "factura(s)" : "invoice(s)"}</Badge>
               <Badge variant={badgeVariantForStatus(row.latestRun?.status)}>{row.latestRun?.status ?? "SIN CORRIDA"}</Badge>
             </div>
           </div>
@@ -211,7 +214,7 @@ export function AdminInvoicesPanel({
               disabled={pendingByStudent[row.studentId]}
               className="w-full lg:w-auto"
             >
-              Guardar enlace
+              {locale === "es" ? "Guardar enlace" : "Save link"}
             </Button>
             <Button
               variant="gold"
@@ -220,16 +223,16 @@ export function AdminInvoicesPanel({
               disabled={pendingByStudent[row.studentId]}
               className="w-full lg:w-auto"
             >
-              {pendingByStudent[row.studentId] ? "Sync..." : "Sync estudiante"}
+              {pendingByStudent[row.studentId] ? "Sync..." : locale === "es" ? "Sync estudiante" : "Sync student"}
             </Button>
           </div>
 
           <div className="mt-3 text-xs text-[var(--color-ink-soft)]">
             <p>
-              Última sincronización cache: {row.lastSyncedAt ? new Date(row.lastSyncedAt).toLocaleString("es-US") : "Nunca"}
+              {locale === "es" ? "Última sincronización cache" : "Last cache sync"}: {row.lastSyncedAt ? new Date(row.lastSyncedAt).toLocaleString(intlLocale(locale)) : locale === "es" ? "Nunca" : "Never"}
             </p>
             <p>
-              Enlace actual: {row.link?.alegraContactId ?? "Sin contacto"} · estrategia: {row.link?.strategy ?? "EMAIL_AUTO"}
+              {locale === "es" ? "Enlace actual" : "Current link"}: {row.link?.alegraContactId ?? (locale === "es" ? "Sin contacto" : "No contact")} · {locale === "es" ? "estrategia" : "strategy"}: {row.link?.strategy ?? "EMAIL_AUTO"}
             </p>
             {row.link?.lastError ? <p className="text-rose-700">Error: {row.link.lastError}</p> : null}
             {row.latestRun?.errorSummary ? <p className="text-rose-700">Corrida: {row.latestRun.errorSummary}</p> : null}

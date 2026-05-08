@@ -29,7 +29,7 @@ export async function PATCH(_: Request, { params }: Params) {
   });
 
   if (!series) {
-    return NextResponse.json({ error: "Serie no encontrada." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Serie no encontrada." : "Series not found." }, { status: 404 });
   }
 
   await db.$transaction(async (tx) => {
@@ -51,8 +51,8 @@ export async function PATCH(_: Request, { params }: Params) {
   await createNotification({
     userId: series.student.userId,
     type: NotificationType.CLASS_REMINDER,
-    title: "Serie recurrente pausada",
-    body: "Tu docente detuvo las próximas clases de esta serie.",
+    title: "Recurring series paused",
+    body: "Your teacher stopped the upcoming classes in this series.",
     actionUrl: "/schedule",
   });
 
@@ -80,7 +80,7 @@ export async function DELETE(_: Request, { params }: Params) {
   });
 
   if (!series) {
-    return NextResponse.json({ error: "Serie no encontrada." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Serie no encontrada." : "Series not found." }, { status: 404 });
   }
 
   await db.$transaction(async (tx) => {
@@ -99,8 +99,8 @@ export async function DELETE(_: Request, { params }: Params) {
   await createNotification({
     userId: series.student.userId,
     type: NotificationType.CLASS_REMINDER,
-    title: "Serie recurrente eliminada",
-    body: "Tu docente eliminó una serie de clases pendientes.",
+    title: "Recurring series deleted",
+    body: "Your teacher deleted a pending class series.",
     actionUrl: "/schedule",
   });
 

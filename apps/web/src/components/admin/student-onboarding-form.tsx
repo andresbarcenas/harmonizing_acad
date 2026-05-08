@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getDictionary, type AppLocale } from "@/lib/i18n";
 import { uploadProfileImageFile } from "@/lib/profile-upload";
 
 type TeacherOption = {
@@ -25,10 +26,13 @@ type CreatedStudentSummary = {
 
 export function StudentOnboardingForm({
   teachers,
+  locale = "en",
 }: {
   teachers: TeacherOption[];
+  locale?: AppLocale;
 }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +71,9 @@ export function StudentOnboardingForm({
         setError(data.error);
       } else if (data?.error && typeof data.error === "object") {
         const firstFieldError = Object.values(data.error.fieldErrors ?? {}).find((messages) => messages?.length)?.[0];
-        setError(firstFieldError ?? data.error.formErrors?.[0] ?? "No se pudo crear el estudiante.");
+        setError(firstFieldError ?? data.error.formErrors?.[0] ?? dictionary.admin.studentCreateError);
       } else {
-        setError("No se pudo crear el estudiante.");
+        setError(dictionary.admin.studentCreateError);
       }
       setPending(false);
       return;
@@ -83,7 +87,7 @@ export function StudentOnboardingForm({
 
   async function uploadImage() {
     if (!uploadFile) {
-      setError("Selecciona una imagen para subir.");
+      setError(dictionary.forms.selectImage);
       return;
     }
     setUploading(true);
@@ -93,7 +97,7 @@ export function StudentOnboardingForm({
       setProfileImage(uploaded.imageUrl);
       setUploadFile(null);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+      setError(uploadError instanceof Error ? uploadError.message : dictionary.forms.imageUploadError);
     } finally {
       setUploading(false);
     }
@@ -104,13 +108,13 @@ export function StudentOnboardingForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Nombre completo
+            {dictionary.forms.fullName}
           </label>
           <Input id="name" name="name" placeholder="Camila Herrera" required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Correo electrónico
+            {dictionary.forms.email}
           </label>
           <Input id="email" name="email" type="email" placeholder="camila@email.com" required />
         </div>
@@ -119,21 +123,21 @@ export function StudentOnboardingForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="temporaryPassword" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Contraseña temporal
+            {dictionary.forms.temporaryPassword}
           </label>
           <Input
             id="temporaryPassword"
             name="temporaryPassword"
             type="password"
-            placeholder="Mínimo 8 caracteres"
+            placeholder={dictionary.forms.temporaryPasswordPlaceholder}
             minLength={8}
             required
           />
-          <p className="text-xs text-[var(--color-ink-soft)]">Debe incluir letras y números.</p>
+          <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.temporaryPasswordHint}</p>
         </div>
         <div className="space-y-1.5">
           <label htmlFor="teacherId" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Docente asignado
+            {dictionary.forms.assignedTeacher}
           </label>
           <select
             id="teacherId"
@@ -154,25 +158,25 @@ export function StudentOnboardingForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="phone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Teléfono (opcional)
+            {dictionary.forms.phoneOptional}
           </label>
           <Input id="phone" name="phone" placeholder="+1 555 123 4567" />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="preferredInstrument" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Instrumento preferido (opcional)
+            {dictionary.forms.preferredInstrumentOptional}
           </label>
-          <Input id="preferredInstrument" name="preferredInstrument" placeholder="Piano o Técnica vocal" />
+          <Input id="preferredInstrument" name="preferredInstrument" placeholder={dictionary.forms.preferredInstrumentPlaceholder} />
         </div>
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor="student-profile-image-file" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-          Foto de perfil (opcional)
+          {dictionary.forms.profilePhotoOptional}
         </label>
         <div className="flex items-center gap-3">
-          <Avatar src={profileImage || undefined} alt="Preview estudiante" fallback="E" className="h-10 w-10 text-xs" />
-          <p className="text-xs text-[var(--color-ink-soft)]">Sube una imagen para aplicarla al crear el estudiante.</p>
+          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewStudent} fallback="E" className="h-10 w-10 text-xs" />
+          <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.imageCreateApplyStudent}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -184,24 +188,24 @@ export function StudentOnboardingForm({
             onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
           />
           <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
-            {uploading ? "Subiendo..." : "Subir foto"}
+            {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
           </Button>
         </div>
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor="bio" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-          Nota inicial (opcional)
+          {dictionary.forms.initialNoteOptional}
         </label>
-        <Textarea id="bio" name="bio" rows={3} placeholder="Objetivo principal o contexto del estudiante." />
+        <Textarea id="bio" name="bio" rows={3} placeholder={dictionary.forms.studentGoalPlaceholder} />
       </div>
 
       <div className="rounded-[1.1rem] border border-[var(--color-border)] bg-white/72 px-4 py-3 text-sm text-[var(--color-ink-soft)]">
-        Al crear el estudiante se activa automáticamente el plan <span className="font-semibold text-[var(--color-ink)]">$90 USD / 4 clases</span>.
+        {dictionary.admin.planAutoActivated}
       </div>
 
       <Button type="submit" variant="gold" disabled={pending || !teachers.length} className="w-full sm:w-auto">
-        {pending ? "Creando estudiante..." : "Crear estudiante"}
+        {pending ? dictionary.common.creating : dictionary.admin.addStudent}
       </Button>
 
       {error ? (
@@ -210,12 +214,12 @@ export function StudentOnboardingForm({
 
       {created ? (
         <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          <p className="font-semibold">Estudiante creado correctamente.</p>
+          <p className="font-semibold">{dictionary.admin.studentCreated}</p>
           <p className="mt-1">
-            {created.name} ({created.email}) · Docente: {created.teacherName}
+            {created.name} ({created.email}) · {dictionary.common.teacher}: {created.teacherName}
           </p>
           <p className="mt-1">
-            Plan activo: {created.planName} ({created.planLabel})
+            {dictionary.admin.activePlan}: {created.planName} ({created.planLabel})
           </p>
         </div>
       ) : null}

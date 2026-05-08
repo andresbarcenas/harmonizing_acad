@@ -4,9 +4,11 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function NotificationsPage() {
   const viewer = await requireViewer();
+  const dictionary = getDictionary(viewer.locale);
 
   const notifications = await db.notification.findMany({
     where: { userId: viewer.id },
@@ -15,14 +17,14 @@ export default async function NotificationsPage() {
   });
 
   return (
-    <AppShell role={viewer.role} activePath="/notifications" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/notifications" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Centro de alertas"
-        title="Todo lo importante, en un solo vistazo."
-        description="Sigue recordatorios, cambios de horario y novedades recientes sin abandonar tu espacio principal."
+        eyebrow={dictionary.notifications.eyebrow}
+        title={dictionary.notifications.title}
+        description={dictionary.notifications.description}
       />
       <Card>
-        <CardTitle>Centro de notificaciones</CardTitle>
+        <CardTitle>{dictionary.notifications.center}</CardTitle>
       </Card>
       <NotificationList
         initial={notifications.map((notification) => ({
@@ -33,6 +35,7 @@ export default async function NotificationsPage() {
           readAt: notification.readAt?.toISOString() ?? null,
           actionUrl: notification.actionUrl,
         }))}
+        locale={viewer.locale}
       />
     </AppShell>
   );

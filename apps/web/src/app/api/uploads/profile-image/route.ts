@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const assignRaw = formData.get("assign");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Archivo de imagen requerido." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Archivo de imagen requerido." : "Image file is required." }, { status: 400 });
   }
 
   const shouldAssign = assignRaw === null ? true : String(assignRaw).toLowerCase() !== "false";
@@ -43,22 +43,22 @@ export async function POST(req: Request) {
       select: { id: true },
     });
     if (!target) {
-      return NextResponse.json({ error: "Usuario destino no encontrado." }, { status: 404 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Usuario destino no encontrado." : "Target user not found." }, { status: 404 });
     }
   }
 
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "El archivo debe ser una imagen." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El archivo debe ser una imagen." : "The file must be an image." }, { status: 400 });
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: "La imagen excede el límite de 5MB." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La imagen excede el límite de 5MB." : "The image exceeds the 5MB limit." }, { status: 400 });
   }
 
   const mediaBase = getPublicMediaBaseUrl();
   if (!mediaBase) {
     return NextResponse.json(
-      { error: "MEDIA base URL no configurada. Define NEXT_PUBLIC_MEDIA_BASE_URL." },
+      { error: auth.user.locale === "es" ? "MEDIA base URL no configurada. Define NEXT_PUBLIC_MEDIA_BASE_URL." : "MEDIA base URL is not configured. Set NEXT_PUBLIC_MEDIA_BASE_URL." },
       { status: 500 },
     );
   }

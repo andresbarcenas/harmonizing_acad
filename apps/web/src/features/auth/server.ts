@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { normalizeLocale, type AppLocale } from "@/lib/i18n/locales";
 import { defaultRouteForRole } from "@/lib/rbac";
 
 export type AppViewer = {
@@ -12,6 +13,7 @@ export type AppViewer = {
   email: string;
   image?: string | null;
   role: Role;
+  locale: AppLocale;
   timezone: string;
   studentProfileId?: string;
   teacherProfileId?: string;
@@ -46,6 +48,7 @@ export async function requireViewer(expectedRoles?: Role[]): Promise<AppViewer> 
     email: dbUser.email,
     image: dbUser.image,
     role: dbUser.role,
+    locale: normalizeLocale(dbUser.locale),
     timezone: dbUser.timezone,
     studentProfileId: dbUser.studentProfile?.id,
     teacherProfileId: dbUser.teacherProfile?.id,

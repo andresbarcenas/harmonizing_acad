@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
+import { getCookieLocale } from "@/lib/i18n/request";
 import "./globals.css";
 
 const body = Manrope({
@@ -14,12 +15,14 @@ const display = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Harmonizing",
-  description: "Escuela online premium de música para estudiantes hispanos en EE.UU.",
+  description: "Premium online music academy for students in the United States.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getCookieLocale();
+
   return (
-    <html lang="es" className={`${body.variable} ${display.variable}`}>
+    <html lang={locale} className={`${body.variable} ${display.variable}`}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

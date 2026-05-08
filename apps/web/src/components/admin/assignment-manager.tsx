@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { getDictionary, intlLocale, type AppLocale } from "@/lib/i18n";
 
 type AssignmentRow = {
   id: string;
@@ -21,11 +22,14 @@ type TeacherOption = {
 export function AssignmentManager({
   assignments,
   teachers,
+  locale = "en",
 }: {
   assignments: AssignmentRow[];
   teachers: TeacherOption[];
+  locale?: AppLocale;
 }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const [selected, setSelected] = useState<Record<string, string>>(
     Object.fromEntries(assignments.map((item) => [item.studentId, item.teacherId])),
   );
@@ -46,12 +50,12 @@ export function AssignmentManager({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setStatus(payload?.error ?? "No se pudo actualizar la asignación.");
+      setStatus(payload?.error ?? dictionary.admin.assignmentUpdateError);
       setPendingStudentId(null);
       return;
     }
 
-    setStatus("Asignación actualizada.");
+    setStatus(dictionary.admin.assignmentUpdated);
     setPendingStudentId(null);
     router.refresh();
   }
@@ -63,12 +67,12 @@ export function AssignmentManager({
           <div>
             <p className="text-sm font-medium">{assignment.studentName}</p>
             <p className="text-xs text-[var(--color-ink-soft)]">
-              Asignado: {new Date(assignment.assignedAt).toLocaleDateString("es-US")}
+              {dictionary.common.assigned}: {new Date(assignment.assignedAt).toLocaleDateString(intlLocale(locale))}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <label className="sr-only" htmlFor={`teacher-${assignment.studentId}`}>
-              Docente para {assignment.studentName}
+              {dictionary.common.teacher} {assignment.studentName}
             </label>
             <select
               id={`teacher-${assignment.studentId}`}
@@ -94,7 +98,7 @@ export function AssignmentManager({
               disabled={pendingStudentId === assignment.studentId}
               className="w-full sm:w-auto"
             >
-              {pendingStudentId === assignment.studentId ? "Guardando..." : "Reasignar"}
+              {pendingStudentId === assignment.studentId ? dictionary.common.saving : dictionary.admin.reassign}
             </Button>
           </div>
         </div>

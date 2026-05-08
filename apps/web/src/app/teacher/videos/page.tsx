@@ -8,6 +8,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherVideosData } from "@/lib/data";
+import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { getVideoPublicUrl } from "@/lib/storage";
 
@@ -19,25 +20,26 @@ type TeacherVideosPageProps = {
 
 export default async function TeacherVideosPage({ searchParams }: TeacherVideosPageProps) {
   const viewer = await requireViewer([Role.TEACHER]);
+  const dictionary = getDictionary(viewer.locale);
   const selectedFilter = searchParams?.estado === "pending" || searchParams?.estado === "reviewed" ? searchParams.estado : "all";
   const { videos, missingThisWeek } = await getTeacherVideosData(viewer, selectedFilter);
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/videos" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/teacher/videos" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Revisión semanal"
-        title="Tus prácticas pendientes, en una cola elegante y directa."
-        description="Revisa videos, deja feedback personalizado y detecta con rapidez qué estudiantes todavía no han enviado su práctica."
+        eyebrow={dictionary.videos.teacherEyebrow}
+        title={dictionary.videos.teacherTitle}
+        description={dictionary.videos.teacherDescription}
       />
 
       <Card>
-        <CardTitle>Prácticas semanales</CardTitle>
-        <CardDescription>{missingThisWeek.length} estudiante(s) aún no subieron su video esta semana.</CardDescription>
+        <CardTitle>{dictionary.videos.weeklyPractices}</CardTitle>
+        <CardDescription>{missingThisWeek.length} {dictionary.videos.missingCount}</CardDescription>
         <div className="mt-3 inline-flex rounded-full border border-[var(--color-border)] bg-white/76 p-1">
           {[
-            { key: "all", label: "Todas" },
-            { key: "pending", label: "Pendientes" },
-            { key: "reviewed", label: "Revisadas" },
+            { key: "all", label: dictionary.videos.all },
+            { key: "pending", label: dictionary.videos.pending },
+            { key: "reviewed", label: dictionary.videos.reviewed },
           ].map((option) => {
             const active = selectedFilter === option.key;
             return (
@@ -74,7 +76,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
                 <p className="break-all text-xs text-[var(--color-ink-soft)]">{video.originalName} · {Math.floor(video.durationSec / 60)}:{`${video.durationSec % 60}`.padStart(2, "0")}</p>
               </div>
               <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
-                {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "Revisado" : "Pendiente"}
+                {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? dictionary.common.reviewed : dictionary.common.pending}
               </Badge>
             </div>
             <div className="mt-3">
@@ -88,14 +90,14 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
               </video>
             </div>
             <div className="mt-3">
-              <VideoReviewForm videoId={video.id} disabled={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN} />
+              <VideoReviewForm videoId={video.id} disabled={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN} locale={viewer.locale} />
             </div>
           </Card>
         ))}
         {!videos.length ? (
           <Card>
-            <CardTitle>Sin videos aún</CardTitle>
-            <CardDescription>Cuando tus estudiantes envíen prácticas aparecerán aquí para revisión.</CardDescription>
+            <CardTitle>{dictionary.videos.emptyTitle}</CardTitle>
+            <CardDescription>{dictionary.videos.emptyDescription}</CardDescription>
           </Card>
         ) : null}
       </div>

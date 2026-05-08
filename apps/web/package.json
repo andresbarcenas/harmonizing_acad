@@ -1,9 +1,9 @@
 {
   "name": "harmonizing-web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
@@ -15,7 +15,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
-    "seed": "npm run prisma:seed"
+    "seed": "npm run prisma:seed",
+    "smoke:routes": "node scripts/smoke-routes.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

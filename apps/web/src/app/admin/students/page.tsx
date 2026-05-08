@@ -10,9 +10,11 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { formatDate, getDictionary } from "@/lib/i18n";
 
 export default async function AdminStudentsPage() {
   const viewer = await requireViewer([Role.ADMIN]);
+  const dictionary = getDictionary(viewer.locale);
 
   const [teachers, recentStudents] = await Promise.all([
     db.teacherProfile.findMany({
@@ -38,25 +40,26 @@ export default async function AdminStudentsPage() {
   ]);
 
   return (
-    <AppShell role={viewer.role} activePath="/admin/students" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/admin/students" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Onboarding"
-        title="Agregar estudiantes con asignación y plan en un solo flujo."
-        description="Crea cuentas de estudiantes, asigna docente y activa el plan estándar sin salir del panel administrativo."
+        eyebrow={dictionary.admin.studentOnboardingEyebrow}
+        title={dictionary.admin.studentOnboardingTitle}
+        description={dictionary.admin.studentOnboardingDescription}
       >
         <Link href="/admin/teachers">
-          <Button variant="outline" size="sm">Agregar docente</Button>
+          <Button variant="outline" size="sm">{dictionary.admin.addTeacher}</Button>
         </Link>
       </PageIntro>
 
       <Card>
-        <CardTitle>Nuevo estudiante</CardTitle>
+        <CardTitle>{dictionary.admin.addStudent}</CardTitle>
         <CardDescription>
-          Este flujo crea la cuenta del estudiante, su perfil, asignación docente y suscripción activa.
+          {dictionary.admin.onboardingStudentDescription}
         </CardDescription>
         <div className="mt-4">
           {teachers.length ? (
             <StudentOnboardingForm
+              locale={viewer.locale}
               teachers={teachers.map((teacher) => ({
                 id: teacher.id,
                 name: teacher.user.name,
@@ -65,15 +68,15 @@ export default async function AdminStudentsPage() {
             />
           ) : (
             <p className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3 text-sm text-[var(--color-ink-soft)]">
-              No hay docentes disponibles. Crea o activa docentes antes de registrar estudiantes.
+              {dictionary.admin.noTeachersAvailable}
             </p>
           )}
         </div>
       </Card>
 
       <Card>
-        <CardTitle>Estudiantes recientes</CardTitle>
-        <CardDescription>Últimos registros creados en la plataforma.</CardDescription>
+        <CardTitle>{dictionary.admin.recentStudents}</CardTitle>
+        <CardDescription>{dictionary.admin.latestStudents}</CardDescription>
         <div className="mt-4 space-y-2">
           {recentStudents.map((student) => (
             <div
@@ -94,13 +97,13 @@ export default async function AdminStudentsPage() {
               </div>
               <div className="text-left sm:text-right">
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  Docente: {student.assignment?.teacher.user.name ?? "Sin asignar"}
+                  {dictionary.common.teacher}: {student.assignment?.teacher.user.name ?? dictionary.common.unassigned}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  Plan: {student.subscriptions[0]?.plan.name ?? "Sin plan activo"}
+                  {dictionary.common.plan}: {student.subscriptions[0]?.plan.name ?? dictionary.admin.noActivePlan}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  Alta: {new Date(student.joinedAt).toLocaleDateString("es-US")}
+                  {dictionary.common.joined}: {formatDate(student.joinedAt, viewer.locale)}
                 </p>
                 <StudentEditForm
                   studentId={student.id}
@@ -118,12 +121,13 @@ export default async function AdminStudentsPage() {
                     bio: student.bio,
                     profileImage: student.user.image,
                   }}
+                  locale={viewer.locale}
                 />
               </div>
             </div>
           ))}
           {!recentStudents.length ? (
-            <p className="text-sm text-[var(--color-ink-soft)]">Aún no hay estudiantes registrados.</p>
+            <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.admin.noStudentsRegistered}</p>
           ) : null}
         </div>
       </Card>

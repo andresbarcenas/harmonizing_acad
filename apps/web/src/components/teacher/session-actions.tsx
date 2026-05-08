@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import type { AppLocale } from "@/lib/i18n/locales";
 
 export function TeacherSessionActions({
   sessionId,
   initialNotes,
+  locale = "en",
 }: {
   sessionId: string;
   initialNotes?: string | null;
+  locale?: AppLocale;
 }) {
   const router = useRouter();
   const [notes, setNotes] = useState(initialNotes ?? "");
@@ -33,11 +36,11 @@ export function TeacherSessionActions({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setStatus({ kind: "error", message: payload?.error ?? "No se pudo actualizar la clase." });
+      setStatus({ kind: "error", message: payload?.error ?? (locale === "es" ? "No se pudo actualizar la clase." : "Could not update the class.") });
       return;
     }
 
-    setStatus({ kind: "success", message: "Clase actualizada y notificada." });
+    setStatus({ kind: "success", message: locale === "es" ? "Clase actualizada y notificada." : "Class updated and notification sent." });
     startTransition(() => {
       router.refresh();
     });
@@ -49,14 +52,14 @@ export function TeacherSessionActions({
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
         rows={3}
-        placeholder="Notas de clase (opcional)"
+        placeholder={locale === "es" ? "Notas de clase (opcional)" : "Class notes (optional)"}
       />
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button size="sm" variant="gold" onClick={() => markSession("COMPLETED")} disabled={isPending} className="w-full sm:w-auto">
-          Marcar completada
+          {locale === "es" ? "Marcar completada" : "Mark completed"}
         </Button>
         <Button size="sm" variant="outline" onClick={() => markSession("NO_SHOW")} disabled={isPending} className="w-full sm:w-auto">
-          Marcar no asistida
+          {locale === "es" ? "Marcar no asistida" : "Mark no-show"}
         </Button>
       </div>
       {status ? (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
+import { getDictionary, type AppLocale } from "@/lib/i18n";
 
 type AvailabilityItem = {
   id: string;
@@ -14,7 +15,10 @@ type AvailabilityItem = {
   timezone: string;
 };
 
-const weekdays = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const weekdays = {
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  es: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+} as const;
 
 function toHourLabel(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
@@ -31,12 +35,15 @@ export function AvailabilityManager({
   teacherId,
   timezone,
   items,
+  locale = "en",
 }: {
   teacherId: string;
   timezone: string;
   items: AvailabilityItem[];
+  locale?: AppLocale;
 }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const normalizedTimezone = normalizeIanaTimezone(timezone);
   const [weekday, setWeekday] = useState(1);
   const [start, setStart] = useState("17:00");
@@ -108,20 +115,20 @@ export function AvailabilityManager({
     <div className="space-y-2">
       <div className="flex flex-wrap items-end gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/75 p-3">
         <div className="min-w-[8.5rem] flex-1">
-          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`weekday-${teacherId}`}>Día</label>
+          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`weekday-${teacherId}`}>{dictionary.common.day}</label>
           <select
             id={`weekday-${teacherId}`}
             className="mt-1 h-10 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-sm"
             value={weekday}
             onChange={(event) => setWeekday(Number(event.target.value))}
           >
-            {weekdays.map((day, index) => (
+            {weekdays[locale].map((day, index) => (
               <option key={day} value={index}>{day}</option>
             ))}
           </select>
         </div>
         <div className="min-w-[8.5rem] flex-1">
-          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`start-${teacherId}`}>Inicio</label>
+          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`start-${teacherId}`}>{dictionary.common.start}</label>
           <input
             id={`start-${teacherId}`}
             type="time"
@@ -131,7 +138,7 @@ export function AvailabilityManager({
           />
         </div>
         <div className="min-w-[8.5rem] flex-1">
-          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`end-${teacherId}`}>Fin</label>
+          <label className="text-xs text-[var(--color-ink-soft)]" htmlFor={`end-${teacherId}`}>{dictionary.common.end}</label>
           <input
             id={`end-${teacherId}`}
             type="time"
@@ -141,11 +148,11 @@ export function AvailabilityManager({
           />
         </div>
         <div className="min-w-[10rem] flex-1 rounded-xl border border-dashed border-[var(--color-border)] bg-white/72 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-soft)]">Zona base</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-soft)]">{dictionary.common.baseTimezone}</p>
           <p className="text-sm text-[var(--color-ink)]">{normalizedTimezone}</p>
         </div>
         <Button variant="gold" size="sm" onClick={createSlot} disabled={pending} className="w-full sm:w-auto">
-          Agregar bloque
+          {dictionary.common.addBlock}
         </Button>
       </div>
 
@@ -169,7 +176,7 @@ export function AvailabilityManager({
                 }))
               }
             >
-              {weekdays.map((day, index) => (
+              {weekdays[locale].map((day, index) => (
                 <option key={`${slot.id}-${day}`} value={index}>
                   {day}
                 </option>
@@ -212,10 +219,10 @@ export function AvailabilityManager({
               }
             />
             <Button size="sm" variant="outline" onClick={() => updateSlot(slot.id)} disabled={pending} className="w-full sm:w-auto">
-              Guardar
+              {dictionary.common.save}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => deleteSlot(slot.id)} disabled={pending} className="w-full sm:w-auto">
-              Eliminar
+              {dictionary.common.delete}
             </Button>
           </div>
         </div>

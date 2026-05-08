@@ -135,7 +135,7 @@ export async function POST(req: Request) {
   });
 
   if (!thread) {
-    return NextResponse.json({ error: "Conversación no encontrada" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Conversación no encontrada" : "Conversation not found." }, { status: 404 });
   }
 
   const canSend = canAccessThread({
@@ -166,7 +166,7 @@ export async function POST(req: Request) {
   await createNotification({
     userId: recipientUserId,
     type: NotificationType.MESSAGE,
-    title: "Nuevo mensaje",
+    title: "New message",
     body: content.slice(0, 90),
     actionUrl: "/messages",
   });

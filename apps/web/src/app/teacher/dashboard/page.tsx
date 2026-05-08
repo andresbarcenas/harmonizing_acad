@@ -11,41 +11,45 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherDashboardData } from "@/lib/data";
-import { formatUtcToLocal } from "@/lib/timezone";
+import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 
-const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const dayNames = {
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+} as const;
 
 export default async function TeacherDashboardPage() {
   const viewer = await requireViewer([Role.TEACHER]);
+  const dictionary = getDictionary(viewer.locale);
   const data = await getTeacherDashboardData(viewer);
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/dashboard" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/teacher/dashboard" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Panel docente"
-        title="Tu jornada docente, más clara y mejor organizada."
-        description="Consulta tus clases del día, revisa prácticas pendientes y responde solicitudes desde un espacio más calmado, sin perder velocidad de lectura."
+        eyebrow={dictionary.teacher.dashboardEyebrow}
+        title={dictionary.teacher.dashboardTitle}
+        description={dictionary.teacher.dashboardDescription}
       />
 
       <div className="card-grid">
         <Card>
-          <CardTitle>Clases hoy</CardTitle>
+          <CardTitle>{dictionary.teacher.classesToday}</CardTitle>
           <p className="mt-3 font-display text-4xl tracking-[-0.05em]">{data.classesToday.length}</p>
         </Card>
         <Card>
-          <CardTitle>Estudiantes asignados</CardTitle>
+          <CardTitle>{dictionary.teacher.assignedStudents}</CardTitle>
           <p className="mt-3 font-display text-4xl tracking-[-0.05em]">{data.students.length}</p>
         </Card>
         <Card>
-          <CardTitle>Solicitudes pendientes</CardTitle>
+          <CardTitle>{dictionary.teacher.pendingRequests}</CardTitle>
           <p className="mt-3 font-display text-4xl tracking-[-0.05em]">{data.pendingRequests.length}</p>
         </Card>
       </div>
 
       <Card>
-        <CardTitle>Programar clases recurrentes</CardTitle>
+        <CardTitle>{dictionary.teacher.recurringTitle}</CardTitle>
         <CardDescription>
-          Crea una serie semanal para estudiantes asignados. El sistema evita cruces de horario con clases existentes.
+          {dictionary.teacher.recurringDescription}
         </CardDescription>
         <div className="mt-4">
           <RecurringClassForm
@@ -56,38 +60,39 @@ export default async function TeacherDashboardPage() {
             }))}
             defaultTimezone={viewer.timezone}
             defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}
+            locale={viewer.locale}
           />
         </div>
       </Card>
 
       <Card>
-        <CardTitle>Series recurrentes</CardTitle>
-        <CardDescription>Gestiona clases recurrentes activas o elimina series cuando sea necesario.</CardDescription>
+        <CardTitle>{dictionary.teacher.seriesTitle}</CardTitle>
+        <CardDescription>{dictionary.teacher.seriesDescription}</CardDescription>
         <div className="mt-3 space-y-2">
           {data.recurringSeries.map((series) => (
             <div key={series.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium">{series.student.user.name}</p>
-                <Badge variant={series.active ? "gold" : "default"}>{series.active ? "Activa" : "Detenida"}</Badge>
+                <Badge variant={series.active ? "gold" : "default"}>{series.active ? dictionary.common.active : dictionary.common.stopped}</Badge>
               </div>
               <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
-                {series.weekdays.map((day) => dayNames[day] ?? day).join(", ")} · {series.startTimeLocal} · cada {series.intervalWeeks} semana(s)
+                {series.weekdays.map((day) => dayNames[viewer.locale][day] ?? day).join(", ")} · {series.startTimeLocal} · {viewer.locale === "es" ? "cada" : "every"} {series.intervalWeeks} {viewer.locale === "es" ? "semana(s)" : "week(s)"}
               </p>
               <p className="text-xs text-[var(--color-ink-soft)]">
-                Próximas clases: {series.sessions.length} · Zona: {series.timezone}
+                {viewer.locale === "es" ? "Próximas clases" : "Upcoming classes"}: {series.sessions.length} · {dictionary.common.timezone}: {series.timezone}
               </p>
-              <SeriesActions seriesId={series.id} isActive={series.active} />
+              <SeriesActions seriesId={series.id} isActive={series.active} locale={viewer.locale} />
             </div>
           ))}
           {!data.recurringSeries.length ? (
-            <p className="text-sm text-[var(--color-ink-soft)]">No hay series recurrentes creadas.</p>
+            <p className="text-sm text-[var(--color-ink-soft)]">{viewer.locale === "es" ? "No hay series recurrentes creadas." : "No recurring series created."}</p>
           ) : null}
         </div>
       </Card>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <CardTitle>Agenda de hoy</CardTitle>
+          <CardTitle>{dictionary.teacher.todayAgenda}</CardTitle>
           <div className="mt-3 space-y-2">
             {data.classesToday.map((session) => (
               <div key={session.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
@@ -104,29 +109,29 @@ export default async function TeacherDashboardPage() {
                   <Badge variant={session.status === SessionStatus.COMPLETED ? "success" : "default"}>{session.status}</Badge>
                 </div>
                 <p className="text-[11px] text-[var(--color-ink-soft)]">
-                  Docente: {formatUtcToLocal(session.startsAtUtc, viewer.timezone)} ({viewer.timezone})
+                  {dictionary.teacher.teacherTime}: {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} ({viewer.timezone})
                 </p>
                 <p className="text-[11px] text-[var(--color-ink-soft)]">
-                  Estudiante: {formatUtcToLocal(session.startsAtUtc, session.student.user.timezone)} ({session.student.user.timezone})
+                  {dictionary.teacher.studentTime}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} ({session.student.user.timezone})
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <a href={session.meetingUrl} target="_blank" rel="noreferrer">
-                    <Button size="sm" variant="gold">Join Class</Button>
+                    <Button size="sm" variant="gold">{dictionary.common.joinClass}</Button>
                   </a>
                   <a href="/teacher/requests">
-                    <Button size="sm" variant="outline">Ver reagendaciones</Button>
+                    <Button size="sm" variant="outline">{dictionary.teacher.viewRequests}</Button>
                   </a>
                 </div>
-                <TeacherSessionActions sessionId={session.id} initialNotes={session.lastClassNotes} />
+                <TeacherSessionActions sessionId={session.id} initialNotes={session.lastClassNotes} locale={viewer.locale} />
               </div>
             ))}
-            {!data.classesToday.length ? <p className="text-sm text-[var(--color-ink-soft)]">No tienes clases para hoy.</p> : null}
+            {!data.classesToday.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noClassesToday}</p> : null}
           </div>
         </Card>
 
         <Card>
-          <CardTitle>Videos por revisar</CardTitle>
-          <CardDescription>Acceso rápido a prácticas semanales.</CardDescription>
+          <CardTitle>{dictionary.teacher.videosToReview}</CardTitle>
+          <CardDescription>{dictionary.teacher.videosDescription}</CardDescription>
           <div className="mt-3 space-y-2">
             {data.pendingVideos.slice(0, 6).map((video) => (
               <div key={video.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
@@ -142,13 +147,13 @@ export default async function TeacherDashboardPage() {
                 <p className="text-xs text-[var(--color-ink-soft)]">{video.originalName}</p>
               </div>
             ))}
-            {!data.pendingVideos.length ? <p className="text-sm text-[var(--color-ink-soft)]">No hay videos pendientes.</p> : null}
+            {!data.pendingVideos.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noPendingVideos}</p> : null}
           </div>
         </Card>
 
         <Card>
-          <CardTitle>Estudiantes asignados</CardTitle>
-          <CardDescription>Lista activa para acceso rápido.</CardDescription>
+          <CardTitle>{dictionary.teacher.assignedList}</CardTitle>
+          <CardDescription>{dictionary.teacher.assignedDescription}</CardDescription>
           <div className="mt-3 space-y-2">
             {data.students.map((assignment) => (
               <div key={assignment.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
@@ -161,19 +166,19 @@ export default async function TeacherDashboardPage() {
                   />
                   <p className="truncate text-sm font-medium">{assignment.student.user.name}</p>
                 </div>
-                <p className="text-xs text-[var(--color-ink-soft)]">{assignment.student.preferredInstrument ?? "Música general"}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">{assignment.student.preferredInstrument ?? (viewer.locale === "es" ? "Música general" : "General music")}</p>
               </div>
             ))}
-            {!data.students.length ? <p className="text-sm text-[var(--color-ink-soft)]">Aún no tienes estudiantes asignados.</p> : null}
+            {!data.students.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noAssigned}</p> : null}
           </div>
         </Card>
       </div>
 
       <Card>
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <CardTitle>Solicitudes recientes de reagendación</CardTitle>
+          <CardTitle>{dictionary.teacher.recentRequests}</CardTitle>
           <a href="/teacher/requests">
-            <Button size="sm" variant="outline">Abrir bandeja</Button>
+            <Button size="sm" variant="outline">{dictionary.teacher.openInbox}</Button>
           </a>
         </div>
         <div className="mt-3 space-y-2">
@@ -188,17 +193,17 @@ export default async function TeacherDashboardPage() {
                 />
                 <p className="truncate text-sm font-medium">{request.session.student.user.name}</p>
               </div>
-              <p className="text-xs text-[var(--color-ink-soft)]">{formatUtcToLocal(request.proposedStartUtc, viewer.timezone)}</p>
+              <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(request.proposedStartUtc, viewer.timezone, viewer.locale)}</p>
               <p className="text-[11px] text-[var(--color-ink-soft)]">
-                Docente: {formatUtcToLocal(request.proposedStartUtc, viewer.timezone)} ({viewer.timezone})
+                {dictionary.teacher.teacherTime}: {formatDateTimeInZone(request.proposedStartUtc, viewer.timezone, viewer.locale)} ({viewer.timezone})
               </p>
               <p className="text-[11px] text-[var(--color-ink-soft)]">
-                Estudiante: {formatUtcToLocal(request.proposedStartUtc, request.session.student.user.timezone)} ({request.session.student.user.timezone})
+                {dictionary.teacher.studentTime}: {formatDateTimeInZone(request.proposedStartUtc, request.session.student.user.timezone, viewer.locale)} ({request.session.student.user.timezone})
               </p>
               {request.studentMessage ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
             </div>
           ))}
-          {!data.pendingRequests.length ? <p className="text-sm text-[var(--color-ink-soft)]">Sin solicitudes pendientes por ahora.</p> : null}
+          {!data.pendingRequests.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noRequests}</p> : null}
         </div>
       </Card>
     </AppShell>

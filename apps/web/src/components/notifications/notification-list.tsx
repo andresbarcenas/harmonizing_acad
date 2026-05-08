@@ -6,12 +6,16 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getDictionary, intlLocale, type AppLocale } from "@/lib/i18n";
 
 export function NotificationList({
   initial,
+  locale,
 }: {
   initial: Array<{ id: string; title: string; body: string; createdAt: string; readAt: string | null; actionUrl: string | null }>;
+  locale: AppLocale;
 }) {
+  const dictionary = getDictionary(locale);
   const [items, setItems] = useState(initial);
   const unread = items.filter((item) => !item.readAt).length;
 
@@ -42,10 +46,10 @@ export function NotificationList({
     <div className="space-y-3">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-[var(--color-ink-soft)]">{unread} notificación(es) sin leer.</p>
+          <p className="text-sm text-[var(--color-ink-soft)]">{unread} {dictionary.notificationsList.unread}</p>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button variant="outline" onClick={simulateReminders} className="w-full sm:w-auto">Simular recordatorios</Button>
-            <Button variant="ghost" onClick={markAllRead} disabled={!unread} className="w-full sm:w-auto">Marcar todas</Button>
+            <Button variant="outline" onClick={simulateReminders} className="w-full sm:w-auto">{dictionary.notificationsList.simulate}</Button>
+            <Button variant="ghost" onClick={markAllRead} disabled={!unread} className="w-full sm:w-auto">{dictionary.notificationsList.markAll}</Button>
           </div>
         </div>
       </Card>
@@ -56,7 +60,7 @@ export function NotificationList({
               <p className="font-semibold">{item.title}</p>
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{item.body}</p>
               <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-                {new Date(item.createdAt).toLocaleString("es-US", {
+                {new Date(item.createdAt).toLocaleString(intlLocale(locale), {
                   month: "short",
                   day: "numeric",
                   hour: "numeric",
@@ -64,18 +68,18 @@ export function NotificationList({
                 })}
               </p>
             </div>
-            {item.readAt ? <Badge variant="default">Leída</Badge> : <Badge variant="gold">Nueva</Badge>}
+            {item.readAt ? <Badge variant="default">{dictionary.notificationsList.read}</Badge> : <Badge variant="gold">{dictionary.notificationsList.new}</Badge>}
           </div>
           {!item.readAt || item.actionUrl ? (
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               {!item.readAt ? (
                 <Button variant="ghost" className="w-full sm:w-auto" onClick={() => markRead(item.id)}>
-                  Marcar como leída
+                  {dictionary.notificationsList.markRead}
                 </Button>
               ) : null}
               {item.actionUrl ? (
                 <Link href={item.actionUrl}>
-                  <Button variant="outline" className="w-full sm:w-auto">Abrir</Button>
+                  <Button variant="outline" className="w-full sm:w-auto">{dictionary.common.open}</Button>
                 </Link>
               ) : null}
             </div>

@@ -5,6 +5,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { db } from "@/lib/db";
+import { normalizeLocale } from "@/lib/i18n/locales";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -19,10 +20,10 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     CredentialsProvider({
-      name: "Credenciales",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Contraseña", type: "password" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
@@ -48,6 +49,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role: user.role,
+          locale: normalizeLocale(user.locale),
           timezone: user.timezone,
         };
       },
@@ -57,6 +59,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role: Role }).role;
+        token.locale = normalizeLocale((user as { locale?: string }).locale);
         token.timezone = (user as { timezone: string }).timezone;
       }
       return token;
@@ -65,6 +68,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub ?? "";
         session.user.role = (token.role as Role) ?? Role.STUDENT;
+        session.user.locale = normalizeLocale(token.locale);
         session.user.timezone = (token.timezone as string) ?? "America/New_York";
       }
       return session;

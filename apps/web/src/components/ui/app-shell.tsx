@@ -4,10 +4,13 @@ import { Role } from "@prisma/client";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { TimezoneSync } from "@/components/system/timezone-sync";
 import { canUseAlegra } from "@/lib/alegra/client";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { normalizeLocale, type AppLocale } from "@/lib/i18n/locales";
 import { APP_VERSION } from "@/lib/release";
 import { cn } from "@/lib/utils";
 
@@ -16,36 +19,34 @@ type NavItem = {
   label: string;
 };
 
-const studentNav: NavItem[] = [
-  { href: "/dashboard", label: "Inicio" },
-  { href: "/schedule", label: "Agenda" },
-  { href: "/invoices", label: "Facturas" },
-  { href: "/videos", label: "Prácticas" },
-  { href: "/messages", label: "Mensajes" },
-  { href: "/notifications", label: "Notificaciones" },
-  { href: "/settings", label: "Perfil" },
-];
+function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["nav"]): NavItem[] {
+  const studentNav: NavItem[] = [
+    { href: "/dashboard", label: nav.home },
+    { href: "/schedule", label: nav.schedule },
+    { href: "/invoices", label: nav.invoices },
+    { href: "/videos", label: nav.practice },
+    { href: "/messages", label: nav.messages },
+    { href: "/notifications", label: nav.notifications },
+    { href: "/settings", label: nav.profile },
+  ];
+  const teacherNav: NavItem[] = [
+    { href: "/teacher/dashboard", label: nav.today },
+    { href: "/teacher/requests", label: nav.reschedules },
+    { href: "/teacher/videos", label: nav.videos },
+    { href: "/messages", label: nav.messages },
+    { href: "/notifications", label: nav.notifications },
+  ];
+  const adminNav: NavItem[] = [
+    { href: "/admin/dashboard", label: nav.overview },
+    { href: "/admin/invoices", label: nav.billing },
+    { href: "/admin/teachers", label: nav.teachers },
+    { href: "/admin/students", label: nav.students },
+    { href: "/admin/assignments", label: nav.assignments },
+    { href: "/admin/availability", label: nav.availability },
+    { href: "/notifications", label: nav.notifications },
+    { href: "/settings", label: nav.settings },
+  ];
 
-const teacherNav: NavItem[] = [
-  { href: "/teacher/dashboard", label: "Hoy" },
-  { href: "/teacher/requests", label: "Reagendaciones" },
-  { href: "/teacher/videos", label: "Videos" },
-  { href: "/messages", label: "Mensajes" },
-  { href: "/notifications", label: "Notificaciones" },
-];
-
-const adminNav: NavItem[] = [
-  { href: "/admin/dashboard", label: "Resumen" },
-  { href: "/admin/invoices", label: "Facturación" },
-  { href: "/admin/teachers", label: "Docentes" },
-  { href: "/admin/students", label: "Estudiantes" },
-  { href: "/admin/assignments", label: "Asignaciones" },
-  { href: "/admin/availability", label: "Disponibilidad" },
-  { href: "/notifications", label: "Notificaciones" },
-  { href: "/settings", label: "Configuración" },
-];
-
-function navByRole(role: Role): NavItem[] {
   if (role === Role.TEACHER) return teacherNav;
   if (role === Role.ADMIN) return adminNav;
   return studentNav;
@@ -55,16 +56,20 @@ export async function AppShell({
   role,
   activePath,
   userName,
+  locale,
   children,
 }: {
   role: Role;
   activePath: string;
   userName: string;
+  locale?: AppLocale;
   children: React.ReactNode;
 }) {
-  const items = navByRole(role);
-  const notificationIndex = items.findIndex((item) => item.href === "/notifications");
   const session = await getServerSession(authOptions);
+  const activeLocale = normalizeLocale(locale ?? session?.user?.locale);
+  const dictionary = getDictionary(activeLocale);
+  const items = navByRole(role, dictionary.shell.nav);
+  const notificationIndex = items.findIndex((item) => item.href === "/notifications");
   const alegraConfigured = canUseAlegra();
 
   let unreadCount = 0;
@@ -95,18 +100,19 @@ export async function AppShell({
               )}
               title={
                 alegraConfigured
-                  ? "Facturación conectada en modo live con Alegra."
-                  : "Facturación en modo demo (sin credenciales Alegra)."
+                  ? dictionary.shell.billingLiveTitle
+                  : dictionary.shell.billingDemoTitle
               }
             >
               <span className={cn("h-2 w-2 rounded-full", alegraConfigured ? "bg-emerald-500" : "bg-amber-500")} />
-              <span>Facturación {alegraConfigured ? "Live" : "Demo"}</span>
+              <span>{alegraConfigured ? dictionary.shell.billingLive : dictionary.shell.billingDemo}</span>
             </div>
+            <LanguageToggle locale={activeLocale} authenticated compact />
             <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] md:self-auto">
               <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
               <span className="truncate">{userName}</span>
             </div>
-            <SignOutButton compact />
+            <SignOutButton compact label={dictionary.common.signOut} />
           </div>
         </div>
         <nav className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 md:mt-5">

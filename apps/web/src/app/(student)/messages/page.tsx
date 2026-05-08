@@ -4,33 +4,35 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getMessagesThreadForViewer } from "@/lib/data";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function MessagesPage() {
   const viewer = await requireViewer();
+  const dictionary = getDictionary(viewer.locale);
   const thread = await getMessagesThreadForViewer(viewer);
 
   if (!thread) {
     return (
-      <AppShell role={viewer.role} activePath="/messages" userName={viewer.name}>
+      <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale}>
         <PageIntro
-          eyebrow="Mensajes"
-          title="Un canal privado para seguir tu proceso."
-          description="Mantén tus dudas, recordatorios y detalles de clase en una conversación simple y siempre disponible."
+          eyebrow={dictionary.messages.eyebrow}
+          title={dictionary.messages.titleEmpty}
+          description={dictionary.messages.descriptionEmpty}
         />
         <Card>
-          <CardTitle>Mensajes</CardTitle>
-          <CardDescription>No hay conversación disponible aún.</CardDescription>
+          <CardTitle>{dictionary.messages.eyebrow}</CardTitle>
+          <CardDescription>{dictionary.messages.unavailable}</CardDescription>
         </Card>
       </AppShell>
     );
   }
 
   return (
-    <AppShell role={viewer.role} activePath="/messages" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Mensajes"
-        title="Habla con claridad, sin salir de Harmonizing."
-        description="Todo queda en un solo hilo para mantener continuidad entre clases, prácticas y ajustes de agenda."
+        eyebrow={dictionary.messages.eyebrow}
+        title={dictionary.messages.title}
+        description={dictionary.messages.description}
       />
       <MessagesPanel
         threadId={thread.id}
@@ -41,6 +43,7 @@ export default async function MessagesPage() {
           createdAt: message.createdAt.toISOString(),
           sender: { id: message.sender.id, name: message.sender.name },
         }))}
+        locale={viewer.locale}
       />
     </AppShell>
   );

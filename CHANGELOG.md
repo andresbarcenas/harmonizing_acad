@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-05-08
+
+### Added
+- English/Spanish account language support as a release baseline, including localized admin forms, teacher scheduling controls, notifications, uploads, and shared action copy.
+- Lightweight `npm run smoke:routes` route check for public, student, teacher, admin, settings, and notification surfaces after local boot.
+- Auth-first root behavior so `/` sends logged-out users to `/sign-in` and authenticated users to their role workspace.
+
+### Changed
+- English is now the default interface language for unauthenticated and newly created users while Spanish remains available per account.
+- Student schedule visibility now supports selected-week navigation so future recurring classes are discoverable.
+- Release docs now distinguish MVP-complete flows from production-hardening items such as signed media URLs, realtime messaging, rate limiting, and observability.
+
 ## [0.3.0] - 2026-04-24
 
 ### Added

@@ -4,13 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import type { AppLocale } from "@/lib/i18n/locales";
 
 const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
 const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 type FileValidationResult = { valid: true } | { valid: false; message: string };
 
-export function VideoUploadForm() {
+export function VideoUploadForm({ locale }: { locale: AppLocale }) {
   const router = useRouter();
+  const copy = videoUploadCopy[locale];
   const [status, setStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [pending, setPending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -45,13 +47,13 @@ export function VideoUploadForm() {
 
   function validateFile(file: File | null): FileValidationResult {
     if (!file) {
-      return { valid: false, message: "Selecciona un archivo antes de continuar." };
+      return { valid: false, message: copy.selectFile };
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return { valid: false, message: "Formato no permitido. Usa MP4, MOV o WEBM." };
+      return { valid: false, message: copy.invalidFormat };
     }
     if (file.size > MAX_VIDEO_SIZE_BYTES) {
-      return { valid: false, message: "El archivo supera el límite de 100MB." };
+      return { valid: false, message: copy.tooLarge };
     }
     return { valid: true };
   }
@@ -87,7 +89,7 @@ export function VideoUploadForm() {
         setRecordedSeconds((current) => current + 1);
       }, 1000);
     } catch {
-      setStatus({ kind: "error", message: "No pudimos acceder a tu cámara/micrófono." });
+      setStatus({ kind: "error", message: copy.cameraError });
     }
   }
 
@@ -121,19 +123,19 @@ export function VideoUploadForm() {
     try {
       response = await uploadWithProgress(formData, (progress) => setUploadProgress(progress));
     } catch {
-      setStatus({ kind: "error", message: "No pudimos subir el video. Revisa tu conexión e inténtalo otra vez." });
+      setStatus({ kind: "error", message: copy.uploadConnectionError });
       setPending(false);
       return;
     }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setStatus({ kind: "error", message: payload?.error ?? "No pudimos subir el video. Inténtalo de nuevo." });
+      setStatus({ kind: "error", message: payload?.error ?? copy.uploadError });
       setPending(false);
       return;
     }
 
-    setStatus({ kind: "success", message: "Video enviado correctamente. Tu profesora lo revisará pronto." });
+    setStatus({ kind: "success", message: copy.success });
     setSelectedFile(null);
     resetRecordedPreview();
     setPending(false);
@@ -143,26 +145,26 @@ export function VideoUploadForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 rounded-[var(--radius-2xl)] border border-[var(--color-border)] bg-[var(--color-paper-elevated)] p-5 shadow-[var(--shadow-card)]">
-      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold-deep)]">Entrega semanal</p>
-      <p className="font-display text-[1.8rem] tracking-[-0.04em] text-[var(--color-ink)] sm:text-3xl">Subir mi práctica</p>
-      <p className="text-sm text-[var(--color-ink-soft)]">Comparte un video de 1 a 3 minutos para recibir observaciones personalizadas.</p>
+      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold-deep)]">{copy.eyebrow}</p>
+      <p className="font-display text-[1.8rem] tracking-[-0.04em] text-[var(--color-ink)] sm:text-3xl">{copy.title}</p>
+      <p className="text-sm text-[var(--color-ink-soft)]">{copy.description}</p>
       {supportsRecording ? (
         <div className="rounded-[1.1rem] border border-[var(--color-border)] bg-white/74 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-soft)]">Grabar aquí</p>
-          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">Puedes grabar desde el navegador o subir un archivo.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-soft)]">{copy.recordHere}</p>
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{copy.recordDescription}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {!recording ? (
               <Button type="button" variant="gold" onClick={startRecording} disabled={pending} className="w-full sm:w-auto">
-                Iniciar grabación
+                {copy.startRecording}
               </Button>
             ) : (
               <Button type="button" variant="outline" onClick={stopRecording} disabled={pending} className="w-full sm:w-auto">
-                Detener ({recordedSeconds}s)
+                {copy.stopRecording} ({recordedSeconds}s)
               </Button>
             )}
             {recordedFile ? (
               <Button type="button" variant="ghost" onClick={resetRecordedPreview} disabled={pending} className="w-full sm:w-auto">
-                Limpiar grabación
+                {copy.clearRecording}
               </Button>
             ) : null}
           </div>
@@ -216,22 +218,22 @@ export function VideoUploadForm() {
       >
         {selectedFile ? (
           <p className="text-[var(--color-ink-soft)]">
-            Archivo listo: <span className="font-semibold text-[var(--color-ink)]">{selectedFile.name}</span>
+            {copy.fileReady}: <span className="font-semibold text-[var(--color-ink)]">{selectedFile.name}</span>
           </p>
         ) : (
-          <p className="text-[var(--color-ink-soft)]">Arrastra y suelta tu archivo MP4/MOV aquí o usa el selector.</p>
+          <p className="text-[var(--color-ink-soft)]">{copy.dragDrop}</p>
         )}
       </div>
       {pending ? (
         <div className="space-y-1">
-          <p className="text-xs text-[var(--color-ink-soft)]">Subiendo... {uploadProgress}%</p>
+          <p className="text-xs text-[var(--color-ink-soft)]">{copy.uploading} {uploadProgress}%</p>
           <div className="h-2 rounded-full bg-[var(--color-gold-soft)]">
             <div className="h-2 rounded-full bg-[var(--color-gold)] transition-all" style={{ width: `${uploadProgress}%` }} />
           </div>
         </div>
       ) : null}
       <Button type="submit" variant="gold" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Subiendo..." : "Subir mi práctica semanal"}
+        {pending ? copy.uploading : copy.submit}
       </Button>
       {status ? (
         <p className={`text-sm ${status.kind === "success" ? "text-emerald-700" : "text-rose-700"}`}>{status.message}</p>
@@ -261,3 +263,48 @@ function uploadWithProgress(formData: FormData, onProgress: (value: number) => v
     request.send(formData);
   });
 }
+
+const videoUploadCopy = {
+  en: {
+    selectFile: "Select a file before continuing.",
+    invalidFormat: "Unsupported format. Use MP4, MOV, or WEBM.",
+    tooLarge: "The file exceeds the 100MB limit.",
+    cameraError: "We could not access your camera/microphone.",
+    uploadConnectionError: "We could not upload the video. Check your connection and try again.",
+    uploadError: "We could not upload the video. Try again.",
+    success: "Video submitted successfully. Your teacher will review it soon.",
+    eyebrow: "Weekly submission",
+    title: "Upload my practice",
+    description: "Share a 1 to 3 minute video to receive personalized notes.",
+    recordHere: "Record here",
+    recordDescription: "You can record from the browser or upload a file.",
+    startRecording: "Start recording",
+    stopRecording: "Stop",
+    clearRecording: "Clear recording",
+    fileReady: "File ready",
+    dragDrop: "Drag and drop your MP4/MOV file here or use the selector.",
+    uploading: "Uploading...",
+    submit: "Upload my weekly practice",
+  },
+  es: {
+    selectFile: "Selecciona un archivo antes de continuar.",
+    invalidFormat: "Formato no permitido. Usa MP4, MOV o WEBM.",
+    tooLarge: "El archivo supera el límite de 100MB.",
+    cameraError: "No pudimos acceder a tu cámara/micrófono.",
+    uploadConnectionError: "No pudimos subir el video. Revisa tu conexión e inténtalo otra vez.",
+    uploadError: "No pudimos subir el video. Inténtalo de nuevo.",
+    success: "Video enviado correctamente. Tu profesora lo revisará pronto.",
+    eyebrow: "Entrega semanal",
+    title: "Subir mi práctica",
+    description: "Comparte un video de 1 a 3 minutos para recibir observaciones personalizadas.",
+    recordHere: "Grabar aquí",
+    recordDescription: "Puedes grabar desde el navegador o subir un archivo.",
+    startRecording: "Iniciar grabación",
+    stopRecording: "Detener",
+    clearRecording: "Limpiar grabación",
+    fileReady: "Archivo listo",
+    dragDrop: "Arrastra y suelta tu archivo MP4/MOV aquí o usa el selector.",
+    uploading: "Subiendo...",
+    submit: "Subir mi práctica semanal",
+  },
+} as const satisfies Record<AppLocale, Record<string, string>>;

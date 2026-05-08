@@ -25,11 +25,11 @@ export async function POST(req: Request) {
   const proposedEndUtc = new Date(payload.proposedEndUtc);
 
   if (Number.isNaN(proposedStartUtc.getTime()) || Number.isNaN(proposedEndUtc.getTime()) || proposedStartUtc >= proposedEndUtc) {
-    return NextResponse.json({ error: "Horario propuesto inválido" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Horario propuesto inválido" : "Invalid proposed time." }, { status: 400 });
   }
 
   if (!isValidRescheduleDuration(proposedStartUtc, proposedEndUtc)) {
-    return NextResponse.json({ error: "La duración permitida es entre 30 y 180 minutos." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La duración permitida es entre 30 y 180 minutos." : "Allowed duration is between 30 and 180 minutes." }, { status: 400 });
   }
 
   const session = await db.classSession.findFirst({
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Clase no encontrada" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Clase no encontrada" : "Class not found." }, { status: 404 });
   }
 
   const assignment = await db.teacherAssignment.findUnique({
@@ -57,11 +57,11 @@ export async function POST(req: Request) {
   });
 
   if (!assignment || assignment.teacherId !== session.teacherId) {
-    return NextResponse.json({ error: "No tienes una docente asignada para esta clase" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes una docente asignada para esta clase" : "You do not have an assigned teacher for this class." }, { status: 400 });
   }
 
   if (!isSlotWithinAvailability(proposedStartUtc, proposedEndUtc, assignment.teacher.availability, assignment.teacher.user.timezone)) {
-    return NextResponse.json({ error: "El horario propuesto no está dentro de la disponibilidad docente." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El horario propuesto no está dentro de la disponibilidad docente." : "The proposed time is outside teacher availability." }, { status: 409 });
   }
 
   const existingPending = await db.rescheduleRequest.findFirst({
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   });
 
   if (existingPending) {
-    return NextResponse.json({ error: "Ya existe una solicitud pendiente para esta clase." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe una solicitud pendiente para esta clase." : "A pending request already exists for this class." }, { status: 409 });
   }
 
   const overlap = await db.classSession.findFirst({
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
   });
 
   if (overlap) {
-    return NextResponse.json({ error: "La docente ya tiene otra clase en ese horario." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La docente ya tiene otra clase en ese horario." : "The teacher already has another class at that time." }, { status: 409 });
   }
 
   const request = await db.rescheduleRequest.create({
@@ -109,8 +109,8 @@ export async function POST(req: Request) {
   await createNotification({
     userId: assignment.teacher.userId,
     type: NotificationType.RESCHEDULE_UPDATE,
-    title: "Nueva solicitud de reagendación",
-    body: "Un estudiante propuso un nuevo horario.",
+    title: "New reschedule request",
+    body: "A student proposed a new time.",
     actionUrl: "/teacher/requests",
   });
 
@@ -133,7 +133,7 @@ export async function PATCH(req: Request) {
   };
 
   if (!requestId || ![RescheduleStatus.ACCEPTED, RescheduleStatus.REJECTED].includes(status)) {
-    return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Payload inválido" : "Invalid payload." }, { status: 400 });
   }
 
   const request = await db.rescheduleRequest.findFirst({
@@ -148,11 +148,11 @@ export async function PATCH(req: Request) {
   });
 
   if (!request) {
-    return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Solicitud no encontrada" : "Request not found." }, { status: 404 });
   }
 
   if (!isValidRescheduleDuration(request.proposedStartUtc, request.proposedEndUtc)) {
-    return NextResponse.json({ error: "La solicitud tiene una duración inválida." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La solicitud tiene una duración inválida." : "The request has an invalid duration." }, { status: 409 });
   }
 
   if (status === RescheduleStatus.ACCEPTED) {
@@ -166,11 +166,11 @@ export async function PATCH(req: Request) {
     });
 
     if (!teacherUser) {
-      return NextResponse.json({ error: "Docente no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrada" : "Teacher not found." }, { status: 404 });
     }
 
     if (!isSlotWithinAvailability(request.proposedStartUtc, request.proposedEndUtc, availability, teacherUser.user.timezone)) {
-      return NextResponse.json({ error: "El horario propuesto ya no está disponible en agenda docente." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "El horario propuesto ya no está disponible en agenda docente." : "The proposed time is no longer available." }, { status: 409 });
     }
 
     const conflicting = await db.classSession.findMany({
@@ -191,7 +191,7 @@ export async function PATCH(req: Request) {
     );
 
     if (hasOverlap) {
-      return NextResponse.json({ error: "La docente tiene una clase que se superpone con ese horario." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "La docente tiene una clase que se superpone con ese horario." : "The teacher has an overlapping class at that time." }, { status: 409 });
     }
   }
 
@@ -234,8 +234,8 @@ export async function PATCH(req: Request) {
     await createNotification({
       userId: studentUser.userId,
       type: NotificationType.RESCHEDULE_UPDATE,
-      title: status === RescheduleStatus.ACCEPTED ? "Cambio de clase aprobado" : "Cambio de clase rechazado",
-      body: status === RescheduleStatus.ACCEPTED ? "Tu nuevo horario quedó confirmado." : "Conservamos tu horario original.",
+      title: status === RescheduleStatus.ACCEPTED ? "Class change approved" : "Class change rejected",
+      body: status === RescheduleStatus.ACCEPTED ? "Your new time is confirmed." : "We kept your original time.",
       actionUrl: "/schedule",
     });
   }

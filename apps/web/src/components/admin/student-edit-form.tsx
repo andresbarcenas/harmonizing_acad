@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getDictionary, type AppLocale } from "@/lib/i18n";
 import { uploadProfileImageFile } from "@/lib/profile-upload";
 
 type TeacherOption = {
@@ -18,6 +19,7 @@ export function StudentEditForm({
   studentId,
   initial,
   teachers,
+  locale = "en",
 }: {
   studentId: string;
   initial: {
@@ -31,8 +33,10 @@ export function StudentEditForm({
     profileImage?: string | null;
   };
   teachers: TeacherOption[];
+  locale?: AppLocale;
 }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const [pending, setPending] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,15 +74,15 @@ export function StudentEditForm({
         setError(data.error);
       } else if (data?.error && typeof data.error === "object") {
         const firstFieldError = Object.values(data.error.fieldErrors ?? {}).find((messages) => messages?.length)?.[0];
-        setError(firstFieldError ?? data.error.formErrors?.[0] ?? "No se pudo actualizar.");
+        setError(firstFieldError ?? data.error.formErrors?.[0] ?? dictionary.admin.updateError);
       } else {
-        setError("No se pudo actualizar.");
+        setError(dictionary.admin.updateError);
       }
       setPending(false);
       return;
     }
 
-    setSuccess("Estudiante actualizado.");
+    setSuccess(dictionary.admin.studentUpdated);
     setPending(false);
     setOpen(false);
     router.refresh();
@@ -86,7 +90,7 @@ export function StudentEditForm({
 
   async function uploadImage() {
     if (!uploadFile) {
-      setError("Selecciona una imagen para subir.");
+      setError(dictionary.forms.selectImage);
       return;
     }
     setUploading(true);
@@ -97,11 +101,11 @@ export function StudentEditForm({
         assign: true,
       });
       setProfileImage(uploaded.imageUrl);
-      setSuccess("Foto actualizada.");
+      setSuccess(dictionary.forms.imageUpdated);
       setUploadFile(null);
       router.refresh();
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+      setError(uploadError instanceof Error ? uploadError.message : dictionary.forms.imageUploadError);
     } finally {
       setUploading(false);
     }
@@ -110,7 +114,7 @@ export function StudentEditForm({
   return (
     <div className="mt-2">
       <Button size="sm" variant="outline" onClick={() => setOpen((value) => !value)}>
-        {open ? "Cerrar edición" : "Editar"}
+        {open ? dictionary.common.closeEdit : dictionary.common.edit}
       </Button>
 
       {open ? (
@@ -122,7 +126,7 @@ export function StudentEditForm({
               fallback={initial.name.slice(0, 1).toUpperCase()}
               className="h-9 w-9 text-[10px]"
             />
-            <p className="text-xs text-[var(--color-ink-soft)]">Editar datos del estudiante.</p>
+            <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.studentEditHelp}</p>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <Input name="name" defaultValue={initial.name} required />
@@ -142,8 +146,8 @@ export function StudentEditForm({
             </select>
           </div>
           <div className="grid gap-2 md:grid-cols-2">
-            <Input name="phone" defaultValue={initial.phone ?? ""} placeholder="Teléfono" />
-            <Input name="preferredInstrument" defaultValue={initial.preferredInstrument ?? ""} placeholder="Instrumento preferido" />
+            <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
+            <Input name="preferredInstrument" defaultValue={initial.preferredInstrument ?? ""} placeholder={dictionary.forms.preferredInstrumentOptional} />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input
@@ -155,12 +159,12 @@ export function StudentEditForm({
               onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
             />
             <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
-              {uploading ? "Subiendo..." : "Subir foto"}
+              {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
             </Button>
           </div>
           <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder="Bio" />
           <Button type="submit" size="sm" variant="gold" disabled={pending}>
-            {pending ? "Guardando..." : "Guardar cambios"}
+            {pending ? dictionary.common.saving : dictionary.forms.saveChanges}
           </Button>
           {error ? <p className="text-xs text-rose-700">{error}</p> : null}
           {success ? <p className="text-xs text-emerald-700">{success}</p> : null}

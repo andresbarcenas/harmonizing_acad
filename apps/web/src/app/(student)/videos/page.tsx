@@ -7,25 +7,27 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentVideosData } from "@/lib/data";
+import { formatDate, getDictionary } from "@/lib/i18n";
 import { getVideoPublicUrl } from "@/lib/storage";
 
 export default async function StudentVideosPage() {
   const viewer = await requireViewer([Role.STUDENT]);
+  const dictionary = getDictionary(viewer.locale);
   const videos = await getStudentVideosData(viewer);
 
   return (
-    <AppShell role={viewer.role} activePath="/videos" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/videos" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Práctica semanal"
-        title="Comparte tu avance y recibe guía con continuidad."
-        description="Sube tu práctica en minutos, mantén un historial visible y revisa el feedback de tu docente en una línea de progreso más clara."
+        eyebrow={dictionary.videos.studentEyebrow}
+        title={dictionary.videos.studentTitle}
+        description={dictionary.videos.studentDescription}
       />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <VideoUploadForm />
+        <VideoUploadForm locale={viewer.locale} />
         <Card>
-          <CardTitle>Timeline de progreso</CardTitle>
-          <CardDescription>Tu historial semanal de práctica.</CardDescription>
+          <CardTitle>{dictionary.videos.timeline}</CardTitle>
+          <CardDescription>{dictionary.videos.timelineDescription}</CardDescription>
           <div className="mt-3 space-y-3">
             {videos.map((video, index) => (
               <div key={video.id} className="relative rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
@@ -33,10 +35,10 @@ export default async function StudentVideosPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="break-all text-sm font-medium">{video.originalName}</p>
                   <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
-                    {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "Revisado" : "En revisión"}
+                    {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? dictionary.common.reviewed : dictionary.common.inReview}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{new Date(video.submittedAt).toLocaleDateString("es-US")}</p>
+                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, viewer.locale)}</p>
                 <div className="mt-2">
                   <video
                     controls
@@ -48,14 +50,14 @@ export default async function StudentVideosPage() {
                   </video>
                 </div>
                 <div className="mt-2 rounded-xl border border-[var(--color-border)] bg-white/80 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
-                  <p>1) Enviado</p>
-                  <p>2) Revisado por docente</p>
-                  <p>3) Feedback aplicado</p>
+                  <p>1) {dictionary.videos.sent}</p>
+                  <p>2) {dictionary.videos.reviewedByTeacher}</p>
+                  <p>3) {dictionary.videos.feedbackApplied}</p>
                 </div>
                 {video.feedback[0] ? <p className="mt-2 text-sm text-[var(--color-ink)]">{video.feedback[0].comment}</p> : null}
               </div>
             ))}
-            {!videos.length ? <p className="text-sm text-[var(--color-ink-soft)]">Aún no has enviado videos de práctica.</p> : null}
+            {!videos.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.videos.noStudentVideos}</p> : null}
           </div>
         </Card>
       </div>

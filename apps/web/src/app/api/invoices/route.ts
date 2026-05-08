@@ -42,7 +42,7 @@ export async function POST() {
 
   if (cooldownHit) {
     return NextResponse.json(
-      { error: "Ya existe una sincronización reciente. Intenta nuevamente en unos segundos." },
+      { error: auth.user.locale === "es" ? "Ya existe una sincronización reciente. Intenta nuevamente en unos segundos." : "A recent sync already exists. Try again in a few seconds." },
       { status: 429 },
     );
   }

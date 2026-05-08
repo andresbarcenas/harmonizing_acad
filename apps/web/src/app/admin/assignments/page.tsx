@@ -8,9 +8,11 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function AdminAssignmentsPage() {
   const viewer = await requireViewer([Role.ADMIN]);
+  const dictionary = getDictionary(viewer.locale);
 
   const assignments = await db.teacherAssignment.findMany({
     include: {
@@ -25,25 +27,25 @@ export default async function AdminAssignmentsPage() {
   });
 
   return (
-    <AppShell role={viewer.role} activePath="/admin/assignments" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/admin/assignments" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Asignaciones"
-        title="Cada relación estudiante-docente, en una vista más limpia."
-        description="Revisa quién acompaña a cada alumno y mantén el control de las asignaciones activas con una lectura rápida y ordenada."
+        eyebrow={dictionary.shell.nav.assignments}
+        title={viewer.locale === "es" ? "Cada relación estudiante-docente, en una vista más limpia." : "Every student-teacher relationship in a cleaner view."}
+        description={viewer.locale === "es" ? "Revisa quién acompaña a cada alumno y mantén el control de las asignaciones activas con una lectura rápida y ordenada." : "Review who supports each student and keep active assignments easy to scan."}
       >
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/teachers">
-            <Button variant="outline" size="sm">Nuevo docente</Button>
+            <Button variant="outline" size="sm">{dictionary.admin.addTeacher}</Button>
           </Link>
           <Link href="/admin/students">
-            <Button variant="outline" size="sm">Nuevo estudiante</Button>
+            <Button variant="outline" size="sm">{dictionary.admin.addStudent}</Button>
           </Link>
         </div>
       </PageIntro>
 
       <Card>
-        <CardTitle>Asignaciones estudiante-docente</CardTitle>
-        <CardDescription>Los estudiantes no pueden cambiar docente desde la plataforma.</CardDescription>
+        <CardTitle>{viewer.locale === "es" ? "Asignaciones estudiante-docente" : "Student-teacher assignments"}</CardTitle>
+        <CardDescription>{viewer.locale === "es" ? "Los estudiantes no pueden cambiar docente desde la plataforma." : "Students cannot change teachers from the platform."}</CardDescription>
         <div className="mt-4">
           <AssignmentManager
             assignments={assignments.map((assignment) => ({
@@ -57,8 +59,9 @@ export default async function AdminAssignmentsPage() {
               id: teacher.id,
               name: teacher.user.name,
             }))}
+            locale={viewer.locale}
           />
-          {!assignments.length ? <p className="mt-2 text-sm text-[var(--color-ink-soft)]">No hay asignaciones activas.</p> : null}
+          {!assignments.length ? <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{viewer.locale === "es" ? "No hay asignaciones activas." : "No active assignments."}</p> : null}
         </div>
       </Card>
     </AppShell>

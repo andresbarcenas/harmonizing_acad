@@ -4,8 +4,11 @@ import { redirect } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand/logo";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { Card } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getCookieLocale } from "@/lib/i18n/request";
 import { defaultRouteForRole } from "@/lib/rbac";
 import { APP_VERSION } from "@/lib/release";
 
@@ -14,6 +17,8 @@ export default async function SignInPage() {
   if (session?.user?.role) {
     redirect(defaultRouteForRole(session.user.role));
   }
+  const locale = await getCookieLocale();
+  const dictionary = getDictionary(locale);
 
   return (
     <div className="relative isolate min-h-screen overflow-hidden px-3 py-6 sm:px-4 md:px-6 md:py-12">
@@ -25,17 +30,20 @@ export default async function SignInPage() {
           <div className="absolute -right-5 top-24 flex h-14 w-14 items-center justify-center rounded-full border border-white/80 bg-white/86 text-[var(--color-gold)] shadow-[var(--shadow-glow)]">
             <Sparkles className="h-5 w-5" />
           </div>
+          <div className="absolute -left-4 top-24">
+            <LanguageToggle locale={locale} compact />
+          </div>
           <p className="mx-auto mt-8 max-w-sm text-[1.4rem] font-medium tracking-[-0.04em] text-[var(--color-ink-soft)] sm:text-[1.6rem] md:mt-10 md:text-[1.8rem]">
-            Tu escuela de música exclusiva
+            {dictionary.auth.tagline}
           </p>
         </div>
 
         <Card className="mt-8 w-full rounded-[2rem] px-5 py-7 sm:px-7 sm:py-8 md:mt-10 md:px-8 md:py-9">
           <h1 className="text-center font-display text-[2rem] tracking-[-0.04em] text-[var(--color-ink)] sm:text-[2.4rem] md:text-[2.9rem]">
-            Iniciar Sesión
+            {dictionary.auth.title}
           </h1>
           <div className="mt-10">
-            <SignInForm />
+            <SignInForm locale={locale} />
           </div>
         </Card>
         <p className="mt-5 text-center text-xs tracking-[0.12em] text-[var(--color-ink-soft)] uppercase">

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { RescheduleStatus, SessionStatus } from "@prisma/client";
-import { addDays, endOfMonth, startOfDay, startOfMonth } from "date-fns";
+import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import type { AppViewer } from "@/features/auth/server";
@@ -91,15 +91,17 @@ export async function getStudentDashboardData(viewer: AppViewer) {
   };
 }
 
-export async function getStudentScheduleData(viewer: AppViewer) {
+export async function getStudentScheduleData(viewer: AppViewer, options: { week?: string } = {}) {
   if (viewer.role !== "STUDENT" || !viewer.studentProfileId) {
     throw new Error("Unauthorized: student role required");
   }
 
   const studentProfileId = viewer.studentProfileId;
   const now = new Date();
+  const studentTimezone = normalizeIanaTimezone(viewer.timezone);
+  const week = resolveScheduleWeek(studentTimezone, options.week);
 
-  const [student, sessions, pendingRequests] = await Promise.all([
+  const [student, sessions, nextUpcomingSession, pendingRequests] = await Promise.all([
     db.studentProfile.findUnique({
       where: { id: studentProfileId },
       include: {
@@ -118,11 +120,21 @@ export async function getStudentScheduleData(viewer: AppViewer) {
     db.classSession.findMany({
       where: {
         studentId: studentProfileId,
+        startsAtUtc: {
+          gte: week.startUtc,
+          lt: week.endUtc,
+        },
+        status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+      },
+      orderBy: { startsAtUtc: "asc" },
+    }),
+    db.classSession.findFirst({
+      where: {
+        studentId: studentProfileId,
         startsAtUtc: { gte: now },
         status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
       },
       orderBy: { startsAtUtc: "asc" },
-      take: 8,
     }),
     db.rescheduleRequest.findMany({
       where: {
@@ -134,13 +146,17 @@ export async function getStudentScheduleData(viewer: AppViewer) {
   ]);
 
   const teacher = student?.assignment?.teacher;
-  const slots = teacher ? buildWeekSlots(teacher.availability, teacher.user.timezone ?? "America/New_York") : [];
+  const slots = teacher
+    ? buildWeekSlots(teacher.availability, teacher.user.timezone ?? "America/New_York", week.startUtc, week.endUtc)
+    : [];
 
   return {
     assignedTeacher: teacher ?? null,
     sessions,
+    nextUpcomingSession,
     slots,
     pendingRequests,
+    week,
   };
 }
 
@@ -163,7 +179,7 @@ type Availability = {
   timezone: string;
 };
 
-function buildWeekSlots(availability: Availability[], fallbackTimezone: string) {
+function buildWeekSlots(availability: Availability[], fallbackTimezone: string, selectedWeekStartUtc: Date, selectedWeekEndUtc: Date) {
   const now = new Date();
   const slots: { startUtc: Date; endUtc: Date }[] = [];
   const seen = new Set<string>();
@@ -171,9 +187,10 @@ function buildWeekSlots(availability: Availability[], fallbackTimezone: string) 
 
   for (const window of availability) {
     const timezone = normalizeIanaTimezone(window.timezone || normalizedDefaultTimezone);
-    const zoneStart = startOfDay(toZonedTime(now, timezone));
+    // Generate around the selected student week, then filter by UTC bounds so teacher/student timezones stay aligned.
+    const zoneStart = startOfDay(toZonedTime(addDays(selectedWeekStartUtc, -1), timezone));
 
-    for (let i = 0; i < 7; i += 1) {
+    for (let i = 0; i < 9; i += 1) {
       const localDate = addDays(zoneStart, i);
       if (localDate.getDay() !== window.weekday) continue;
 
@@ -182,7 +199,7 @@ function buildWeekSlots(availability: Availability[], fallbackTimezone: string) 
         localSlot.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
         const startUtc = fromZonedTime(localSlot, timezone);
         const dedupeKey = startUtc.toISOString();
-        if (startUtc <= now || seen.has(dedupeKey)) continue;
+        if (startUtc <= now || startUtc < selectedWeekStartUtc || startUtc >= selectedWeekEndUtc || seen.has(dedupeKey)) continue;
 
         const endUtc = new Date(startUtc.getTime() + 60 * 60 * 1000);
         slots.push({ startUtc, endUtc });
@@ -191,5 +208,36 @@ function buildWeekSlots(availability: Availability[], fallbackTimezone: string) 
     }
   }
 
-  return slots.sort((a, b) => a.startUtc.getTime() - b.startUtc.getTime()).slice(0, 12);
+  return slots.sort((a, b) => a.startUtc.getTime() - b.startUtc.getTime());
+}
+
+function resolveScheduleWeek(timezone: string, weekParam?: string) {
+  const normalizedTimezone = normalizeIanaTimezone(timezone);
+  const anchor = parseWeekParamAsLocalAnchor(weekParam, normalizedTimezone) ?? new Date();
+  const zonedAnchor = toZonedTime(anchor, normalizedTimezone);
+  const localWeekStart = startOfWeek(zonedAnchor, { weekStartsOn: 1 });
+  localWeekStart.setHours(0, 0, 0, 0);
+
+  const localWeekEnd = addDays(localWeekStart, 7);
+  const startUtc = fromZonedTime(localWeekStart, normalizedTimezone);
+  const endUtc = fromZonedTime(localWeekEnd, normalizedTimezone);
+
+  return {
+    startUtc,
+    endUtc,
+    startKey: format(localWeekStart, "yyyy-MM-dd"),
+    previousWeekKey: format(addDays(localWeekStart, -7), "yyyy-MM-dd"),
+    nextWeekKey: format(addDays(localWeekStart, 7), "yyyy-MM-dd"),
+    currentWeekKey: format(startOfWeek(toZonedTime(new Date(), normalizedTimezone), { weekStartsOn: 1 }), "yyyy-MM-dd"),
+  };
+}
+
+function parseWeekParamAsLocalAnchor(weekParam: string | undefined, timezone: string) {
+  if (!weekParam || !/^\d{4}-\d{2}-\d{2}$/.test(weekParam)) return null;
+
+  const [year, month, day] = weekParam.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  const localNoon = new Date(year, month - 1, day, 12, 0, 0, 0);
+  return fromZonedTime(localNoon, normalizeIanaTimezone(timezone));
 }

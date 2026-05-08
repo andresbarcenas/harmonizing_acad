@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { intlLocale, type AppLocale } from "@/lib/i18n/locales";
 
 export function MessagesPanel({
   threadId,
   messages,
   currentUserId,
+  locale,
 }: {
   threadId: string;
   messages: Array<{ id: string; content: string; createdAt: string; sender: { id: string; name: string | null } }>;
   currentUserId: string;
+  locale: AppLocale;
 }) {
   const [draft, setDraft] = useState("");
   const [localMessages, setLocalMessages] = useState(messages);
@@ -43,7 +46,7 @@ export function MessagesPanel({
       id: optimisticId,
       content: draft.trim(),
       createdAt: new Date().toISOString(),
-      sender: { id: currentUserId, name: "Tú" },
+      sender: { id: currentUserId, name: locale === "es" ? "Tú" : "You" },
     };
     setLocalMessages((prev) => [...prev, optimisticMessage]);
     setDraft("");
@@ -81,16 +84,16 @@ export function MessagesPanel({
             >
               <p>{message.content}</p>
               <p className={`mt-1 text-[10px] ${own ? "text-white/72" : "text-[var(--color-ink-soft)]"}`}>
-                {message.sender.name} · {new Date(message.createdAt).toLocaleTimeString("es-US", { hour: "numeric", minute: "2-digit" })}
+                {message.sender.name} · {new Date(message.createdAt).toLocaleTimeString(intlLocale(locale), { hour: "numeric", minute: "2-digit" })}
               </p>
             </div>
           );
         })}
       </div>
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Escribe un mensaje" />
+        <Input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={locale === "es" ? "Escribe un mensaje" : "Write a message"} />
         <Button variant="gold" onClick={send} disabled={sending || !draft.trim()} className="w-full sm:w-auto">
-          {sending ? "Enviando..." : "Enviar"}
+          {sending ? (locale === "es" ? "Enviando..." : "Sending...") : locale === "es" ? "Enviar" : "Send"}
         </Button>
       </div>
     </div>

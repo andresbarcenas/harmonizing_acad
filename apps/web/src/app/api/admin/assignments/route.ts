@@ -33,7 +33,7 @@ export async function PATCH(req: Request) {
   ]);
 
   if (!student || !teacher) {
-    return NextResponse.json({ error: "Estudiante o docente no encontrado" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante o docente no encontrado" : "Student or teacher not found." }, { status: 404 });
   }
 
   const assignment = await db.teacherAssignment.upsert({
@@ -53,11 +53,10 @@ export async function PATCH(req: Request) {
   await createNotification({
     userId: student.userId,
     type: NotificationType.SYSTEM,
-    title: "Asignación docente actualizada",
-    body: `Tu docente asignada ahora es ${teacher.user.name}.`,
+    title: "Teacher assignment updated",
+    body: `Your assigned teacher is now ${teacher.user.name}.`,
     actionUrl: "/dashboard",
   });
 
   return NextResponse.json({ assignment });
 }
-

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   ]);
 
   if (existingUser) {
-    return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
   }
 
   try {
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
           email: data.email,
           passwordHash,
           role: Role.TEACHER,
-          locale: "es",
+          locale: "en",
           timezone: teacherTimezone,
           image: data.profileImage ?? null,
         },
@@ -85,8 +85,8 @@ export async function POST(req: Request) {
     await createNotification({
       userId: created.user.id,
       type: NotificationType.SYSTEM,
-      title: "Cuenta docente creada",
-      body: "Tu perfil docente ya está activo en Harmonizing.",
+      title: "Teacher account created",
+      body: "Your teacher profile is now active in Harmonizing.",
       actionUrl: "/teacher/dashboard",
     });
 
@@ -104,9 +104,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
     }
 
-    return NextResponse.json({ error: "No se pudo crear el docente." }, { status: 500 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No se pudo crear el docente." : "Could not create the teacher." }, { status: 500 });
   }
 }

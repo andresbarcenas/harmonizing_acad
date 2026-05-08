@@ -13,6 +13,12 @@
 - `AppShell` + `PageIntro` enforce consistent high-level composition for student, teacher, admin, settings, and notifications surfaces.
 - Auth routes (`/sign-in`, `/forgot-password`) follow the same system with denser visual hierarchy and softer atmospheric backgrounds.
 
+## Internationalization
+- Supported locales are English (`en`) and Spanish (`es`) with English as the default fallback.
+- Routes are not prefixed by locale; public/auth pages use the locale cookie and authenticated pages use `User.locale`.
+- Translation dictionaries live under `apps/web/src/lib/i18n` and are applied at render/message boundaries while database enums remain canonical.
+- Date, time, and currency rendering use locale-aware helpers while UTC remains the storage format for schedule data.
+
 ## Auth and Roles
 - NextAuth credentials provider with Prisma adapter
 - User roles: `STUDENT`, `TEACHER`, `ADMIN`

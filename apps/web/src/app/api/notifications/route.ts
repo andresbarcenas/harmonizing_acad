@@ -34,7 +34,7 @@ export async function PATCH(req: Request) {
   const { notificationId, markAll } = (await req.json()) as { notificationId?: string; markAll?: boolean };
 
   if (!markAll && !notificationId) {
-    return NextResponse.json({ error: "notificationId requerido" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "notificationId requerido" : "notificationId is required." }, { status: 400 });
   }
 
   if (markAll) {
@@ -90,9 +90,14 @@ export async function POST() {
   let created = 0;
 
   for (const session of sessions) {
-    const studentTitle = "Recordatorio de clase";
-    const studentBody = `Tu clase inicia ${formatUtcToLocal(session.startsAtUtc, session.student.user.timezone)}.`;
-    const teacherBody = `Clase con ${session.student.user.name} a las ${formatUtcToLocal(session.startsAtUtc, session.teacher.user.timezone, "h:mm a")}.`;
+    const studentTitle = session.student.user.locale === "es" ? "Recordatorio de clase" : "Class reminder";
+    const teacherTitle = session.teacher.user.locale === "es" ? "Recordatorio de clase" : "Class reminder";
+    const studentBody = session.student.user.locale === "es"
+      ? `Tu clase inicia ${formatUtcToLocal(session.startsAtUtc, session.student.user.timezone)}.`
+      : `Your class starts ${formatUtcToLocal(session.startsAtUtc, session.student.user.timezone)}.`;
+    const teacherBody = session.teacher.user.locale === "es"
+      ? `Clase con ${session.student.user.name} a las ${formatUtcToLocal(session.startsAtUtc, session.teacher.user.timezone, "h:mm a")}.`
+      : `Class with ${session.student.user.name} at ${formatUtcToLocal(session.startsAtUtc, session.teacher.user.timezone, "h:mm a")}.`;
 
     const [existingStudent, existingTeacher] = await Promise.all([
       db.notification.findFirst({
@@ -108,7 +113,7 @@ export async function POST() {
         where: {
           userId: session.teacher.userId,
           type: NotificationType.CLASS_REMINDER,
-          title: studentTitle,
+          title: teacherTitle,
           body: teacherBody,
           createdAt: { gte: dedupeSince },
         },

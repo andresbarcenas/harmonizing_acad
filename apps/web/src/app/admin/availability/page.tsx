@@ -8,9 +8,11 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function AdminAvailabilityPage() {
   const viewer = await requireViewer([Role.ADMIN]);
+  const dictionary = getDictionary(viewer.locale);
 
   const teachers = await db.teacherProfile.findMany({
     include: {
@@ -20,14 +22,14 @@ export default async function AdminAvailabilityPage() {
   });
 
   return (
-    <AppShell role={viewer.role} activePath="/admin/availability" userName={viewer.name}>
+    <AppShell role={viewer.role} activePath="/admin/availability" userName={viewer.name} locale={viewer.locale}>
       <PageIntro
-        eyebrow="Disponibilidad"
-        title="Horarios docentes con una vista más tranquila."
-        description="Consulta las franjas activas de cada profesor en su zona horaria declarada y mantén el control operativo desde un solo espacio."
+        eyebrow={dictionary.shell.nav.availability}
+        title={dictionary.admin.availabilityTitle}
+        description={dictionary.admin.availabilityDescription}
       >
         <Link href="/admin/teachers">
-          <Button variant="outline" size="sm">Nuevo docente</Button>
+          <Button variant="outline" size="sm">{dictionary.admin.addTeacher}</Button>
         </Link>
       </PageIntro>
 
@@ -47,14 +49,15 @@ export default async function AdminAvailabilityPage() {
                   endMinuteLocal: slot.endMinuteLocal,
                   timezone: slot.timezone,
                 }))}
+                locale={viewer.locale}
               />
             </div>
           </Card>
         ))}
         {!teachers.length ? (
           <Card>
-            <CardTitle>Sin docentes cargados</CardTitle>
-            <CardDescription>Agrega docentes para gestionar disponibilidad.</CardDescription>
+            <CardTitle>{dictionary.admin.noTeachersLoaded}</CardTitle>
+            <CardDescription>{dictionary.admin.addTeachersForAvailability}</CardDescription>
           </Card>
         ) : null}
       </div>

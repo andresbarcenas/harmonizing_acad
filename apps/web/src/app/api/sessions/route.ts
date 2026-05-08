@@ -25,7 +25,7 @@ export async function PATCH(req: Request) {
   };
 
   if (!sessionId || ![SessionStatus.COMPLETED, SessionStatus.NO_SHOW].includes(status)) {
-    return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Payload inválido" : "Invalid payload." }, { status: 400 });
   }
 
   const session = await db.classSession.findFirst({
@@ -36,7 +36,7 @@ export async function PATCH(req: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Clase no encontrada" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Clase no encontrada" : "Class not found." }, { status: 404 });
   }
 
   await db.classSession.update({
@@ -56,8 +56,8 @@ export async function PATCH(req: Request) {
     await createNotification({
       userId: student.userId,
       type: NotificationType.CLASS_REMINDER,
-      title: status === SessionStatus.COMPLETED ? "Clase completada" : "Clase marcada como no asistida",
-      body: status === SessionStatus.COMPLETED ? "Tu profesora registró notas de progreso." : "Comunícate con tu profesora para reprogramar.",
+      title: status === SessionStatus.COMPLETED ? "Class completed" : "Class marked as no-show",
+      body: status === SessionStatus.COMPLETED ? "Your teacher added progress notes." : "Contact your teacher to reschedule.",
       actionUrl: "/dashboard",
     });
   }
@@ -111,14 +111,14 @@ export async function POST(req: Request) {
   });
 
   if (!assignment) {
-    return NextResponse.json({ error: "El estudiante no está asignado a esta docente." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El estudiante no está asignado a esta docente." : "The student is not assigned to this teacher." }, { status: 400 });
   }
   const recurrenceTimezone = normalizeIanaTimezone(data.timezone ?? assignment.teacher.user.timezone);
 
   const { year, month, day } = parseDateParts(data.startsOnDate);
   const baseDate = new Date(Date.UTC(year, month - 1, day));
   if (Number.isNaN(baseDate.getTime())) {
-    return NextResponse.json({ error: "Fecha de inicio inválida." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Fecha de inicio inválida." : "Invalid start date." }, { status: 400 });
   }
   const now = new Date();
 
@@ -194,7 +194,7 @@ export async function POST(req: Request) {
 
   if (!sessionsToCreate.length) {
     return NextResponse.json(
-      { error: "No se pudieron crear clases por conflictos de horario.", conflicts: conflictWindows },
+      { error: auth.user.locale === "es" ? "No se pudieron crear clases por conflictos de horario." : "Could not create classes because of schedule conflicts.", conflicts: conflictWindows },
       { status: 400 },
     );
   }
@@ -227,8 +227,8 @@ export async function POST(req: Request) {
   await createNotification({
     userId: assignment.student.userId,
     type: NotificationType.CLASS_REMINDER,
-    title: "Nuevas clases recurrentes",
-    body: `Tu docente programó ${sessionsToCreate.length} clase(s) en una nueva serie.`,
+    title: "New recurring classes",
+    body: `Your teacher scheduled ${sessionsToCreate.length} class(es) in a new series.`,
     actionUrl: "/schedule",
   });
 

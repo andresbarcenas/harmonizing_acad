@@ -7,9 +7,13 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getDictionary, type AppLocale } from "@/lib/i18n";
 import { uploadProfileImageFile } from "@/lib/profile-upload";
 
-const weekdays = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const weekdays = {
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  es: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+} as const;
 type AvailabilityDraft = {
   id: string;
   weekday: number;
@@ -39,8 +43,9 @@ function makeRow(seed: number): AvailabilityDraft {
   };
 }
 
-export function TeacherOnboardingForm() {
+export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +98,9 @@ export function TeacherOnboardingForm() {
         setError(data.error);
       } else if (data?.error && typeof data.error === "object") {
         const firstFieldError = Object.values(data.error.fieldErrors ?? {}).find((messages) => messages?.length)?.[0];
-        setError(firstFieldError ?? data.error.formErrors?.[0] ?? "No se pudo crear el docente.");
+        setError(firstFieldError ?? data.error.formErrors?.[0] ?? dictionary.admin.teacherCreateError);
       } else {
-        setError("No se pudo crear el docente.");
+        setError(dictionary.admin.teacherCreateError);
       }
 
       setPending(false);
@@ -111,7 +116,7 @@ export function TeacherOnboardingForm() {
 
   async function uploadImage() {
     if (!uploadFile) {
-      setError("Selecciona una imagen para subir.");
+      setError(dictionary.forms.selectImage);
       return;
     }
     setUploading(true);
@@ -121,7 +126,7 @@ export function TeacherOnboardingForm() {
       setProfileImage(uploaded.imageUrl);
       setUploadFile(null);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "No se pudo subir la imagen.");
+      setError(uploadError instanceof Error ? uploadError.message : dictionary.forms.imageUploadError);
     } finally {
       setUploading(false);
     }
@@ -132,13 +137,13 @@ export function TeacherOnboardingForm() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Nombre completo
+            {dictionary.forms.fullName}
           </label>
           <Input id="name" name="name" placeholder="Daniela Rojas" required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Correo electrónico
+            {dictionary.forms.email}
           </label>
           <Input id="email" name="email" type="email" placeholder="daniela@email.com" required />
         </div>
@@ -147,36 +152,36 @@ export function TeacherOnboardingForm() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="temporaryPassword" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Contraseña temporal
+            {dictionary.forms.temporaryPassword}
           </label>
           <Input
             id="temporaryPassword"
             name="temporaryPassword"
             type="password"
             minLength={8}
-            placeholder="Mínimo 8 caracteres"
+            placeholder={dictionary.forms.temporaryPasswordPlaceholder}
             required
           />
-          <p className="text-xs text-[var(--color-ink-soft)]">Debe incluir letras y números.</p>
+          <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.temporaryPasswordHint}</p>
         </div>
         <div className="space-y-1.5">
           <label htmlFor="specialty" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Especialidad
+            {dictionary.forms.teacherSpecialty}
           </label>
-          <Input id="specialty" name="specialty" placeholder="Técnica vocal y piano" required />
+          <Input id="specialty" name="specialty" placeholder={dictionary.forms.specialtyPlaceholder} required />
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="zoomLink" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Zoom link (opcional)
+            {dictionary.forms.zoomOptional}
           </label>
           <Input id="zoomLink" name="zoomLink" type="url" placeholder="https://zoom.us/j/..." />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="meetLink" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Google Meet link (opcional)
+            {dictionary.forms.meetOptional}
           </label>
           <Input id="meetLink" name="meetLink" type="url" placeholder="https://meet.google.com/..." />
         </div>
@@ -184,11 +189,11 @@ export function TeacherOnboardingForm() {
 
       <div className="space-y-1.5">
         <label htmlFor="teacher-profile-image-file" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-          Foto de perfil (opcional)
+          {dictionary.forms.profilePhotoOptional}
         </label>
         <div className="flex items-center gap-3">
-          <Avatar src={profileImage || undefined} alt="Preview docente" fallback="D" className="h-10 w-10 text-xs" />
-          <p className="text-xs text-[var(--color-ink-soft)]">Sube una imagen para aplicarla al crear el docente.</p>
+          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewTeacher} fallback="D" className="h-10 w-10 text-xs" />
+          <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.imageCreateApplyTeacher}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -200,23 +205,23 @@ export function TeacherOnboardingForm() {
             onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
           />
           <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
-            {uploading ? "Subiendo..." : "Subir foto"}
+            {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
           </Button>
         </div>
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor="bio" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-          Bio (opcional)
+          {dictionary.forms.bioOptional}
         </label>
-        <Textarea id="bio" name="bio" rows={3} placeholder="Perfil breve del docente y su enfoque." />
+        <Textarea id="bio" name="bio" rows={3} placeholder={dictionary.forms.teacherBioPlaceholder} />
       </div>
 
       <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-4">
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <p className="text-sm font-semibold text-[var(--color-ink)]">Disponibilidad inicial (opcional)</p>
-            <p className="text-xs text-[var(--color-ink-soft)]">Puedes dejarlo vacío y configurarlo luego en Disponibilidad.</p>
+            <p className="text-sm font-semibold text-[var(--color-ink)]">{dictionary.forms.initialAvailability}</p>
+            <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.initialAvailabilityHelp}</p>
           </div>
           <Button
             type="button"
@@ -224,7 +229,7 @@ export function TeacherOnboardingForm() {
             size="sm"
             onClick={addAvailabilityRow}
           >
-            Agregar bloque
+            {dictionary.common.addBlock}
           </Button>
         </div>
 
@@ -246,7 +251,7 @@ export function TeacherOnboardingForm() {
                   }
                   className="h-10 rounded-xl border border-[var(--color-border)] bg-white px-3 text-sm"
                 >
-                  {weekdays.map((day, index) => (
+                  {weekdays[locale].map((day, index) => (
                     <option key={`${row.id}-${day}`} value={index}>
                       {day}
                     </option>
@@ -271,7 +276,7 @@ export function TeacherOnboardingForm() {
                   }
                 />
                 <Button type="button" variant="ghost" size="sm" onClick={() => removeAvailabilityRow(row.id)}>
-                  Eliminar
+                  {dictionary.common.delete}
                 </Button>
               </div>
             ))}
@@ -280,7 +285,7 @@ export function TeacherOnboardingForm() {
       </div>
 
       <Button type="submit" variant="gold" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Creando docente..." : "Crear docente"}
+        {pending ? dictionary.common.creating : dictionary.admin.addTeacher}
       </Button>
 
       {error ? (
@@ -289,12 +294,12 @@ export function TeacherOnboardingForm() {
 
       {created ? (
         <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          <p className="font-semibold">Docente creado correctamente.</p>
+          <p className="font-semibold">{dictionary.admin.teacherCreated}</p>
           <p className="mt-1">
             {created.name} ({created.email}) · {created.specialty}
           </p>
           <p className="mt-1">
-            Zona horaria: {created.timezone} · Bloques creados: {created.availabilityCount}
+            {dictionary.common.timezone}: {created.timezone} · {dictionary.admin.availabilityBlocks}: {created.availabilityCount}
           </p>
         </div>
       ) : null}

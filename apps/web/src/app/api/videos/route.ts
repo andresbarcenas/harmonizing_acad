@@ -40,23 +40,23 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile) {
-    return NextResponse.json({ error: "No tienes permisos para subir videos." }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para subir videos." : "You do not have permission to upload videos." }, { status: 403 });
   }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 
   if (!file) {
-    return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Archivo requerido" : "File is required." }, { status: 400 });
   }
   if (!isAllowedVideoType(file.type)) {
     return NextResponse.json(
-      { error: `Formato no permitido. Usa MP4, MOV o WEBM (${ALLOWED_VIDEO_MIME_TYPES.join(", ")}).` },
+      { error: auth.user.locale === "es" ? `Formato no permitido. Usa MP4, MOV o WEBM (${ALLOWED_VIDEO_MIME_TYPES.join(", ")}).` : `Unsupported format. Use MP4, MOV, or WEBM (${ALLOWED_VIDEO_MIME_TYPES.join(", ")}).` },
       { status: 400 },
     );
   }
   if (file.size > MAX_VIDEO_SIZE_BYTES) {
-    return NextResponse.json({ error: "El archivo supera el límite de 100MB." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El archivo supera el límite de 100MB." : "The file exceeds the 100MB limit." }, { status: 400 });
   }
 
   const assignment = await db.teacherAssignment.findUnique({
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   });
 
   if (!assignment) {
-    return NextResponse.json({ error: "No tienes profesora asignada" }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes profesora asignada" : "You do not have an assigned teacher." }, { status: 400 });
   }
 
   const durationValue = Number(formData.get("durationSec") ?? 120);
@@ -86,8 +86,8 @@ export async function POST(req: Request) {
   await createNotification({
     userId: assignment.teacher.userId,
     type: NotificationType.VIDEO_REVIEW,
-    title: "Nuevo video semanal",
-    body: `${auth.user.name} subió una nueva práctica.`,
+    title: "New weekly video",
+    body: `${auth.user.name} uploaded a new practice video.`,
     actionUrl: "/teacher/videos",
   });
 
@@ -99,14 +99,14 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "No tienes permisos para revisar videos." }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para revisar videos." : "You do not have permission to review videos." }, { status: 403 });
   }
   const teacherProfileId = auth.user.teacherProfile.id;
 
   const parsed = reviewVideoSchema.safeParse(await req.json());
 
   if (!parsed.success) {
-    const firstIssue = parsed.error.issues[0]?.message ?? "Datos inválidos para registrar feedback.";
+    const firstIssue = parsed.error.issues[0]?.message ?? (auth.user.locale === "es" ? "Datos inválidos para registrar feedback." : "Invalid data for saving feedback.");
     return NextResponse.json({ error: firstIssue }, { status: 400 });
   }
 
@@ -120,7 +120,7 @@ export async function PATCH(req: Request) {
   });
 
   if (!video) {
-    return NextResponse.json({ error: "Video no encontrado" }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Video no encontrado" : "Video not found." }, { status: 404 });
   }
 
   await db.$transaction(async (tx) => {
@@ -150,8 +150,8 @@ export async function PATCH(req: Request) {
     await createNotification({
       userId: student.userId,
       type: NotificationType.VIDEO_REVIEW,
-      title: "Tu video fue revisado",
-      body: "Ya tienes feedback de tu profesora.",
+      title: "Your video was reviewed",
+      body: "You now have feedback from your teacher.",
       actionUrl: "/videos",
     });
   }

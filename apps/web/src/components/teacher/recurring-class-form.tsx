@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getDictionary } from "@/lib/i18n";
+import type { AppLocale } from "@/lib/i18n/locales";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 type StudentOption = {
@@ -15,25 +17,28 @@ type StudentOption = {
 };
 
 const weekdayOptions = [
-  { value: 0, label: "Dom" },
-  { value: 1, label: "Lun" },
-  { value: 2, label: "Mar" },
-  { value: 3, label: "Mié" },
-  { value: 4, label: "Jue" },
-  { value: 5, label: "Vie" },
-  { value: 6, label: "Sáb" },
+  { value: 0, en: "Sun", es: "Dom" },
+  { value: 1, en: "Mon", es: "Lun" },
+  { value: 2, en: "Tue", es: "Mar" },
+  { value: 3, en: "Wed", es: "Mié" },
+  { value: 4, en: "Thu", es: "Jue" },
+  { value: 5, en: "Fri", es: "Vie" },
+  { value: 6, en: "Sat", es: "Sáb" },
 ];
 
 export function RecurringClassForm({
   students,
   defaultTimezone,
   defaultMeetingUrl,
+  locale = "en",
 }: {
   students: StudentOption[];
   defaultTimezone: string;
   defaultMeetingUrl?: string | null;
+  locale?: AppLocale;
 }) {
   const router = useRouter();
+  const dictionary = getDictionary(locale);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -58,6 +63,7 @@ export function RecurringClassForm({
       startsOnDate: String(formData.get("startsOnDate") ?? ""),
       startTimeLocal: String(formData.get("startTimeLocal") ?? ""),
       weekdays,
+      timezone: normalizedDefaultTimezone,
       durationMin: Number(formData.get("durationMin") ?? 60),
       horizonWeeks: Number(formData.get("horizonWeeks") ?? 8),
       intervalWeeks: Number(formData.get("intervalWeeks") ?? 1),
@@ -76,7 +82,7 @@ export function RecurringClassForm({
       | null;
 
     if (!response.ok) {
-      setError(data?.error ?? "No se pudieron crear las clases.");
+      setError(data?.error ?? (locale === "es" ? "No se pudieron crear las clases." : "Could not create classes."));
       setConflicts(data?.conflicts ?? []);
       setPending(false);
       return;
@@ -85,10 +91,10 @@ export function RecurringClassForm({
     const created = data?.created ?? 0;
     const conflictCount = data?.conflicts?.length ?? 0;
     if (conflictCount) {
-      setSuccess(`Se crearon ${created} clases. ${conflictCount} bloque(s) tuvieron conflicto.`);
+      setSuccess(locale === "es" ? `Se crearon ${created} clases. ${conflictCount} bloque(s) tuvieron conflicto.` : `${created} classes were created. ${conflictCount} block(s) had conflicts.`);
       setConflicts(data?.conflicts ?? []);
     } else {
-      setSuccess(`Se crearon ${created} clases recurrentes.`);
+      setSuccess(locale === "es" ? `Se crearon ${created} clases recurrentes.` : `${created} recurring classes were created.`);
     }
 
     setPending(false);
@@ -100,7 +106,7 @@ export function RecurringClassForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="studentId" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Estudiante
+            {dictionary.common.student}
           </label>
           <select
             id="studentId"
@@ -118,7 +124,7 @@ export function RecurringClassForm({
         </div>
         <div className="space-y-1.5">
           <label htmlFor="meetingUrl" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Link de clase
+            {locale === "es" ? "Link de clase" : "Class link"}
           </label>
           <Input
             id="meetingUrl"
@@ -134,24 +140,24 @@ export function RecurringClassForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="startsOnDate" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Fecha inicial
+            {locale === "es" ? "Fecha inicial" : "Start date"}
           </label>
           <Input id="startsOnDate" name="startsOnDate" type="date" defaultValue={initialDate} required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="startTimeLocal" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Hora local
+            {locale === "es" ? "Hora local" : "Local time"}
           </label>
           <Input id="startTimeLocal" name="startTimeLocal" type="time" defaultValue="18:00" required />
         </div>
       </div>
       <p className="text-xs text-[var(--color-ink-soft)]">
-        Esta serie se crea en tu zona horaria docente:{" "}
-        <span className="font-semibold text-[var(--color-ink)]">{normalizedDefaultTimezone}</span>. El estudiante la verá convertida automáticamente a su hora local.
+        {dictionary.teacher.recurringTimezoneNotice}{" "}
+        <span className="font-semibold text-[var(--color-ink)]">{normalizedDefaultTimezone}</span>. {dictionary.teacher.recurringTimezoneStudentNotice}
       </p>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-semibold text-[var(--color-ink-soft)]">Días de la semana</p>
+        <p className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.teacher.weekdays}</p>
         <div className="flex flex-wrap gap-2">
           {weekdayOptions.map((day) => {
             const active = weekdays.includes(day.value);
@@ -171,30 +177,30 @@ export function RecurringClassForm({
                   })
                 }
               >
-                {day.label}
+                {day[locale]}
               </Button>
             );
           })}
         </div>
-        <p className="text-xs text-[var(--color-ink-soft)]">Selecciona al menos un día (ej: Lun y Mié).</p>
+        <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.teacher.weekdaysHint}</p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         <div className="space-y-1.5">
           <label htmlFor="durationMin" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Duración (min)
+            {dictionary.teacher.durationMinutes}
           </label>
           <Input id="durationMin" name="durationMin" type="number" min={30} max={180} defaultValue={60} required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="horizonWeeks" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Horizonte (semanas)
+            {dictionary.teacher.horizonWeeks}
           </label>
           <Input id="horizonWeeks" name="horizonWeeks" type="number" min={1} max={26} defaultValue={8} required />
         </div>
         <div className="space-y-1.5">
           <label htmlFor="intervalWeeks" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            Cada (semanas)
+            {dictionary.teacher.intervalWeeks}
           </label>
           <Input id="intervalWeeks" name="intervalWeeks" type="number" min={1} max={4} defaultValue={1} required />
         </div>
@@ -202,20 +208,20 @@ export function RecurringClassForm({
 
       <div className="space-y-1.5">
         <label htmlFor="lessonFocus" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-          Enfoque (opcional)
+          {dictionary.teacher.lessonFocusOptional}
         </label>
-        <Textarea id="lessonFocus" name="lessonFocus" rows={2} placeholder="Ej: Técnica vocal, control respiratorio y afinación." />
+        <Textarea id="lessonFocus" name="lessonFocus" rows={2} placeholder={dictionary.teacher.lessonFocusPlaceholder} />
       </div>
 
       <Button type="submit" variant="gold" size="sm" disabled={pending || !students.length}>
-        {pending ? "Programando..." : "Programar clases recurrentes"}
+        {pending ? dictionary.teacher.scheduling : dictionary.teacher.scheduleRecurring}
       </Button>
 
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       {success ? <p className="text-sm text-emerald-700">{success}</p> : null}
       {conflicts.length ? (
         <div className="rounded-xl border border-[var(--color-border)] bg-white/72 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
-          <p className="font-semibold text-[var(--color-ink)]">Bloques con conflicto:</p>
+          <p className="font-semibold text-[var(--color-ink)]">{dictionary.teacher.conflictBlocks}</p>
           <ul className="mt-1 space-y-1">
             {conflicts.slice(0, 6).map((value) => (
               <li key={value}>{value}</li>

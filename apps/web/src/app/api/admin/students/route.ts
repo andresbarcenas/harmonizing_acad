@@ -59,15 +59,15 @@ export async function POST(req: Request) {
   ]);
 
   if (existingUser) {
-    return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
   }
 
   if (!teacher) {
-    return NextResponse.json({ error: "Docente no encontrado." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
   }
 
   if (!plan) {
-    return NextResponse.json({ error: "No hay plan activo configurado." }, { status: 400 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No hay plan activo configurado." : "No active plan is configured." }, { status: 400 });
   }
 
   try {
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           email: data.email,
           passwordHash,
           role: Role.STUDENT,
-          locale: "es",
+          locale: "en",
           timezone: studentTimezone,
           image: data.profileImage ?? null,
         },
@@ -121,8 +121,8 @@ export async function POST(req: Request) {
     await createNotification({
       userId: created.user.id,
       type: NotificationType.SYSTEM,
-      title: "Cuenta creada y docente asignado",
-      body: `Tu cuenta en Harmonizing está activa. Docente asignada: ${teacher.user.name}.`,
+      title: "Account created and teacher assigned",
+      body: `Your Harmonizing account is active. Assigned teacher: ${teacher.user.name}.`,
       actionUrl: "/dashboard",
     });
 
@@ -135,14 +135,14 @@ export async function POST(req: Request) {
         image: created.user.image,
         teacherName: teacher.user.name,
         planName: plan.name,
-        planLabel: `$${plan.priceUsd} USD / ${plan.monthlyClassCount} clases`,
+        planLabel: `$${plan.priceUsd} USD / ${plan.monthlyClassCount} classes`,
       },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
     }
 
-    return NextResponse.json({ error: "No se pudo crear el estudiante." }, { status: 500 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No se pudo crear el estudiante." : "Could not create the student." }, { status: 500 });
   }
 }

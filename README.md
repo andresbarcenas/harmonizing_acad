@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.3.0`
+- Current version: `v0.4.0`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -21,6 +21,8 @@ Premium, mobile-first web app for an online music school serving Spanish-speakin
    - `cp .env.example .env`
 2. Run everything:
    - `docker compose up --build`
+3. Run route smoke after boot:
+   - `cd apps/web && npm run smoke:routes`
 
 App endpoints:
 - Web: `http://localhost:3010`
@@ -46,10 +48,13 @@ App endpoints:
 Complete in this v1:
 - Role-based dashboards and navigation (student/teacher/admin)
 - UTC-backed sessions and timezone-local rendering
+- Week-aware student schedule navigation for future recurring classes
 - Reschedule proposal + teacher approve/reject flow
 - Weekly practice upload metadata flow + teacher feedback flow
 - Student-teacher chat thread (single active thread per assignment)
 - Notification center + read state
+- English/Spanish UI support with English default and account-level preference
+- Auth-first root route (`/`) that redirects to sign-in or the active role workspace
 - Admin metrics (students, teachers, MRR, weekly classes, workload)
 - WhatsApp plan management CTA surfaced in student-facing areas
 - Alegra invoicing v1: student invoices page, cached sync, admin monitor/relink tools
@@ -60,7 +65,8 @@ Current placeholders / known simplifications:
 - Chat is request/response polling-style (no websockets yet)
 - No external payment gateway by design (WhatsApp management only)
 - Invoicing is read-only in-app; payment collection remains external
-- No production CDN, background jobs, or rate limiting yet
+- Some stored historical notifications may retain the language used when they were created
+- No production CDN, background jobs, rate limiting, or observability package yet
 
 ## Alegra Invoicing (v1)
 - Student UI: `/invoices`

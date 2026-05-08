@@ -31,7 +31,7 @@ export async function PATCH(
   });
 
   if (!student) {
-    return NextResponse.json({ error: "Estudiante no encontrado." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante no encontrado." : "Student not found." }, { status: 404 });
   }
 
   if (data.teacherId) {
@@ -40,7 +40,7 @@ export async function PATCH(
       select: { id: true },
     });
     if (!teacher) {
-      return NextResponse.json({ error: "Docente no encontrado." }, { status: 404 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
     }
   }
 
@@ -50,7 +50,7 @@ export async function PATCH(
       select: { id: true },
     });
     if (existing) {
-      return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
     }
   }
 
@@ -101,8 +101,8 @@ export async function PATCH(
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return NextResponse.json({ error: "Ya existe un usuario con este email." }, { status: 409 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
     }
-    return NextResponse.json({ error: "No se pudo actualizar el estudiante." }, { status: 500 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No se pudo actualizar el estudiante." : "Could not update the student." }, { status: 500 });
   }
 }
