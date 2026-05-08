@@ -270,7 +270,7 @@ model ClassSession {
   teacherId          String
   recurrenceId       String?
   classRequestId     String?          @unique
-  type               ClassSessionType @default(RECURRING)
+  type               ClassSessionType @default(SINGLE)
   startsAtUtc        DateTime
   endsAtUtc          DateTime
   meetingUrl         String
@@ -374,6 +374,8 @@ model ClassRequest {
   durationMin       Int
   studentMessage    String?
   reviewerResponse  String?
+  internalNote      String?
+  rejectionReason   String?
   decidedAt         DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt

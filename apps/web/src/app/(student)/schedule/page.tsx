@@ -129,6 +129,11 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
                   <p className="text-sm font-semibold">{classTypeLabel(request.type, viewer.locale)}</p>
                   <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(request.preferredStartUtc, viewer.timezone, viewer.locale)} · {request.durationMin} min</p>
                   {request.studentMessage ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
+                  {request.status === ClassRequestStatus.REJECTED && request.rejectionReason ? (
+                    <p className="mt-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                      {viewer.locale === "es" ? "Motivo de rechazo" : "Rejection reason"}: {request.rejectionReason}
+                    </p>
+                  ) : null}
                 </div>
                 <Badge variant={request.status === ClassRequestStatus.PENDING ? "warning" : "default"}>{classRequestStatusLabel(request.status, viewer.locale)}</Badge>
               </div>

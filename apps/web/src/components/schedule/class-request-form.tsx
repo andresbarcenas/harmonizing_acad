@@ -11,7 +11,7 @@ import { classTypeLabel } from "@/lib/class-session-labels";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
-const requestTypes = [ClassSessionType.MAKEUP, ClassSessionType.EXTRA, ClassSessionType.EVALUATION, ClassSessionType.SINGLE] as const;
+const requestTypes = [ClassSessionType.MAKEUP, ClassSessionType.EXTRA, ClassSessionType.EVALUATION] as const;
 const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
 
 export function ClassRequestForm({ timezone, locale = "en" }: { timezone: string; locale?: AppLocale }) {

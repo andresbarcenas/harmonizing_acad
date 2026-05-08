@@ -21,7 +21,7 @@ Both patterns produce `ClassSession` rows, so every class can later connect to l
 - duration
 - horizon and interval
 
-`ClassSession` stores the actual scheduled lesson instance. Single classes are `ClassSession` records with no `recurrenceId`.
+`ClassSession` stores the actual scheduled lesson instance. Single classes are `ClassSession` records with no `recurrenceId`. Standalone/manual sessions default to `SINGLE`; recurring generation sets `RECURRING` explicitly.
 
 `ClassSession.type` identifies the booking type:
 
@@ -41,6 +41,14 @@ Both patterns produce `ClassSession` rows, so every class can later connect to l
 - `CANCELLED`
 
 When a request is accepted, the app creates a linked `ClassSession` through `classRequestId`.
+
+Students can request only:
+
+- `MAKEUP`
+- `EXTRA`
+- `EVALUATION`
+
+`SINGLE`, `TRIAL`, and `REPLACEMENT` remain admin/teacher booking types.
 
 ## Conflict Detection
 
@@ -110,6 +118,7 @@ When a request is accepted or rejected:
 
 - student receives an in-app notification
 - accepted requests link to the created class detail when available
+- rejected requests store and show a student-visible rejection reason
 
 ## Routes
 
@@ -139,6 +148,7 @@ Admin:
 4. Try to create an overlapping class and confirm it is blocked.
 5. Confirm the class appears in the admin schedule list with a type badge.
 6. Approve and reject a pending student request.
+7. Confirm rejected requests keep a student-visible rejection reason and optional internal note.
 
 Teacher:
 
@@ -155,7 +165,7 @@ Student:
 1. Sign in as `isabella@harmonizing.com / demo123`.
 2. Open `/schedule`.
 3. Confirm recurring and single classes appear together.
-4. Submit a makeup or extra-class request.
+4. Submit a makeup, extra, or evaluation request.
 5. Confirm the pending request appears.
 6. After teacher/admin approval, confirm the approved class appears in schedule and class detail.
 7. Confirm rejected request copy is shown through notifications when rejected.
@@ -168,4 +178,5 @@ npm run db:generate
 npm run typecheck
 npm run lint
 npm run build
+npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url <shadow-db-url> --script
 ```

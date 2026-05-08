@@ -89,6 +89,16 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{classTypeLabel(request.type, viewer.locale)} · {formatDateTimeInZone(request.preferredStartUtc, viewer.timezone, viewer.locale)} · {request.durationMin} min</p>
                 {request.studentMessage ? <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
+                {request.status === ClassRequestStatus.REJECTED && request.rejectionReason ? (
+                  <p className="mt-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                    {isSpanish ? "Motivo de rechazo" : "Rejection reason"}: {request.rejectionReason}
+                  </p>
+                ) : null}
+                {request.internalNote ? (
+                  <p className="mt-2 rounded-xl border border-[var(--color-border)] bg-white/70 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
+                    {isSpanish ? "Nota interna" : "Internal note"}: {request.internalNote}
+                  </p>
+                ) : null}
                 {request.status === ClassRequestStatus.PENDING ? <div className="mt-3"><ClassRequestActions requestId={request.id} locale={viewer.locale} /></div> : null}
               </div>
             ))}

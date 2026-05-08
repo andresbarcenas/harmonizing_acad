@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-05-08
+
+### Added
+- Single-class scheduling management for admin, teacher, and student workflows, including class type/status visibility across schedule surfaces.
+- Student-requested one-off class flow with pending, accepted, and rejected states plus student-visible rejection reasons.
+- Seed coverage for trial, makeup, extra, pending, accepted, and rejected single-class scheduling scenarios.
+- Scheduling documentation covering recurring versus single classes, request workflow, conflict detection, timezone rules, and manual validation.
+
+### Changed
+- Standalone class sessions now default to `SINGLE`, while recurring session creation continues to set `RECURRING` explicitly.
+- Student class requests are limited to makeup, extra, and evaluation sessions; admin/teacher booking retains broader one-off class types.
+- Request review now separates student-visible rejection reasons from optional internal notes.
+
 ## [0.5.0] - 2026-05-08
 
 ### Added

@@ -39,7 +39,6 @@ export const studentClassRequestTypes = [
   ClassSessionType.MAKEUP,
   ClassSessionType.EXTRA,
   ClassSessionType.EVALUATION,
-  ClassSessionType.SINGLE,
 ] as const;
 
 export const singleClassBookingSchema = z.object({
@@ -75,6 +74,8 @@ export const createClassRequestSchema = z.object({
 export const reviewClassRequestSchema = z.object({
   status: z.enum([ClassRequestStatus.ACCEPTED, ClassRequestStatus.REJECTED]),
   reviewerResponse: optionalString(1000),
+  rejectionReason: optionalString(1000),
+  internalNote: optionalString(1000),
 });
 
 export type SingleClassBookingInput = z.infer<typeof singleClassBookingSchema>;

@@ -44,6 +44,16 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   const input = parsed.data;
+  if (input.status === ClassRequestStatus.REJECTED && !input.rejectionReason) {
+    return NextResponse.json(
+      {
+        error: auth.user.locale === "es"
+          ? "Agrega un motivo de rechazo visible para el estudiante."
+          : "Add a student-visible rejection reason.",
+      },
+      { status: 400 },
+    );
+  }
   let createdSessionId: string | null = null;
 
   if (input.status === ClassRequestStatus.ACCEPTED) {
@@ -68,6 +78,8 @@ export async function PATCH(req: Request, { params }: Params) {
       data: {
         status: input.status,
         reviewerResponse: input.reviewerResponse,
+        rejectionReason: input.status === ClassRequestStatus.REJECTED ? input.rejectionReason : null,
+        internalNote: input.internalNote,
         reviewedByUserId: auth.user.id,
         decidedAt: new Date(),
       },
@@ -107,7 +119,7 @@ export async function PATCH(req: Request, { params }: Params) {
         : isSpanish ? "Solicitud de clase rechazada" : "Class request rejected",
       body: isAccepted
         ? isSpanish ? "Tu nueva clase quedó confirmada." : "Your new class is confirmed."
-        : input.reviewerResponse ?? (isSpanish ? "Tu docente mantuvo la agenda actual." : "Your teacher kept the current schedule."),
+        : input.rejectionReason ?? (isSpanish ? "Tu docente mantuvo la agenda actual." : "Your teacher kept the current schedule."),
       actionUrl: createdSessionId ? `/classes/${createdSessionId}` : "/schedule",
     },
     ...(auth.user.id !== request.teacher.userId && isAccepted

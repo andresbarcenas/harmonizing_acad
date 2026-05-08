@@ -13,6 +13,8 @@ export function ClassRequestActions({ requestId, locale = "en" }: { requestId: s
   const router = useRouter();
   const [pending, setPending] = useState<ClassRequestDecision | null>(null);
   const [response, setResponse] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [internalNote, setInternalNote] = useState("");
   const [state, setState] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const isSpanish = locale === "es";
 
@@ -22,7 +24,12 @@ export function ClassRequestActions({ requestId, locale = "en" }: { requestId: s
     const apiResponse = await fetch(`/api/classes/requests/${requestId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, reviewerResponse: response.trim() || undefined }),
+      body: JSON.stringify({
+        status,
+        reviewerResponse: response.trim() || undefined,
+        rejectionReason: status === "REJECTED" ? rejectionReason.trim() || undefined : undefined,
+        internalNote: internalNote.trim() || undefined,
+      }),
     });
     const payload = (await apiResponse.json().catch(() => null)) as { error?: string } | null;
     if (!apiResponse.ok) {
@@ -37,7 +44,9 @@ export function ClassRequestActions({ requestId, locale = "en" }: { requestId: s
 
   return (
     <div className="space-y-2">
-      <Textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={2} placeholder={isSpanish ? "Respuesta opcional para estudiante/padre" : "Optional response for student/parent"} />
+      <Textarea value={response} onChange={(event) => setResponse(event.target.value)} rows={2} placeholder={isSpanish ? "Respuesta visible si apruebas la solicitud" : "Visible response if you approve the request"} />
+      <Textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} rows={2} placeholder={isSpanish ? "Motivo visible si rechazas la solicitud" : "Visible reason if you reject the request"} />
+      <Textarea value={internalNote} onChange={(event) => setInternalNote(event.target.value)} rows={2} placeholder={isSpanish ? "Nota interna opcional" : "Optional internal note"} />
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="button" size="sm" variant="gold" onClick={() => decide("ACCEPTED")} disabled={pending !== null} className="w-full sm:w-auto">
           {pending === "ACCEPTED" ? (isSpanish ? "Aprobando..." : "Approving...") : isSpanish ? "Aprobar y agendar" : "Approve and book"}

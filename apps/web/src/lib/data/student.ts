@@ -148,7 +148,10 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
     db.classRequest.findMany({
       where: {
         studentId: studentProfileId,
-        status: ClassRequestStatus.PENDING,
+        OR: [
+          { status: ClassRequestStatus.PENDING },
+          { createdAt: { gte: addDays(now, -30) } },
+        ],
       },
       include: {
         teacher: { include: { user: true } },

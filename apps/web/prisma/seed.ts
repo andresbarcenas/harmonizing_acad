@@ -401,6 +401,8 @@ async function main() {
   acceptedRequestStart.setUTCHours(22, 0, 0, 0);
   const pendingRequestStart = addDays(now, 15);
   pendingRequestStart.setUTCHours(21, 0, 0, 0);
+  const rejectedRequestStart = addDays(now, 17);
+  rejectedRequestStart.setUTCHours(23, 0, 0, 0);
 
   await Promise.all([
     prisma.classSession.upsert({
@@ -504,6 +506,8 @@ async function main() {
       durationMin: 60,
       studentMessage: "Quiero recuperar la clase que perdí la semana pasada.",
       reviewerResponse: "Aprobada. Trabajaremos repertorio y lectura.",
+      internalNote: "Solicitud aprobada desde seed demo.",
+      rejectionReason: null,
       decidedAt: subDays(now, 1),
     },
     create: {
@@ -520,6 +524,7 @@ async function main() {
       durationMin: 60,
       studentMessage: "Quiero recuperar la clase que perdí la semana pasada.",
       reviewerResponse: "Aprobada. Trabajaremos repertorio y lectura.",
+      internalNote: "Solicitud aprobada desde seed demo.",
       decidedAt: subDays(now, 1),
     },
   });
@@ -568,6 +573,8 @@ async function main() {
       durationMin: 60,
       studentMessage: "Me gustaría una práctica extra antes del video semanal.",
       reviewerResponse: null,
+      internalNote: null,
+      rejectionReason: null,
       reviewedByUserId: null,
       decidedAt: null,
     },
@@ -583,6 +590,44 @@ async function main() {
       timezone: "America/New_York",
       durationMin: 60,
       studentMessage: "Me gustaría una práctica extra antes del video semanal.",
+    },
+  });
+
+  await prisma.classRequest.upsert({
+    where: { id: "class_request_rejected_evaluation_luis" },
+    update: {
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      requestedByUserId: studentTwoUser.id,
+      reviewedByUserId: teacherUser.id,
+      type: ClassSessionType.EVALUATION,
+      status: ClassRequestStatus.REJECTED,
+      preferredStartUtc: rejectedRequestStart,
+      preferredEndUtc: addHours(rejectedRequestStart, 1),
+      timezone: "America/Los_Angeles",
+      durationMin: 60,
+      studentMessage: "Quisiera una evaluación adicional antes de escoger repertorio nuevo.",
+      reviewerResponse: null,
+      rejectionReason: "Ese horario no está disponible. Propón un bloque dentro de la disponibilidad docente.",
+      internalNote: "Demo: solicitud rechazada para mostrar el estado al estudiante.",
+      decidedAt: subDays(now, 1),
+    },
+    create: {
+      id: "class_request_rejected_evaluation_luis",
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      requestedByUserId: studentTwoUser.id,
+      reviewedByUserId: teacherUser.id,
+      type: ClassSessionType.EVALUATION,
+      status: ClassRequestStatus.REJECTED,
+      preferredStartUtc: rejectedRequestStart,
+      preferredEndUtc: addHours(rejectedRequestStart, 1),
+      timezone: "America/Los_Angeles",
+      durationMin: 60,
+      studentMessage: "Quisiera una evaluación adicional antes de escoger repertorio nuevo.",
+      rejectionReason: "Ese horario no está disponible. Propón un bloque dentro de la disponibilidad docente.",
+      internalNote: "Demo: solicitud rechazada para mostrar el estado al estudiante.",
+      decidedAt: subDays(now, 1),
     },
   });
 
