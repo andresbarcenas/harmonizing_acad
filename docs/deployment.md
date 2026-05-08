@@ -10,13 +10,8 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
 - `CRON_SECRET`
-- `STORAGE_PROVIDER`
-- `S3_ENDPOINT`
-- `S3_REGION`
-- `S3_ACCESS_KEY`
-- `S3_SECRET_KEY`
-- `S3_BUCKET`
-- `NEXT_PUBLIC_MEDIA_BASE_URL`
+- `STORAGE_PROVIDER=vercel-blob`
+- `BLOB_READ_WRITE_TOKEN`
 - `ALEGRA_API_BASE_URL`
 - `ALEGRA_API_EMAIL`
 - `ALEGRA_API_TOKEN`
@@ -27,6 +22,15 @@ Generate long random secrets locally when needed:
 ```bash
 openssl rand -base64 32
 ```
+
+Create the managed resources from `apps/web`:
+
+```bash
+npx vercel@latest integration add neon --environment production
+npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
+```
+
+Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
 ## First-Time Link
 
@@ -78,6 +82,7 @@ Add these repository secrets in GitHub under `Settings > Secrets and variables >
 - `DATABASE_URL`
 
 Use `apps/web/.vercel/project.json` for the Vercel org and project IDs. Keep the token and database URL private.
+Use the unpooled Neon connection string (`DATABASE_URL_UNPOOLED` or `POSTGRES_URL_NON_POOLING`) for the GitHub `DATABASE_URL` secret because GitHub Actions runs Prisma migrations.
 
 The workflow runs from `apps/web`, installs dependencies, lints, typechecks, pulls the Vercel production environment, builds with `vercel build --prod`, applies Prisma migrations, and deploys the prebuilt output with `vercel deploy --prebuilt --prod --archive=tgz`.
 
