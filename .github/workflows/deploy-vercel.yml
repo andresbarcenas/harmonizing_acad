@@ -1,0 +1,64 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Production deploy
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    env:
+      CI: true
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel production environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build production output
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Apply production database migrations
+        run: npm run prisma:deploy
+
+      - name: Deploy prebuilt output to production
+        run: vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}

@@ -72,7 +72,7 @@ Current placeholders / known simplifications:
 ## Alegra Invoicing (v1)
 - Student UI: `/invoices`
 - Admin monitor: `/admin/invoices`
-- Sync strategy: cached snapshots in DB, auto-sync every 6 hours (Vercel cron) plus manual sync from admin/student views
+- Sync strategy: cached snapshots in DB, daily Vercel cron in production plus manual sync from admin/student views
 - Mapping default: exact email match from Harmonizing student email to Alegra contact
 - Demo fallback: if Alegra credentials are missing, Harmonizing uses seeded local invoice snapshots and keeps the experience operable in read-only mode
 
@@ -91,10 +91,12 @@ Demo fallback details:
 ## Deployment Notes
 - Local Docker runtime starts the app in development mode after Prisma setup for fast iteration.
 - For production verification before deploy, use `npm run build && npm run start` from `apps/web`.
+- Vercel deployment runbook: [`docs/deployment.md`](./docs/deployment.md)
 - Optional dev mail preview: set `NOTIFICATION_SMTP_MIRROR=true` to mirror in-app notifications to MailHog inbox.
 - Vercel production should keep `NEXTAUTH_URL` as deployed URL and disable local-only hostnames/ports.
 
 ## Docs
 - Architecture: `docs/architecture.md`
+- Deployment: `docs/deployment.md`
 - Phases: `docs/phases.md`
 - UX system: `docs/ux-system.md`
