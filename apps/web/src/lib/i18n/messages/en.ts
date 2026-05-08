@@ -63,6 +63,7 @@ export const en = {
       students: "Students",
       assignments: "Assignments",
       availability: "Availability",
+      changelog: "Changelog",
       settings: "Settings",
     },
   },
