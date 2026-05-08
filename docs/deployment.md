@@ -86,6 +86,8 @@ Use the unpooled Neon connection string (`DATABASE_URL_UNPOOLED` or `POSTGRES_UR
 
 The workflow runs from `apps/web`, installs dependencies, lints, typechecks, pulls the Vercel production environment, builds with `vercel build --prod`, applies Prisma migrations, and deploys the prebuilt output with `vercel deploy --prebuilt --prod --archive=tgz`.
 
+`npm run prisma:deploy` automatically prefers a direct migration URL in this order: `MIGRATION_DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL_NON_POOLING`, then `DATABASE_URL`. It refuses obvious pooled Neon URLs so migration advisory locks do not get stranded behind PgBouncer.
+
 It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual because it can create or reset credentials.
 
 ## Safety Notes

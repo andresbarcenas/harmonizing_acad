@@ -17,8 +17,8 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed": "npm run prisma:seed",
     "smoke:routes": "node scripts/smoke-routes.mjs",
-    "db:deploy": "prisma migrate deploy",
-    "prisma:deploy": "prisma migrate deploy",
+    "db:deploy": "node scripts/prisma-deploy.cjs",
+    "prisma:deploy": "node scripts/prisma-deploy.cjs",
     "bootstrap:admin": "prisma generate && node scripts/bootstrap-admin.cjs",
     "bootstrap:prod": "npm run prisma:deploy && npm run bootstrap:admin"
   },
