@@ -77,7 +77,6 @@ export const es: typeof en = {
     invalid: "No pudimos iniciar sesión. Verifica tus credenciales.",
     submitting: "Ingresando...",
     forgot: "¿Olvidaste tu contraseña?",
-    demoAccess: "Acceso demo",
     recoveryEyebrow: "Acceso y soporte",
     recoveryTitle: "Recuperar contraseña",
     recoveryDescription: "Estamos atendiendo la recuperación de acceso de forma personalizada. Escríbenos por WhatsApp y te ayudamos a reactivar tu cuenta.",

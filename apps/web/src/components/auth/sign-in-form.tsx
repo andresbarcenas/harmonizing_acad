@@ -59,7 +59,6 @@ export function SignInForm({ locale }: { locale: AppLocale }) {
           <Input
             type="email"
             name="email"
-            defaultValue="isabella@harmonizing.com"
             placeholder="you@email.com"
             required
             className="pl-12"
@@ -78,10 +77,6 @@ export function SignInForm({ locale }: { locale: AppLocale }) {
         {isPending || submitting ? dictionary.auth.submitting : dictionary.common.signIn}
         {!isPending && !submitting ? <ArrowRight className="h-4 w-4" /> : null}
       </Button>
-      <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/72 px-4 py-3 text-xs leading-5 text-[var(--color-ink-soft)]">
-        {dictionary.auth.demoAccess}: <span className="font-semibold text-[var(--color-ink)]">isabella@harmonizing.com</span> /{" "}
-        <span className="font-semibold text-[var(--color-ink)]">demo123</span>
-      </div>
       <Link
         href="/forgot-password"
         className="block pt-1 text-center text-sm font-semibold text-[var(--color-gold-deep)] transition hover:text-[var(--color-gold)]"

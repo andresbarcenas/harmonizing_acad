@@ -75,7 +75,6 @@ export const en = {
     invalid: "We could not sign you in. Please check your credentials.",
     submitting: "Signing in...",
     forgot: "Forgot your password?",
-    demoAccess: "Demo access",
     recoveryEyebrow: "Access and support",
     recoveryTitle: "Recover password",
     recoveryDescription: "Password assistance is handled personally right now. Message us on WhatsApp and we will help restore your account.",
