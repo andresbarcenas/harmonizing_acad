@@ -18,13 +18,20 @@ const dayNames = {
   es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
 } as const;
 
-export default async function TeacherDashboardPage() {
+type TeacherDashboardPageProps = {
+  searchParams?: Promise<{
+    studentId?: string;
+  }>;
+};
+
+export default async function TeacherDashboardPage({ searchParams }: TeacherDashboardPageProps) {
   const viewer = await requireViewer([Role.TEACHER]);
   const dictionary = getDictionary(viewer.locale);
-  const data = await getTeacherDashboardData(viewer);
+  const resolvedSearchParams = await searchParams;
+  const data = await getTeacherDashboardData(viewer, { studentId: resolvedSearchParams?.studentId });
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/dashboard" userName={viewer.name} locale={viewer.locale}>
+    <AppShell role={viewer.role} activePath="/teacher/dashboard" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={data.selectedStudentId}>
       <PageIntro
         eyebrow={dictionary.teacher.dashboardEyebrow}
         title={dictionary.teacher.dashboardTitle}
@@ -61,6 +68,7 @@ export default async function TeacherDashboardPage() {
             defaultTimezone={viewer.timezone}
             defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}
             locale={viewer.locale}
+            selectedStudentId={data.selectedStudentId}
           />
         </div>
       </Card>
@@ -118,8 +126,11 @@ export default async function TeacherDashboardPage() {
                   <a href={session.meetingUrl} target="_blank" rel="noreferrer">
                     <Button size="sm" variant="gold">{dictionary.common.joinClass}</Button>
                   </a>
-                  <a href="/teacher/requests">
+                  <a href={withStudentContext("/teacher/requests", data.selectedStudentId)}>
                     <Button size="sm" variant="outline">{dictionary.teacher.viewRequests}</Button>
+                  </a>
+                  <a href={withStudentContext("/teacher/progress", session.studentId)}>
+                    <Button size="sm" variant="outline">{viewer.locale === "es" ? "Nota estructurada" : "Structured note"}</Button>
                   </a>
                 </div>
                 <TeacherSessionActions sessionId={session.id} initialNotes={session.lastClassNotes} locale={viewer.locale} />
@@ -177,7 +188,7 @@ export default async function TeacherDashboardPage() {
       <Card>
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <CardTitle>{dictionary.teacher.recentRequests}</CardTitle>
-          <a href="/teacher/requests">
+          <a href={withStudentContext("/teacher/requests", data.selectedStudentId)}>
             <Button size="sm" variant="outline">{dictionary.teacher.openInbox}</Button>
           </a>
         </div>
@@ -208,4 +219,8 @@ export default async function TeacherDashboardPage() {
       </Card>
     </AppShell>
   );
+}
+
+function withStudentContext(href: string, studentId?: string | null) {
+  return studentId ? `${href}?studentId=${encodeURIComponent(studentId)}` : href;
 }

@@ -6,14 +6,21 @@ import { requireViewer } from "@/features/auth/server";
 import { getMessagesThreadForViewer } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n";
 
-export default async function MessagesPage() {
+type MessagesPageProps = {
+  searchParams?: Promise<{
+    studentId?: string;
+  }>;
+};
+
+export default async function MessagesPage({ searchParams }: MessagesPageProps) {
   const viewer = await requireViewer();
   const dictionary = getDictionary(viewer.locale);
-  const thread = await getMessagesThreadForViewer(viewer);
+  const resolvedSearchParams = await searchParams;
+  const { thread, selectedStudentId } = await getMessagesThreadForViewer(viewer, { studentId: resolvedSearchParams?.studentId });
 
   if (!thread) {
     return (
-      <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale}>
+      <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={selectedStudentId}>
         <PageIntro
           eyebrow={dictionary.messages.eyebrow}
           title={dictionary.messages.titleEmpty}
@@ -28,7 +35,7 @@ export default async function MessagesPage() {
   }
 
   return (
-    <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale}>
+    <AppShell role={viewer.role} activePath="/messages" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={selectedStudentId}>
       <PageIntro
         eyebrow={dictionary.messages.eyebrow}
         title={dictionary.messages.title}

@@ -31,11 +31,13 @@ export function RecurringClassForm({
   defaultTimezone,
   defaultMeetingUrl,
   locale = "en",
+  selectedStudentId,
 }: {
   students: StudentOption[];
   defaultTimezone: string;
   defaultMeetingUrl?: string | null;
   locale?: AppLocale;
+  selectedStudentId?: string | null;
 }) {
   const router = useRouter();
   const dictionary = getDictionary(locale);
@@ -45,6 +47,7 @@ export function RecurringClassForm({
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [weekdays, setWeekdays] = useState<number[]>([1]);
   const normalizedDefaultTimezone = normalizeIanaTimezone(defaultTimezone);
+  const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? null;
 
   const initialDate = useMemo(() => {
     const value = new Date();
@@ -59,7 +62,7 @@ export function RecurringClassForm({
     setConflicts([]);
 
     const payload = {
-      studentId: String(formData.get("studentId") ?? ""),
+      studentId: selectedStudent?.id ?? String(formData.get("studentId") ?? ""),
       startsOnDate: String(formData.get("startsOnDate") ?? ""),
       startTimeLocal: String(formData.get("startTimeLocal") ?? ""),
       weekdays,
@@ -104,24 +107,33 @@ export function RecurringClassForm({
   return (
     <form action={onSubmit} className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-1.5">
-          <label htmlFor="studentId" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            {dictionary.common.student}
-          </label>
-          <select
-            id="studentId"
-            name="studentId"
-            defaultValue={students[0]?.id}
-            className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
-            required
-          >
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.name} {student.instrument ? `· ${student.instrument}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+        {selectedStudent ? (
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.teacher.selectedStudent}</p>
+            <div className="h-[3.1rem] rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 py-3 text-sm text-[var(--color-ink)]">
+              {selectedStudent.name} {selectedStudent.instrument ? `· ${selectedStudent.instrument}` : ""}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <label htmlFor="studentId" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.common.student}
+            </label>
+            <select
+              id="studentId"
+              name="studentId"
+              defaultValue={students[0]?.id}
+              className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+              required
+            >
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name} {student.instrument ? `· ${student.instrument}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="space-y-1.5">
           <label htmlFor="meetingUrl" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             {locale === "es" ? "Link de clase" : "Class link"}

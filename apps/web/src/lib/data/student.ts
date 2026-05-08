@@ -43,6 +43,7 @@ export async function getStudentDashboardData(viewer: AppViewer) {
         studentId: studentProfileId,
         status: SessionStatus.COMPLETED,
       },
+      include: { lessonNote: true },
       orderBy: { startsAtUtc: "desc" },
     }),
     db.activeSubscription.findFirst({
@@ -165,11 +166,26 @@ export async function getStudentVideosData(viewer: AppViewer) {
     throw new Error("Unauthorized: student role required");
   }
 
-  return db.practiceVideo.findMany({
-    where: { studentId: viewer.studentProfileId },
-    include: { feedback: true },
-    orderBy: { submittedAt: "desc" },
-  });
+  const [videos, assignments, repertoireItems, skillCategories] = await Promise.all([
+    db.practiceVideo.findMany({
+      where: { studentId: viewer.studentProfileId },
+      include: { feedback: true, practiceAssignment: true, repertoireItem: true, skillCategory: true },
+      orderBy: { submittedAt: "desc" },
+    }),
+    db.practiceAssignment.findMany({
+      where: { studentId: viewer.studentProfileId },
+      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+      take: 12,
+    }),
+    db.repertoireItem.findMany({
+      where: { studentId: viewer.studentProfileId },
+      orderBy: { updatedAt: "desc" },
+      take: 12,
+    }),
+    db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
+  ]);
+
+  return { videos, assignments, repertoireItems, skillCategories };
 }
 
 type Availability = {

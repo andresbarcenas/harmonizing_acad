@@ -70,12 +70,37 @@ export async function POST(req: Request) {
 
   const durationValue = Number(formData.get("durationSec") ?? 120);
   const safeDuration = Number.isFinite(durationValue) ? Math.max(1, Math.min(600, Math.round(durationValue))) : 120;
+  const practiceAssignmentId = optionalFormId(formData.get("practiceAssignmentId"));
+  const repertoireItemId = optionalFormId(formData.get("repertoireItemId"));
+  const skillCategoryId = optionalFormId(formData.get("skillCategoryId"));
+
+  if (practiceAssignmentId) {
+    const practiceAssignment = await db.practiceAssignment.findFirst({
+      where: { id: practiceAssignmentId, studentId: auth.user.studentProfile.id },
+      select: { id: true },
+    });
+    if (!practiceAssignment) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "La tarea seleccionada no existe." : "The selected assignment does not exist." }, { status: 400 });
+    }
+  }
+  if (repertoireItemId) {
+    const repertoireItem = await db.repertoireItem.findFirst({
+      where: { id: repertoireItemId, studentId: auth.user.studentProfile.id },
+      select: { id: true },
+    });
+    if (!repertoireItem) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "El repertorio seleccionado no existe." : "The selected repertoire item does not exist." }, { status: 400 });
+    }
+  }
   const stored = await storePracticeVideo(file, auth.user.studentProfile.id);
 
   const video = await db.practiceVideo.create({
     data: {
       studentId: auth.user.studentProfile.id,
       teacherId: assignment.teacherId,
+      practiceAssignmentId,
+      repertoireItemId,
+      skillCategoryId,
       storageKey: stored.storageKey,
       originalName: file.name,
       durationSec: safeDuration,
@@ -110,7 +135,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: firstIssue }, { status: 400 });
   }
 
-  const { videoId, comment } = parsed.data;
+  const { videoId, comment, skillRatings = [] } = parsed.data;
 
   const video = await db.practiceVideo.findFirst({
     where: {
@@ -132,13 +157,24 @@ export async function PATCH(req: Request) {
       },
     });
 
-    await tx.videoFeedback.create({
+    const feedback = await tx.videoFeedback.create({
       data: {
         videoId: video.id,
         teacherId: teacherProfileId,
         comment,
       },
     });
+
+    if (skillRatings.length) {
+      await tx.videoSkillRating.createMany({
+        data: skillRatings.map((rating) => ({
+          videoFeedbackId: feedback.id,
+          skillCategoryId: rating.skillCategoryId,
+          rating: rating.rating,
+          note: rating.note,
+        })),
+      });
+    }
   });
 
   const student = await db.studentProfile.findUnique({
@@ -157,4 +193,10 @@ export async function PATCH(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
+}
+
+function optionalFormId(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
 }

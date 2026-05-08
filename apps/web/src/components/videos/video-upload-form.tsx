@@ -10,7 +10,17 @@ const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
 const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 type FileValidationResult = { valid: true } | { valid: false; message: string };
 
-export function VideoUploadForm({ locale }: { locale: AppLocale }) {
+export function VideoUploadForm({
+  locale,
+  assignments = [],
+  repertoireItems = [],
+  skillCategories = [],
+}: {
+  locale: AppLocale;
+  assignments?: Array<{ id: string; title: string }>;
+  repertoireItems?: Array<{ id: string; title: string }>;
+  skillCategories?: Array<{ id: string; name: string; instrument: string }>;
+}) {
   const router = useRouter();
   const copy = videoUploadCopy[locale];
   const [status, setStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
@@ -118,6 +128,12 @@ export function VideoUploadForm({ locale }: { locale: AppLocale }) {
     const formData = new FormData();
     formData.set("file", activeFile as File);
     formData.set("durationSec", `${Math.max(recordedSeconds, 60)}`);
+    const selectedAssignment = document.querySelector<HTMLSelectElement>("[data-video-upload-assignment]")?.value;
+    const selectedRepertoire = document.querySelector<HTMLSelectElement>("[data-video-upload-repertoire]")?.value;
+    const selectedSkill = document.querySelector<HTMLSelectElement>("[data-video-upload-skill]")?.value;
+    if (selectedAssignment) formData.set("practiceAssignmentId", selectedAssignment);
+    if (selectedRepertoire) formData.set("repertoireItemId", selectedRepertoire);
+    if (selectedSkill) formData.set("skillCategoryId", selectedSkill);
 
     let response: Response;
     try {
@@ -193,6 +209,22 @@ export function VideoUploadForm({ locale }: { locale: AppLocale }) {
         }}
         className="block w-full rounded-[1.2rem] border border-[var(--color-border)] bg-white/76 p-4 text-sm text-[var(--color-ink-soft)] file:mr-3 file:rounded-full file:border file:border-[var(--color-border)] file:bg-[var(--color-gold-soft)] file:px-4 file:py-2 file:font-semibold file:text-[var(--color-gold-deep)]"
       />
+      {assignments.length || repertoireItems.length || skillCategories.length ? (
+        <div className="grid gap-2 rounded-[1.1rem] border border-[var(--color-border)] bg-white/74 p-3 md:grid-cols-3">
+          <select data-video-upload-assignment className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+            <option value="">{locale === "es" ? "Relacionar tarea" : "Link assignment"}</option>
+            {assignments.map((assignment) => <option key={assignment.id} value={assignment.id}>{assignment.title}</option>)}
+          </select>
+          <select data-video-upload-repertoire className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+            <option value="">{locale === "es" ? "Relacionar repertorio" : "Link repertoire"}</option>
+            {repertoireItems.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+          </select>
+          <select data-video-upload-skill className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+            <option value="">{locale === "es" ? "Relacionar habilidad" : "Link skill"}</option>
+            {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
+          </select>
+        </div>
+      ) : null}
       <div
         className={`rounded-[1.2rem] border border-dashed p-4 text-sm transition ${isDragging ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)]" : "border-[var(--color-border)] bg-white/72"}`}
         onDragOver={(event) => {

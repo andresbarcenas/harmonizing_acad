@@ -6,6 +6,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { TimezoneSync } from "@/components/system/timezone-sync";
+import { TeacherStudentSelector } from "@/components/teacher/student-context-selector";
 import { canUseAlegra } from "@/lib/alegra/client";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -25,6 +26,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/schedule", label: nav.schedule },
     { href: "/invoices", label: nav.invoices },
     { href: "/videos", label: nav.practice },
+    { href: "/progress", label: nav.progress },
     { href: "/messages", label: nav.messages },
     { href: "/notifications", label: nav.notifications },
     { href: "/settings", label: nav.profile },
@@ -33,6 +35,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/teacher/dashboard", label: nav.today },
     { href: "/teacher/requests", label: nav.reschedules },
     { href: "/teacher/videos", label: nav.videos },
+    { href: "/teacher/progress", label: nav.progress },
     { href: "/messages", label: nav.messages },
     { href: "/notifications", label: nav.notifications },
   ];
@@ -43,6 +46,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/admin/students", label: nav.students },
     { href: "/admin/assignments", label: nav.assignments },
     { href: "/admin/availability", label: nav.availability },
+    { href: "/admin/progress", label: nav.progress },
     { href: "/notifications", label: nav.notifications },
     { href: "/settings", label: nav.settings },
   ];
@@ -57,12 +61,14 @@ export async function AppShell({
   activePath,
   userName,
   locale,
+  selectedTeacherStudentId,
   children,
 }: {
   role: Role;
   activePath: string;
   userName: string;
   locale?: AppLocale;
+  selectedTeacherStudentId?: string | null;
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
@@ -71,6 +77,20 @@ export async function AppShell({
   const items = navByRole(role, dictionary.shell.nav);
   const notificationIndex = items.findIndex((item) => item.href === "/notifications");
   const alegraConfigured = canUseAlegra();
+  const teacherContextStudents = role === Role.TEACHER && session?.user?.id
+    ? await db.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+        include: {
+          students: {
+            include: { student: { include: { user: true } } },
+            orderBy: { student: { user: { name: "asc" } } },
+          },
+        },
+      })
+    : null;
+  const validTeacherStudentId = teacherContextStudents?.students.some((assignment) => assignment.studentId === selectedTeacherStudentId)
+    ? selectedTeacherStudentId
+    : null;
 
   let unreadCount = 0;
   if (session?.user?.id) {
@@ -85,7 +105,13 @@ export async function AppShell({
       <header className="mb-5 overflow-hidden rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(145deg,rgba(255,255,255,0.86),rgba(252,247,241,0.72))] px-3 py-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:px-4 md:mb-6 md:px-6 md:py-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Link
-            href={role === Role.STUDENT ? "/dashboard" : role === Role.TEACHER ? "/teacher/dashboard" : "/admin/dashboard"}
+            href={
+              role === Role.STUDENT
+                ? "/dashboard"
+                : role === Role.TEACHER
+                  ? withTeacherStudentContext("/teacher/dashboard", role, validTeacherStudentId)
+                  : "/admin/dashboard"
+            }
             className="min-w-0"
           >
             <BrandLogo compact={false} />
@@ -115,13 +141,28 @@ export async function AppShell({
             <SignOutButton compact label={dictionary.common.signOut} />
           </div>
         </div>
+        {role === Role.TEACHER ? (
+          <div className="mt-4">
+            <TeacherStudentSelector
+              students={(teacherContextStudents?.students ?? []).map((assignment) => ({
+                id: assignment.student.id,
+                name: assignment.student.user.name,
+                image: assignment.student.user.image,
+                instrument: assignment.student.preferredInstrument,
+              }))}
+              selectedStudentId={validTeacherStudentId}
+              locale={activeLocale}
+            />
+          </div>
+        ) : null}
         <nav className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 md:mt-5">
           {items.map((item, index) => {
             const active = activePath === item.href;
+            const href = withTeacherStudentContext(item.href, role, validTeacherStudentId);
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={href}
                 className={cn(
                   "rounded-full px-3.5 py-2.5 text-sm whitespace-nowrap transition-all duration-200 sm:px-4",
                   active
@@ -149,4 +190,14 @@ export async function AppShell({
       </footer>
     </div>
   );
+}
+
+function withTeacherStudentContext(href: string, role: Role, studentId?: string | null) {
+  if (role !== Role.TEACHER || !studentId) return href;
+
+  const contextualRoutes = ["/teacher/dashboard", "/teacher/requests", "/teacher/videos", "/messages"];
+  if (!contextualRoutes.includes(href)) return href;
+
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}studentId=${encodeURIComponent(studentId)}`;
 }

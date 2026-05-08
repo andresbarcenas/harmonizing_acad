@@ -11,6 +11,9 @@ import {
   InvoiceContactLinkStrategy,
   InvoiceSyncScope,
   InvoiceSyncStatus,
+  PracticeAssignmentStatus,
+  ProgressReportStatus,
+  RepertoireStatus,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { addDays, addHours, subDays } from "date-fns";
@@ -176,6 +179,45 @@ async function main() {
     ],
   });
 
+  const skillSeed = [
+    ["GENERAL", "Rhythm", "Pulso interno, subdivisión y estabilidad rítmica."],
+    ["GENERAL", "Ear training", "Escucha activa, afinación relativa y reconocimiento musical."],
+    ["GENERAL", "Music theory", "Lenguaje musical, armonía básica y comprensión de estructura."],
+    ["GENERAL", "Practice discipline", "Hábitos de estudio, constancia y preparación semanal."],
+    ["PIANO", "Timing / metronome", "Uso del metrónomo y precisión de tempo."],
+    ["PIANO", "Note reading", "Lectura de notas y reconocimiento en el teclado."],
+    ["PIANO", "Sight reading", "Lectura a primera vista."],
+    ["PIANO", "Hand coordination", "Coordinación entre manos y control simultáneo."],
+    ["PIANO", "Left/right hand independence", "Independencia entre mano izquierda y derecha."],
+    ["PIANO", "Scales", "Escalas, digitación y regularidad técnica."],
+    ["PIANO", "Chords", "Acordes, inversiones y progresiones."],
+    ["PIANO", "Technique", "Control técnico, relajación y articulación."],
+    ["PIANO", "Dynamics", "Control de volumen, contraste y matices."],
+    ["PIANO", "Expression", "Fraseo, intención musical y sensibilidad."],
+    ["PIANO", "Posture", "Postura corporal, manos y ergonomía."],
+    ["PIANO", "Repertoire/song mastery", "Dominio de canciones y piezas asignadas."],
+    ["VOICE", "Pitch accuracy", "Afinación y precisión melódica."],
+    ["VOICE", "Breath control", "Respiración, soporte y control del aire."],
+    ["VOICE", "Vocal tone", "Color, claridad y estabilidad del sonido."],
+    ["VOICE", "Range", "Extensión vocal cómoda y saludable."],
+    ["VOICE", "Support", "Apoyo diafragmático y sostén de frases."],
+    ["VOICE", "Diction", "Claridad de pronunciación e intención textual."],
+    ["VOICE", "Performance confidence", "Seguridad escénica y presencia."],
+    ["VOICE", "Warmup discipline", "Rutina de calentamiento y cuidado vocal."],
+    ["VOICE", "Song interpretation", "Interpretación, emoción y narrativa."],
+    ["VOICE", "Stage presence", "Comunicación escénica y confianza corporal."],
+  ] as const;
+
+  const skillCategories = new Map<string, Awaited<ReturnType<typeof prisma.skillCategory.upsert>>>();
+  for (const [index, [instrument, name, description]] of skillSeed.entries()) {
+    const category = await prisma.skillCategory.upsert({
+      where: { instrument_name: { instrument, name } },
+      update: { description, sortOrder: index + 1, active: true },
+      create: { instrument, name, description, sortOrder: index + 1 },
+    });
+    skillCategories.set(`${instrument}:${name}`, category);
+  }
+
   const now = new Date();
   const nextClassStart = addDays(now, 2);
   nextClassStart.setUTCHours(23, 0, 0, 0);
@@ -255,6 +297,82 @@ async function main() {
         meetingUrl: "https://zoom.us/j/1234567890",
         status: SessionStatus.CANCELLED,
         lessonFocus: "Revisión de repertorio",
+      },
+    }),
+  ]);
+
+  const pianoSeries = await prisma.recurringClassSeries.upsert({
+    where: { id: "series_isabella_piano_twice_weekly" },
+    update: {
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      timezone: "America/Chicago",
+      weekdays: [1, 3],
+      active: true,
+    },
+    create: {
+      id: "series_isabella_piano_twice_weekly",
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      timezone: "America/Chicago",
+      startsOnDate: addDays(now, 7),
+      startTimeLocal: "18:00",
+      startMinuteLocal: 18 * 60,
+      durationMin: 60,
+      intervalWeeks: 1,
+      horizonWeeks: 8,
+      weekdays: [1, 3],
+      meetingUrl: "https://zoom.us/j/1234567890",
+      lessonFocus: "Piano: coordinación, repertorio y técnica semanal",
+    },
+  });
+
+  const recurringClassOne = addDays(now, 8);
+  recurringClassOne.setUTCHours(23, 0, 0, 0);
+  const recurringClassTwo = addDays(now, 10);
+  recurringClassTwo.setUTCHours(23, 0, 0, 0);
+
+  await Promise.all([
+    prisma.classSession.upsert({
+      where: { id: "session_isabella_recurring_piano_1" },
+      update: {
+        recurrenceId: pianoSeries.id,
+        studentId: studentProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: recurringClassOne,
+        endsAtUtc: addHours(recurringClassOne, 1),
+      },
+      create: {
+        id: "session_isabella_recurring_piano_1",
+        recurrenceId: pianoSeries.id,
+        studentId: studentProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: recurringClassOne,
+        endsAtUtc: addHours(recurringClassOne, 1),
+        meetingUrl: "https://zoom.us/j/1234567890",
+        status: SessionStatus.SCHEDULED,
+        lessonFocus: "Lectura rítmica y manos juntas",
+      },
+    }),
+    prisma.classSession.upsert({
+      where: { id: "session_isabella_recurring_piano_2" },
+      update: {
+        recurrenceId: pianoSeries.id,
+        studentId: studentProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: recurringClassTwo,
+        endsAtUtc: addHours(recurringClassTwo, 1),
+      },
+      create: {
+        id: "session_isabella_recurring_piano_2",
+        recurrenceId: pianoSeries.id,
+        studentId: studentProfile.id,
+        teacherId: teacherProfile.id,
+        startsAtUtc: recurringClassTwo,
+        endsAtUtc: addHours(recurringClassTwo, 1),
+        meetingUrl: "https://zoom.us/j/1234567890",
+        status: SessionStatus.SCHEDULED,
+        lessonFocus: "Sección B y metrónomo",
       },
     }),
   ]);
@@ -393,7 +511,7 @@ async function main() {
     },
   });
 
-  await prisma.videoFeedback.upsert({
+  const videoFeedback = await prisma.videoFeedback.upsert({
     where: { id: "feedback_seed_1" },
     update: { comment: "Muy buen fraseo. En la segunda mitad, relajá hombros para sostener mejor el aire." },
     create: {
@@ -416,6 +534,328 @@ async function main() {
       durationSec: 96,
       status: VideoStatus.PENDING,
       submittedAt: subDays(now, 1),
+    },
+  });
+
+  const rhythm = skillCategories.get("GENERAL:Rhythm");
+  const practiceDiscipline = skillCategories.get("GENERAL:Practice discipline");
+  const handCoordination = skillCategories.get("PIANO:Hand coordination");
+  const sightReading = skillCategories.get("PIANO:Sight reading");
+  const timing = skillCategories.get("PIANO:Timing / metronome");
+  const posture = skillCategories.get("PIANO:Posture");
+  const breathControl = skillCategories.get("VOICE:Breath control");
+  const pitchAccuracy = skillCategories.get("VOICE:Pitch accuracy");
+
+  if (!rhythm || !practiceDiscipline || !handCoordination || !sightReading || !timing || !posture || !breathControl || !pitchAccuracy) {
+    throw new Error("Missing seeded skill categories");
+  }
+
+  const lessonNote = await prisma.lessonNote.upsert({
+    where: { sessionId: session2.id },
+    update: {
+      summary: "Isabella consolidó postura, pulso lento y coordinación básica de ambas manos.",
+      taughtToday: "Trabajo de postura, respiración antes de tocar, lectura rítmica en negras y corcheas, y manos juntas en compases 1-8.",
+      studentDidWell: "Mantuvo mejor relajación de hombros y logró tocar la primera frase con menos pausas.",
+      needsImprovement: "Tiende a acelerar las corcheas cuando entra la mano izquierda.",
+      homework: "Practicar compases 1-8 a 60 bpm, 12 minutos diarios, primero manos separadas y luego juntas.",
+      nextLessonFocus: "Subir a 66 bpm y conectar compases 1-16 sin detenerse.",
+      teacherPrivateNote: "Revisar tensión en muñeca derecha si vuelve a aparecer al subir tempo.",
+      studentVisibleNote: "Excelente avance de coordinación. Mantén el tempo lento y celebra cada repetición limpia.",
+      preparednessRating: 4,
+      focusRating: 4,
+      effortRating: 5,
+      overallLessonRating: 4,
+    },
+    create: {
+      sessionId: session2.id,
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      summary: "Isabella consolidó postura, pulso lento y coordinación básica de ambas manos.",
+      taughtToday: "Trabajo de postura, respiración antes de tocar, lectura rítmica en negras y corcheas, y manos juntas en compases 1-8.",
+      studentDidWell: "Mantuvo mejor relajación de hombros y logró tocar la primera frase con menos pausas.",
+      needsImprovement: "Tiende a acelerar las corcheas cuando entra la mano izquierda.",
+      homework: "Practicar compases 1-8 a 60 bpm, 12 minutos diarios, primero manos separadas y luego juntas.",
+      nextLessonFocus: "Subir a 66 bpm y conectar compases 1-16 sin detenerse.",
+      teacherPrivateNote: "Revisar tensión en muñeca derecha si vuelve a aparecer al subir tempo.",
+      studentVisibleNote: "Excelente avance de coordinación. Mantén el tempo lento y celebra cada repetición limpia.",
+      preparednessRating: 4,
+      focusRating: 4,
+      effortRating: 5,
+      overallLessonRating: 4,
+    },
+  });
+
+  const voiceLessonNote = await prisma.lessonNote.upsert({
+    where: { sessionId: session4.id },
+    update: {
+      summary: "Luis mejoró el control de aire en frases largas y mantuvo mejor afinación en calentamientos.",
+      taughtToday: "Respiración diafragmática, vocalizaciones en terceras y dicción en verso principal.",
+      studentDidWell: "Sostuvo frases más largas sin empujar el sonido.",
+      needsImprovement: "Necesita preparar el calentamiento antes de clase.",
+      homework: "Calentamiento de 8 minutos y práctica lenta del verso con respiraciones marcadas.",
+      nextLessonFocus: "Afinación de saltos y soporte en notas largas.",
+      studentVisibleNote: "El control del aire está más estable. Practica corto, constante y sin tensión.",
+      preparednessRating: 3,
+      focusRating: 4,
+      effortRating: 4,
+      overallLessonRating: 4,
+    },
+    create: {
+      sessionId: session4.id,
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      summary: "Luis mejoró el control de aire en frases largas y mantuvo mejor afinación en calentamientos.",
+      taughtToday: "Respiración diafragmática, vocalizaciones en terceras y dicción en verso principal.",
+      studentDidWell: "Sostuvo frases más largas sin empujar el sonido.",
+      needsImprovement: "Necesita preparar el calentamiento antes de clase.",
+      homework: "Calentamiento de 8 minutos y práctica lenta del verso con respiraciones marcadas.",
+      nextLessonFocus: "Afinación de saltos y soporte en notas largas.",
+      studentVisibleNote: "El control del aire está más estable. Practica corto, constante y sin tensión.",
+      preparednessRating: 3,
+      focusRating: 4,
+      effortRating: 4,
+      overallLessonRating: 4,
+    },
+  });
+
+  const lessonRatings = [
+    { lessonNoteId: lessonNote.id, skillCategoryId: rhythm.id, rating: 3, note: "Aún acelera las corcheas al unir manos." },
+    { lessonNoteId: lessonNote.id, skillCategoryId: handCoordination.id, rating: 4, note: "Mejor control manos juntas en tempo lento." },
+    { lessonNoteId: lessonNote.id, skillCategoryId: sightReading.id, rating: 2, note: "Necesita más repetición con notas nuevas." },
+    { lessonNoteId: lessonNote.id, skillCategoryId: posture.id, rating: 4, note: "Hombros más relajados y mejor banco." },
+    { lessonNoteId: voiceLessonNote.id, skillCategoryId: breathControl.id, rating: 4, note: "Frases más estables y menos aire escapado." },
+    { lessonNoteId: voiceLessonNote.id, skillCategoryId: pitchAccuracy.id, rating: 3, note: "Afinación estable en ejercicios, variable en canción." },
+  ];
+
+  for (const rating of lessonRatings) {
+    await prisma.lessonSkillRating.upsert({
+      where: {
+        lessonNoteId_skillCategoryId: {
+          lessonNoteId: rating.lessonNoteId,
+          skillCategoryId: rating.skillCategoryId,
+        },
+      },
+      update: { rating: rating.rating, note: rating.note },
+      create: rating,
+    });
+  }
+
+  const repertoire = await prisma.repertoireItem.upsert({
+    where: { id: "rep_isabella_besame_mucho" },
+    update: {
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      status: RepertoireStatus.IMPROVING,
+      masteryPercent: 68,
+    },
+    create: {
+      id: "rep_isabella_besame_mucho",
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      title: "Bésame Mucho",
+      composerOrArtist: "Consuelo Velázquez",
+      instrument: "Piano",
+      level: "Intermedio inicial",
+      status: RepertoireStatus.IMPROVING,
+      startDate: subDays(now, 28),
+      targetDate: addDays(now, 21),
+      masteryPercent: 68,
+      currentFocusSection: "Compases 1-16",
+      currentTempo: 60,
+      targetTempo: 76,
+      teacherNotes: "Priorizar pulso estable antes de subir velocidad.",
+      studentVisibleNotes: "Trabaja secciones pequeñas y toca siempre con metrónomo.",
+    },
+  });
+
+  await prisma.repertoireItem.upsert({
+    where: { id: "rep_luis_contigo_distancia" },
+    update: {
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      status: RepertoireStatus.LEARNING,
+      masteryPercent: 42,
+    },
+    create: {
+      id: "rep_luis_contigo_distancia",
+      studentId: studentTwoProfile.id,
+      teacherId: teacherProfile.id,
+      title: "Contigo en la distancia",
+      composerOrArtist: "César Portillo de la Luz",
+      instrument: "Voz",
+      level: "Principiante alto",
+      status: RepertoireStatus.LEARNING,
+      startDate: subDays(now, 10),
+      targetDate: addDays(now, 30),
+      masteryPercent: 42,
+      currentFocusSection: "Verso principal",
+      teacherNotes: "Cuidar respiraciones antes de frases largas.",
+      studentVisibleNotes: "Marca dónde respirar y canta sin empujar.",
+    },
+  });
+
+  const assignment = await prisma.practiceAssignment.upsert({
+    where: { id: "assignment_isabella_manos_juntas" },
+    update: {
+      status: PracticeAssignmentStatus.IN_PROGRESS,
+      repertoireItemId: repertoire.id,
+      skillCategoryId: handCoordination.id,
+    },
+    create: {
+      id: "assignment_isabella_manos_juntas",
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      lessonNoteId: lessonNote.id,
+      classSessionId: session2.id,
+      repertoireItemId: repertoire.id,
+      skillCategoryId: handCoordination.id,
+      title: "Compases 1-8 manos juntas",
+      instructions: "Practica 3 rondas a 60 bpm. Si puedes tocar dos repeticiones limpias, sube a 63 bpm.",
+      assignedDate: subDays(now, 5),
+      dueDate: addDays(now, 2),
+      status: PracticeAssignmentStatus.IN_PROGRESS,
+      expectedMinutes: 12,
+      requiresVideo: true,
+      teacherReviewNote: "Revisar si mantiene tempo sin mirar demasiado las manos.",
+    },
+  });
+
+  await prisma.practiceAssignment.upsert({
+    where: { id: "assignment_isabella_lectura_ritmica" },
+    update: {
+      status: PracticeAssignmentStatus.ASSIGNED,
+      skillCategoryId: rhythm.id,
+    },
+    create: {
+      id: "assignment_isabella_lectura_ritmica",
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      lessonNoteId: lessonNote.id,
+      classSessionId: session2.id,
+      skillCategoryId: rhythm.id,
+      title: "Lectura rítmica con palmas",
+      instructions: "Lee y marca negras/corcheas durante 5 minutos antes de tocar la pieza.",
+      assignedDate: subDays(now, 5),
+      dueDate: addDays(now, 2),
+      status: PracticeAssignmentStatus.ASSIGNED,
+      expectedMinutes: 5,
+      requiresVideo: false,
+    },
+  });
+
+  await prisma.practiceLog.deleteMany({ where: { studentId: studentProfile.id } });
+  await prisma.practiceLog.createMany({
+    data: [
+      {
+        studentId: studentProfile.id,
+        assignmentId: assignment.id,
+        repertoireItemId: repertoire.id,
+        skillCategoryId: handCoordination.id,
+        practicedOn: subDays(now, 4),
+        minutesPracticed: 18,
+        notes: "Manos separadas primero. Me costó mantener el tempo al final.",
+        moodRating: 4,
+        difficultyRating: 3,
+      },
+      {
+        studentId: studentProfile.id,
+        assignmentId: assignment.id,
+        repertoireItemId: repertoire.id,
+        skillCategoryId: timing.id,
+        practicedOn: subDays(now, 2),
+        minutesPracticed: 22,
+        notes: "Usé metrónomo a 60 bpm y logré tocar dos veces sin parar.",
+        moodRating: 5,
+        difficultyRating: 2,
+      },
+    ],
+  });
+
+  await prisma.practiceVideo.update({
+    where: { id: video.id },
+    data: {
+      practiceAssignmentId: assignment.id,
+      repertoireItemId: repertoire.id,
+      skillCategoryId: handCoordination.id,
+    },
+  });
+
+  await prisma.videoSkillRating.upsert({
+    where: {
+      videoFeedbackId_skillCategoryId: {
+        videoFeedbackId: videoFeedback.id,
+        skillCategoryId: handCoordination.id,
+      },
+    },
+    update: { rating: 4, note: "El video confirma mejor control de manos juntas." },
+    create: {
+      videoFeedbackId: videoFeedback.id,
+      skillCategoryId: handCoordination.id,
+      rating: 4,
+      note: "El video confirma mejor control de manos juntas.",
+    },
+  });
+
+  await prisma.progressReport.upsert({
+    where: { id: "report_isabella_april_foundation" },
+    update: {
+      attendanceCount: 1,
+      completedLessonsCount: 1,
+      missedCancelledCount: 1,
+      totalPracticeMinutes: 40,
+      practiceAssignmentCompletionRate: 0,
+      videoSubmissionsCount: 1,
+      averageLessonRating: 4,
+      averageSkillRatings: {
+        Rhythm: 3,
+        "Hand coordination": 4,
+        "Sight reading": 2,
+        Posture: 4,
+      },
+      repertoireProgressSummary: {
+        activeItems: 1,
+        averageMasteryPercent: 68,
+        byStatus: { IMPROVING: 1 },
+      },
+      teacherSummary: "Isabella muestra constancia y mejor coordinación cuando trabaja a tempo lento.",
+      strengths: "Disciplina, sensibilidad musical y disposición para repetir con paciencia.",
+      improvementAreas: "Lectura a primera vista y estabilidad rítmica con ambas manos.",
+      recommendedNextFocus: "Mantener metrónomo y ampliar de compases 1-8 a 1-16.",
+      finalGrade: "B+",
+      gradePercentage: 86,
+    },
+    create: {
+      id: "report_isabella_april_foundation",
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      generatedByUserId: teacherUser.id,
+      startDate: subDays(now, 30),
+      endDate: now,
+      status: ProgressReportStatus.GENERATED,
+      attendanceCount: 1,
+      completedLessonsCount: 1,
+      missedCancelledCount: 1,
+      totalPracticeMinutes: 40,
+      practiceAssignmentCompletionRate: 0,
+      videoSubmissionsCount: 1,
+      averageLessonRating: 4,
+      averageSkillRatings: {
+        Rhythm: 3,
+        "Hand coordination": 4,
+        "Sight reading": 2,
+        Posture: 4,
+      },
+      repertoireProgressSummary: {
+        activeItems: 1,
+        averageMasteryPercent: 68,
+        byStatus: { IMPROVING: 1 },
+      },
+      teacherSummary: "Isabella muestra constancia y mejor coordinación cuando trabaja a tempo lento.",
+      strengths: "Disciplina, sensibilidad musical y disposición para repetir con paciencia.",
+      improvementAreas: "Lectura a primera vista y estabilidad rítmica con ambas manos.",
+      recommendedNextFocus: "Mantener metrónomo y ampliar de compases 1-8 a 1-16.",
+      finalGrade: "B+",
+      gradePercentage: 86,
     },
   });
 

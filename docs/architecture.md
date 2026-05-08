@@ -76,3 +76,9 @@ Core entities:
 - Add real-time messaging transport (websocket/SSE) if needed
 - Add queue/background workers for reminders and video processing
 - Harden with audit logs, rate limits, and observability
+
+## Progress Intelligence
+
+The progress subsystem adds structured lesson evidence around existing sessions, videos, goals, songs, and logs. Teachers create `LessonNote` records for classes, rate `SkillCategory` items, manage `RepertoireItem` records, assign `PracticeAssignment` work, and generate deterministic `ProgressReport` snapshots. Students can view visible notes/reports, update assignment status, log practice minutes, and link practice videos to assignments, repertoire, and skills. Admins can monitor missing lesson notes, low practice activity, report status, and seeded skill categories.
+
+See `docs/progress-intelligence.md` for the detailed workflow and report calculations.

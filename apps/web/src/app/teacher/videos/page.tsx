@@ -13,19 +13,21 @@ import { cn } from "@/lib/utils";
 import { getVideoPublicUrl } from "@/lib/storage";
 
 type TeacherVideosPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     estado?: string;
-  };
+    studentId?: string;
+  }>;
 };
 
 export default async function TeacherVideosPage({ searchParams }: TeacherVideosPageProps) {
   const viewer = await requireViewer([Role.TEACHER]);
   const dictionary = getDictionary(viewer.locale);
-  const selectedFilter = searchParams?.estado === "pending" || searchParams?.estado === "reviewed" ? searchParams.estado : "all";
-  const { videos, missingThisWeek } = await getTeacherVideosData(viewer, selectedFilter);
+  const resolvedSearchParams = await searchParams;
+  const selectedFilter = resolvedSearchParams?.estado === "pending" || resolvedSearchParams?.estado === "reviewed" ? resolvedSearchParams.estado : "all";
+  const { videos, missingThisWeek, selectedStudentId, skillCategories } = await getTeacherVideosData(viewer, selectedFilter, { studentId: resolvedSearchParams?.studentId });
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/videos" userName={viewer.name} locale={viewer.locale}>
+    <AppShell role={viewer.role} activePath="/teacher/videos" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={selectedStudentId}>
       <PageIntro
         eyebrow={dictionary.videos.teacherEyebrow}
         title={dictionary.videos.teacherTitle}
@@ -45,7 +47,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
             return (
               <Link
                 key={option.key}
-                href={option.key === "all" ? "/teacher/videos" : `/teacher/videos?estado=${option.key}`}
+                href={buildVideosFilterHref(option.key, selectedStudentId)}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-semibold transition",
                   active ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)]",
@@ -74,6 +76,9 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{video.student.user.name}</p>
                 <p className="break-all text-xs text-[var(--color-ink-soft)]">{video.originalName} · {Math.floor(video.durationSec / 60)}:{`${video.durationSec % 60}`.padStart(2, "0")}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">
+                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ")}
+                </p>
               </div>
               <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>
                 {video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? dictionary.common.reviewed : dictionary.common.pending}
@@ -90,7 +95,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
               </video>
             </div>
             <div className="mt-3">
-              <VideoReviewForm videoId={video.id} disabled={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN} locale={viewer.locale} />
+              <VideoReviewForm videoId={video.id} disabled={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN} locale={viewer.locale} skillCategories={skillCategories} />
             </div>
           </Card>
         ))}
@@ -103,4 +108,12 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
       </div>
     </AppShell>
   );
+}
+
+function buildVideosFilterHref(filter: string, studentId?: string | null) {
+  const params = new URLSearchParams();
+  if (filter !== "all") params.set("estado", filter);
+  if (studentId) params.set("studentId", studentId);
+  const query = params.toString();
+  return query ? `/teacher/videos?${query}` : "/teacher/videos";
 }

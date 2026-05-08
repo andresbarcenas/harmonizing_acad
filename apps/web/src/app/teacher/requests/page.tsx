@@ -9,13 +9,20 @@ import { requireViewer } from "@/features/auth/server";
 import { getTeacherRequestsData } from "@/lib/data";
 import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 
-export default async function TeacherRequestsPage() {
+type TeacherRequestsPageProps = {
+  searchParams?: Promise<{
+    studentId?: string;
+  }>;
+};
+
+export default async function TeacherRequestsPage({ searchParams }: TeacherRequestsPageProps) {
   const viewer = await requireViewer([Role.TEACHER]);
   const dictionary = getDictionary(viewer.locale);
-  const requests = await getTeacherRequestsData(viewer);
+  const resolvedSearchParams = await searchParams;
+  const { requests, selectedStudentId } = await getTeacherRequestsData(viewer, { studentId: resolvedSearchParams?.studentId });
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/requests" userName={viewer.name} locale={viewer.locale}>
+    <AppShell role={viewer.role} activePath="/teacher/requests" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={selectedStudentId}>
       <PageIntro
         eyebrow={dictionary.shell.nav.reschedules}
         title={viewer.locale === "es" ? "Aprueba cambios con contexto y sin fricción." : "Approve changes with context and less friction."}

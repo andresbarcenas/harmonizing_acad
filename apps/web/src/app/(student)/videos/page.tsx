@@ -13,7 +13,7 @@ import { getVideoPublicUrl } from "@/lib/storage";
 export default async function StudentVideosPage() {
   const viewer = await requireViewer([Role.STUDENT]);
   const dictionary = getDictionary(viewer.locale);
-  const videos = await getStudentVideosData(viewer);
+  const { videos, assignments, repertoireItems, skillCategories } = await getStudentVideosData(viewer);
 
   return (
     <AppShell role={viewer.role} activePath="/videos" userName={viewer.name} locale={viewer.locale}>
@@ -24,7 +24,7 @@ export default async function StudentVideosPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <VideoUploadForm locale={viewer.locale} />
+        <VideoUploadForm locale={viewer.locale} assignments={assignments} repertoireItems={repertoireItems} skillCategories={skillCategories} />
         <Card>
           <CardTitle>{dictionary.videos.timeline}</CardTitle>
           <CardDescription>{dictionary.videos.timelineDescription}</CardDescription>
@@ -39,6 +39,9 @@ export default async function StudentVideosPage() {
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, viewer.locale)}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">
+                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ")}
+                </p>
                 <div className="mt-2">
                   <video
                     controls

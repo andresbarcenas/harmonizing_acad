@@ -6,12 +6,25 @@ import { endOfDay, endOfWeek, startOfDay, startOfWeek } from "date-fns";
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 
-export async function getTeacherDashboardData(viewer: AppViewer) {
+async function resolveTeacherStudentContext(teacherProfileId: string, studentId?: string | null) {
+  if (!studentId) return null;
+
+  const assignment = await db.teacherAssignment.findFirst({
+    where: { teacherId: teacherProfileId, studentId },
+    select: { studentId: true },
+  });
+
+  return assignment?.studentId ?? null;
+}
+
+export async function getTeacherDashboardData(viewer: AppViewer, options: { studentId?: string | null } = {}) {
   if (viewer.role !== "TEACHER" || !viewer.teacherProfileId) {
     throw new Error("Unauthorized: teacher role required");
   }
 
   const teacherProfileId = viewer.teacherProfileId;
+  const selectedStudentId = await resolveTeacherStudentContext(teacherProfileId, options.studentId);
+  const studentFilter = selectedStudentId ? { studentId: selectedStudentId } : {};
   const todayStart = startOfDay(new Date());
   const todayEnd = endOfDay(new Date());
   const now = new Date();
@@ -26,6 +39,7 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
     db.classSession.findMany({
       where: {
         teacherId: teacherProfileId,
+        ...studentFilter,
         startsAtUtc: { gte: todayStart, lte: todayEnd },
       },
       include: {
@@ -36,7 +50,7 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
       orderBy: { startsAtUtc: "asc" },
     }),
     db.teacherAssignment.findMany({
-      where: { teacherId: teacherProfileId },
+      where: { teacherId: teacherProfileId, ...studentFilter },
       include: {
         student: {
           include: { user: true },
@@ -46,7 +60,7 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
     db.rescheduleRequest.findMany({
       where: {
         status: RescheduleStatus.PENDING,
-        session: { teacherId: teacherProfileId },
+        session: { teacherId: teacherProfileId, ...studentFilter },
       },
       include: {
         session: {
@@ -60,6 +74,7 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
     db.practiceVideo.findMany({
       where: {
         teacherId: teacherProfileId,
+        ...studentFilter,
         status: { in: [VideoStatus.PENDING, VideoStatus.REVIEWED] },
       },
       include: {
@@ -71,6 +86,7 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
     db.recurringClassSeries.findMany({
       where: {
         teacherId: teacherProfileId,
+        ...studentFilter,
       },
       include: {
         student: { include: { user: true } },
@@ -101,13 +117,20 @@ export async function getTeacherDashboardData(viewer: AppViewer) {
     pendingVideos,
     classStatusCounts,
     recurringSeries,
+    selectedStudentId,
   };
 }
 
-export async function getTeacherVideosData(viewer: AppViewer, statusFilter: "all" | "pending" | "reviewed" = "all") {
+export async function getTeacherVideosData(
+  viewer: AppViewer,
+  statusFilter: "all" | "pending" | "reviewed" = "all",
+  options: { studentId?: string | null } = {},
+) {
   if (viewer.role !== "TEACHER" || !viewer.teacherProfileId) {
     throw new Error("Unauthorized: teacher role required");
   }
+  const selectedStudentId = await resolveTeacherStudentContext(viewer.teacherProfileId, options.studentId);
+  const studentFilter = selectedStudentId ? { studentId: selectedStudentId } : {};
 
   const whereStatus =
     statusFilter === "pending"
@@ -116,27 +139,37 @@ export async function getTeacherVideosData(viewer: AppViewer, statusFilter: "all
         ? { in: [VideoStatus.REVIEWED, VideoStatus.FEEDBACK_GIVEN] as VideoStatus[] }
         : undefined;
 
-  const [videos, assignedStudents] = await Promise.all([
+  const [videos, assignedStudents, skillCategories] = await Promise.all([
     db.practiceVideo.findMany({
-      where: { teacherId: viewer.teacherProfileId, ...(whereStatus ? { status: whereStatus } : {}) },
+      where: { teacherId: viewer.teacherProfileId, ...studentFilter, ...(whereStatus ? { status: whereStatus } : {}) },
       include: {
         student: { include: { user: true } },
-        feedback: true,
+        feedback: { include: { skillRatings: { include: { skillCategory: true } } } },
+        repertoireItem: true,
+        skillCategory: true,
+        practiceAssignment: true,
       },
       orderBy: { submittedAt: "desc" },
     }),
     db.teacherAssignment.findMany({
-      where: { teacherId: viewer.teacherProfileId },
+      where: { teacherId: viewer.teacherProfileId, ...studentFilter },
       include: { student: { include: { user: true } } },
     }),
+    db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
   ]);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const weeklySubmissions = await db.practiceVideo.findMany({
+    where: {
+      teacherId: viewer.teacherProfileId,
+      ...studentFilter,
+      submittedAt: { gte: weekStart, lte: weekEnd },
+    },
+    select: { studentId: true },
+  });
   const submittedThisWeek = new Set(
-    videos
-      .filter((video) => video.submittedAt >= weekStart && video.submittedAt <= weekEnd)
-      .map((video) => video.studentId),
+    weeklySubmissions.map((video) => video.studentId),
   );
   const missingThisWeek = assignedStudents.filter((assignment) => !submittedThisWeek.has(assignment.studentId));
 
@@ -144,18 +177,22 @@ export async function getTeacherVideosData(viewer: AppViewer, statusFilter: "all
     videos,
     missingThisWeek,
     statusFilter,
+    selectedStudentId,
+    skillCategories,
   };
 }
 
-export async function getTeacherRequestsData(viewer: AppViewer) {
+export async function getTeacherRequestsData(viewer: AppViewer, options: { studentId?: string | null } = {}) {
   if (viewer.role !== "TEACHER" || !viewer.teacherProfileId) {
     throw new Error("Unauthorized: teacher role required");
   }
+  const selectedStudentId = await resolveTeacherStudentContext(viewer.teacherProfileId, options.studentId);
+  const studentFilter = selectedStudentId ? { studentId: selectedStudentId } : {};
 
-  return db.rescheduleRequest.findMany({
+  const requests = await db.rescheduleRequest.findMany({
     where: {
       status: RescheduleStatus.PENDING,
-      session: { teacherId: viewer.teacherProfileId },
+      session: { teacherId: viewer.teacherProfileId, ...studentFilter },
     },
     include: {
       session: {
@@ -166,4 +203,6 @@ export async function getTeacherRequestsData(viewer: AppViewer) {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return { requests, selectedStudentId };
 }

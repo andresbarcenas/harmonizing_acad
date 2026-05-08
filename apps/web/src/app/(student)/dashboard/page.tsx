@@ -82,10 +82,10 @@ export default async function StudentDashboardPage() {
           ) : (
             <CardDescription className="mt-3">{dictionary.student.noTeacher}</CardDescription>
           )}
-          {data.latestCompleted?.lastClassNotes ? (
+          {data.latestCompleted?.lessonNote?.studentVisibleNote || data.latestCompleted?.lastClassNotes ? (
             <div className="mt-5 rounded-[1.35rem] border border-[var(--color-border)] bg-white/72 p-4">
               <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold-deep)]">{dictionary.student.lastNote}</p>
-              <p className="mt-2 text-sm leading-6">{data.latestCompleted.lastClassNotes}</p>
+              <p className="mt-2 text-sm leading-6">{data.latestCompleted.lessonNote?.studentVisibleNote ?? data.latestCompleted.lastClassNotes}</p>
             </div>
           ) : null}
         </Card>
