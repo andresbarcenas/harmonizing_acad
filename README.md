@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.4.0`
+- Current version: `v0.5.0`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -55,6 +55,7 @@ Complete in this v1:
 - Notification center + read state
 - English/Spanish UI support with English default and account-level preference
 - Auth-first root route (`/`) that redirects to sign-in or the active role workspace
+- Student/parent progress portal with lesson summaries, practice assignments, completion notes, repertoire, video request links, skill snapshots, and reports
 - Admin metrics (students, teachers, MRR, weekly classes, workload)
 - WhatsApp plan management CTA surfaced in student-facing areas
 - Alegra invoicing v1: student invoices page, cached sync, admin monitor/relink tools

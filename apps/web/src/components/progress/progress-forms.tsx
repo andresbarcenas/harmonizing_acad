@@ -68,6 +68,8 @@ function copy(locale: AppLocale) {
         parentNote: "Nota familiar opcional",
         inProgress: "Marcar en progreso",
         complete: "Marcar completada",
+        completionNote: "Nota al completar",
+        completionNotePlaceholder: "Cuenta brevemente cómo te fue con esta práctica.",
         generateReport: "Generar reporte",
         startDate: "Inicio",
         endDate: "Fin",
@@ -115,6 +117,8 @@ function copy(locale: AppLocale) {
         parentNote: "Optional parent note",
         inProgress: "Mark in progress",
         complete: "Mark completed",
+        completionNote: "Completion note",
+        completionNotePlaceholder: "Briefly share how this practice went.",
         generateReport: "Generate report",
         startDate: "Start",
         endDate: "End",
@@ -292,17 +296,45 @@ export function PracticeLogForm({ assignments, repertoire, skills, locale }: { a
   );
 }
 
-export function AssignmentStatusActions({ assignmentId, status, locale }: { assignmentId: string; status: PracticeAssignmentStatus; locale: AppLocale }) {
+export function AssignmentStatusActions({ assignmentId, status, locale, initialCompletionNote }: { assignmentId: string; status: PracticeAssignmentStatus; locale: AppLocale; initialCompletionNote?: string | null }) {
   const router = useRouter();
   const c = copy(locale);
+  const [completionNote, setCompletionNote] = useState(initialCompletionNote ?? "");
+  const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
   async function update(nextStatus: typeof assignmentStatus.inProgress | typeof assignmentStatus.completed) {
-    await fetch("/api/progress/practice-assignments", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId, status: nextStatus }) });
+    setPending(true);
+    setMessage("");
+    const response = await fetch("/api/progress/practice-assignments", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignmentId, status: nextStatus, completionNote: nextStatus === assignmentStatus.completed ? completionNote : undefined }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      setMessage(payload?.error ?? c.error);
+      setPending(false);
+      return;
+    }
+    setPending(false);
     router.refresh();
   }
   return (
-    <div className="flex flex-wrap gap-2">
-      {status === assignmentStatus.assigned ? <Button size="sm" variant="outline" onClick={() => update(assignmentStatus.inProgress)}>{c.inProgress}</Button> : null}
-      {[assignmentStatus.assigned, assignmentStatus.inProgress].includes(status as typeof assignmentStatus.assigned | typeof assignmentStatus.inProgress) ? <Button size="sm" variant="gold" onClick={() => update(assignmentStatus.completed)}>{c.complete}</Button> : null}
+    <div className="space-y-2">
+      {[assignmentStatus.assigned, assignmentStatus.inProgress].includes(status as typeof assignmentStatus.assigned | typeof assignmentStatus.inProgress) ? (
+        <Textarea
+          value={completionNote}
+          onChange={(event) => setCompletionNote(event.target.value)}
+          placeholder={c.completionNotePlaceholder}
+          className="min-h-20"
+          aria-label={c.completionNote}
+        />
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {status === assignmentStatus.assigned ? <Button size="sm" variant="outline" disabled={pending} onClick={() => update(assignmentStatus.inProgress)}>{c.inProgress}</Button> : null}
+        {[assignmentStatus.assigned, assignmentStatus.inProgress].includes(status as typeof assignmentStatus.assigned | typeof assignmentStatus.inProgress) ? <Button size="sm" variant="gold" disabled={pending} onClick={() => update(assignmentStatus.completed)}>{c.complete}</Button> : null}
+      </div>
+      {message ? <p className="text-xs text-rose-600">{message}</p> : null}
     </div>
   );
 }

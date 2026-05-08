@@ -167,6 +167,7 @@ export const upsertPracticeAssignmentSchema = z.object({
 export const practiceAssignmentStatusSchema = z.object({
   assignmentId: z.string().min(1),
   status: z.enum([PracticeAssignmentStatus.IN_PROGRESS, PracticeAssignmentStatus.COMPLETED]),
+  completionNote: optionalString(1000),
 });
 
 export const createPracticeLogSchema = z.object({

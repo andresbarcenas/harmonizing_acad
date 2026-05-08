@@ -10,10 +10,19 @@ import { getStudentVideosData } from "@/lib/data";
 import { formatDate, getDictionary } from "@/lib/i18n";
 import { getVideoPublicUrl } from "@/lib/storage";
 
-export default async function StudentVideosPage() {
+type StudentVideosPageProps = {
+  searchParams?: Promise<{
+    assignmentId?: string;
+    repertoireItemId?: string;
+    skillCategoryId?: string;
+  }>;
+};
+
+export default async function StudentVideosPage({ searchParams }: StudentVideosPageProps) {
   const viewer = await requireViewer([Role.STUDENT]);
   const dictionary = getDictionary(viewer.locale);
   const { videos, assignments, repertoireItems, skillCategories } = await getStudentVideosData(viewer);
+  const params = await searchParams;
 
   return (
     <AppShell role={viewer.role} activePath="/videos" userName={viewer.name} locale={viewer.locale}>
@@ -24,7 +33,15 @@ export default async function StudentVideosPage() {
       />
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <VideoUploadForm locale={viewer.locale} assignments={assignments} repertoireItems={repertoireItems} skillCategories={skillCategories} />
+        <VideoUploadForm
+          locale={viewer.locale}
+          assignments={assignments}
+          repertoireItems={repertoireItems}
+          skillCategories={skillCategories}
+          defaultAssignmentId={params?.assignmentId}
+          defaultRepertoireItemId={params?.repertoireItemId}
+          defaultSkillCategoryId={params?.skillCategoryId}
+        />
         <Card>
           <CardTitle>{dictionary.videos.timeline}</CardTitle>
           <CardDescription>{dictionary.videos.timelineDescription}</CardDescription>

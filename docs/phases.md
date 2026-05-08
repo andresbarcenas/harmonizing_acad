@@ -11,6 +11,7 @@
 - [x] Premium visual refresh: app-wide calm-luxury redesign from auth reference across shared primitives and role surfaces
 - [x] Alegra invoicing v1: read-only student invoices, cached sync engine, admin monitoring/relink controls
 - [x] v0.4.0 stabilization: English/Spanish locale support, auth-first root route, week-aware student schedule visibility, route smoke script
+- [x] v0.5.0 student/parent progress portal: lesson summaries, assignments with completion notes, practice logging, repertoire, video request links, skill snapshots
 
 ## Current MVP Status
 

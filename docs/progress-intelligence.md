@@ -131,3 +131,18 @@ Progress writes validate ownership before data reaches Prisma foreign-key constr
 - Linked repertoire and practice assignments must belong to the same student context.
 - Students can only log practice against their own assignments/repertoire and only update their own assignment status.
 - Admins can view progress globally and generate reports, but broad edit flows remain intentionally limited until a dedicated admin progress-management pass.
+
+## Student Progress Portal Manual Test Plan
+
+Use this checklist for the student/parent-facing progress experience:
+
+1. Sign in as `isabella@harmonizing.com / demo123`.
+2. Open `/progress` and confirm the dashboard shows next class, practice minutes this week, active assignments, pending video requests, last lesson summary, repertoire, skill snapshot, feedback, and latest report.
+3. Confirm the last lesson card shows only student-visible lesson fields: summary, topics worked, strengths, improvement areas, next focus, and visible teacher note. Teacher private notes must not appear anywhere on the student page.
+4. In the assignments section, mark an assigned task as in progress.
+5. Add a short completion note and mark the task completed. Refresh and confirm the completion note remains visible.
+6. Log practice minutes with date, notes, optional assignment/repertoire/skill, mood/difficulty, and optional parent note. Confirm the weekly minutes and recent activity update after refresh.
+7. Review the repertoire section and confirm each active song/piece shows status, mastery percentage, focus section, tempo, visible notes, latest assignment, and latest video feedback when available.
+8. For an assignment that requires video, click `Subir video de práctica` and confirm `/videos` opens with the assignment/repertoire/skill preselected when those links exist.
+9. Return to `/progress` and confirm empty states are helpful if assignments, lesson notes, songs, practice logs, reports, or feedback are missing.
+10. Confirm student RBAC by attempting to access another student's IDs through assignment/video/practice links; APIs should reject cross-student records.

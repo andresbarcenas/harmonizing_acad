@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Role } from "@prisma/client";
+import { PracticeAssignmentStatus, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
@@ -68,6 +68,13 @@ export async function PATCH(req: Request) {
   const canEdit = (auth.user.role === Role.STUDENT && auth.user.studentProfile?.id === assignment.studentId) || (auth.user.role === Role.TEACHER && auth.user.teacherProfile?.id === assignment.teacherId);
   if (!canEdit) return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para editar esta tarea." : "You cannot edit this assignment." }, { status: 403 });
 
-  const updated = await db.practiceAssignment.update({ where: { id: assignment.id }, data: { status: parsed.data.status } });
+  const updated = await db.practiceAssignment.update({
+    where: { id: assignment.id },
+    data: {
+      status: parsed.data.status,
+      studentCompletionNote: auth.user.role === Role.STUDENT ? parsed.data.completionNote : undefined,
+      studentCompletedAt: parsed.data.status === PracticeAssignmentStatus.COMPLETED ? new Date() : undefined,
+    },
+  });
   return NextResponse.json({ assignment: updated });
 }

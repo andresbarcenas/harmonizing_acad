@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-05-08
+
+### Added
+- Student/parent progress portal on `/progress` with next class, latest lesson summary, active assignments, practice minutes, video requests, repertoire, skill snapshots, recent teacher feedback, and latest progress report.
+- Assignment completion notes with persisted `studentCompletionNote` and `studentCompletedAt` fields.
+- Video request deep links from required-video assignments into `/videos` with assignment, repertoire, and skill preselection when available.
+- Manual student progress portal test plan covering lesson visibility, assignment status updates, practice logging, repertoire, video links, and private-note protection.
+
+### Changed
+- Student progress data access now returns richer Prisma-backed progress context, including week practice totals, pending video requests, related feedback, and upcoming class data.
+- Practice assignment status updates can now include a student/parent completion note while preserving teacher-only review notes.
+
 ## [0.4.0] - 2026-05-08
 
 ### Added

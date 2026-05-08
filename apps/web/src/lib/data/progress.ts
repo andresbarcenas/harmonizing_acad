@@ -1,7 +1,7 @@
 import "server-only";
 
-import { PracticeAssignmentStatus, Role, SessionStatus } from "@prisma/client";
-import { endOfDay, startOfDay, subDays } from "date-fns";
+import { PracticeAssignmentStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
+import { endOfDay, startOfDay, startOfWeek, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
@@ -268,26 +268,78 @@ export async function getStudentProgressData(viewer: AppViewer) {
     throw new Error("Unauthorized: student role required");
   }
 
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+
   const student = await db.studentProfile.findUnique({
     where: { id: viewer.studentProfileId },
     include: {
       user: true,
       assignment: { include: { teacher: { include: { user: true } } } },
       sessions: {
-        where: { lessonNote: { isNot: null } },
+        where: { status: SessionStatus.COMPLETED, lessonNote: { isNot: null } },
         include: { lessonNote: { include: { skillRatings: { include: { skillCategory: true } } } } },
         orderBy: { startsAtUtc: "desc" },
         take: 8,
       },
-      repertoireItems: { orderBy: { updatedAt: "desc" } },
-      practiceAssignments: { include: { repertoireItem: true, skillCategory: true, practiceLogs: true }, orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }] },
+      repertoireItems: {
+        include: {
+          practiceAssignments: { orderBy: { createdAt: "desc" }, take: 1 },
+          practiceVideos: {
+            include: { feedback: { include: { skillRatings: { include: { skillCategory: true } } } } },
+            orderBy: { submittedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+      },
+      practiceAssignments: {
+        include: {
+          repertoireItem: true,
+          skillCategory: true,
+          practiceLogs: true,
+          practiceVideos: { orderBy: { submittedAt: "desc" }, take: 1 },
+        },
+        orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+      },
       practiceLogs: { include: { assignment: true, repertoireItem: true, skillCategory: true }, orderBy: { practicedOn: "desc" }, take: 20 },
       progressReports: { orderBy: { createdAt: "desc" }, take: 6 },
+      practiceVideos: {
+        include: {
+          practiceAssignment: true,
+          repertoireItem: true,
+          skillCategory: true,
+          feedback: { include: { skillRatings: { include: { skillCategory: true } } } },
+        },
+        orderBy: { submittedAt: "desc" },
+        take: 12,
+      },
     },
   });
 
-  const skillCategories = await db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] });
-  return { student, skillCategories };
+  const [skillCategories, nextClass] = await Promise.all([
+    db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
+    db.classSession.findFirst({
+      where: {
+        studentId: viewer.studentProfileId,
+        startsAtUtc: { gte: now },
+        status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+      },
+      include: { teacher: { include: { user: true } } },
+      orderBy: { startsAtUtc: "asc" },
+    }),
+  ]);
+
+  const practiceMinutesThisWeek = student?.practiceLogs
+    .filter((log) => log.practicedOn >= weekStart)
+    .reduce((total, log) => total + log.minutesPracticed, 0) ?? 0;
+
+  const pendingVideoAssignments = student?.practiceAssignments.filter((assignment) =>
+    assignment.requiresVideo &&
+    !assignment.practiceVideos.some((video) => video.status === VideoStatus.PENDING || video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN),
+  ) ?? [];
+
+  return { student, skillCategories, nextClass, practiceMinutesThisWeek, pendingVideoAssignments };
 }
 
 export async function getAdminProgressData(viewer: AppViewer) {

@@ -15,11 +15,17 @@ export function VideoUploadForm({
   assignments = [],
   repertoireItems = [],
   skillCategories = [],
+  defaultAssignmentId,
+  defaultRepertoireItemId,
+  defaultSkillCategoryId,
 }: {
   locale: AppLocale;
   assignments?: Array<{ id: string; title: string }>;
   repertoireItems?: Array<{ id: string; title: string }>;
   skillCategories?: Array<{ id: string; name: string; instrument: string }>;
+  defaultAssignmentId?: string;
+  defaultRepertoireItemId?: string;
+  defaultSkillCategoryId?: string;
 }) {
   const router = useRouter();
   const copy = videoUploadCopy[locale];
@@ -211,15 +217,15 @@ export function VideoUploadForm({
       />
       {assignments.length || repertoireItems.length || skillCategories.length ? (
         <div className="grid gap-2 rounded-[1.1rem] border border-[var(--color-border)] bg-white/74 p-3 md:grid-cols-3">
-          <select data-video-upload-assignment className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+          <select data-video-upload-assignment defaultValue={defaultAssignmentId ?? ""} className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
             <option value="">{locale === "es" ? "Relacionar tarea" : "Link assignment"}</option>
             {assignments.map((assignment) => <option key={assignment.id} value={assignment.id}>{assignment.title}</option>)}
           </select>
-          <select data-video-upload-repertoire className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+          <select data-video-upload-repertoire defaultValue={defaultRepertoireItemId ?? ""} className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
             <option value="">{locale === "es" ? "Relacionar repertorio" : "Link repertoire"}</option>
             {repertoireItems.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
           </select>
-          <select data-video-upload-skill className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
+          <select data-video-upload-skill defaultValue={defaultSkillCategoryId ?? ""} className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
             <option value="">{locale === "es" ? "Relacionar habilidad" : "Link skill"}</option>
             {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
           </select>
