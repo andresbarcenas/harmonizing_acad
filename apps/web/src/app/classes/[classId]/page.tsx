@@ -47,9 +47,12 @@ export default async function ClassDetailPage({ params }: PageProps) {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Info label={isSpanish ? "Zona horaria guardada" : "Stored timezone"} value={session.timezone} />
+            <Info label={isSpanish ? "Hora estudiante" : "Student time"} value={`${formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} (${session.student.user.timezone})`} />
+            <Info label={isSpanish ? "Hora docente" : "Teacher time"} value={`${formatDateTimeInZone(session.startsAtUtc, session.teacher.user.timezone, viewer.locale)} (${session.teacher.user.timezone})`} />
             <Info label={isSpanish ? "Modalidad" : "Mode"} value={modeLabel(session.locationMode, viewer.locale)} />
             <Info label={isSpanish ? "Instrumento" : "Instrument"} value={session.instrument ?? session.student.preferredInstrument ?? "-"} />
             <Info label={isSpanish ? "Serie recurrente" : "Recurring series"} value={session.recurrence ? (isSpanish ? "Sí" : "Yes") : (isSpanish ? "No" : "No")} />
+            {session.recurrence ? <Info label={isSpanish ? "Modo de horario" : "Timezone mode"} value={recurringTimezoneModeLabel(session.recurrence.timezoneMode, viewer.locale)} /> : null}
           </div>
 
           {session.lessonFocus ? <NoteBlock label={isSpanish ? "Enfoque" : "Focus"} value={session.lessonFocus} /> : null}
@@ -97,4 +100,10 @@ function modeLabel(value: string, locale: "en" | "es") {
     HYBRID: { en: "Hybrid", es: "Híbrida" },
   };
   return labels[value]?.[locale] ?? value;
+}
+
+function recurringTimezoneModeLabel(mode: string | null | undefined, locale: "en" | "es") {
+  if (mode === "TEACHER_TIME") return locale === "es" ? "hora docente" : "teacher time";
+  if (mode === "CUSTOM_TIMEZONE") return locale === "es" ? "zona personalizada" : "custom timezone";
+  return locale === "es" ? "hora del estudiante" : "student time";
 }

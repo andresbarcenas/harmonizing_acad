@@ -47,7 +47,7 @@ export default async function AdminSchedulePage() {
         <div className="mt-4">
           <RecurringClassForm
             role="admin"
-            students={data.students.map((student) => ({ id: student.id, name: student.user.name, instrument: student.preferredInstrument }))}
+            students={data.students.map((student) => ({ id: student.id, name: student.user.name, instrument: student.preferredInstrument, timezone: student.user.timezone }))}
             teachers={data.teachers.map((teacher) => ({ id: teacher.id, name: teacher.user.name, timezone: teacher.user.timezone, meetingUrl: teacher.zoomLink ?? teacher.meetLink }))}
             defaultTimezone={viewer.timezone}
             locale={viewer.locale}
@@ -114,6 +114,12 @@ function ClassRow({ session, timezone, locale }: { session: Awaited<ReturnType<t
           </div>
           <p className="mt-2 text-sm font-semibold">{session.student.user.name} · {session.teacher.user.name}</p>
           <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(session.startsAtUtc, timezone, locale)} · {Math.round((session.endsAtUtc.getTime() - session.startsAtUtc.getTime()) / 60000)} min</p>
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            {locale === "es" ? "Estudiante" : "Student"}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, locale)} ({session.student.user.timezone})
+          </p>
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            {locale === "es" ? "Docente" : "Teacher"}: {formatDateTimeInZone(session.startsAtUtc, session.teacher.user.timezone, locale)} ({session.teacher.user.timezone})
+          </p>
           {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
         </div>
         <Link href={`/classes/${session.id}`}><Button size="sm" variant="outline">{locale === "es" ? "Ver detalle" : "View detail"}</Button></Link>

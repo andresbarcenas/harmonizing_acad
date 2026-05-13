@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.1] - 2026-05-13
+
+### Added
+- Student-anchored recurring timezone mode so new recurring classes keep the student's local time stable across U.S. daylight saving changes.
+- Recurring timezone mode selector for student time, teacher time, and admin-only custom timezone anchoring.
+- Class detail and schedule surfaces now show both student and teacher local times for safer cross-country scheduling.
+
+### Changed
+- Existing recurring series are preserved as teacher-time anchored during migration so already-booked UTC class times do not shift.
+- Recurring class creation now checks teacher availability in the teacher's timezone for every generated occurrence.
+- Scheduling documentation now clarifies UTC storage, IANA timezone requirements, Colombia/U.S. daylight-saving behavior, and recurrence anchoring rules.
+
 ## [0.7.0] - 2026-05-12
 
 ### Added

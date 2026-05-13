@@ -6,6 +6,33 @@ const { spawnSync } = require("node:child_process");
 const sql = String.raw`
 DO $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type
+    WHERE typname = 'RecurringTimezoneMode'
+  ) THEN
+    CREATE TYPE "RecurringTimezoneMode" AS ENUM ('STUDENT_TIME', 'TEACHER_TIME', 'CUSTOM_TIMEZONE');
+  END IF;
+
+  IF to_regclass('public."RecurringClassSeries"') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'RecurringClassSeries'
+        AND column_name = 'timezoneMode'
+    ) THEN
+      ALTER TABLE "RecurringClassSeries" ADD COLUMN "timezoneMode" "RecurringTimezoneMode";
+    END IF;
+
+    UPDATE "RecurringClassSeries"
+    SET "timezoneMode" = 'TEACHER_TIME'
+    WHERE "timezoneMode" IS NULL;
+
+    ALTER TABLE "RecurringClassSeries" ALTER COLUMN "timezoneMode" SET DEFAULT 'STUDENT_TIME';
+    ALTER TABLE "RecurringClassSeries" ALTER COLUMN "timezoneMode" SET NOT NULL;
+  END IF;
+
   IF to_regclass('public."ProgressReport"') IS NOT NULL THEN
     IF NOT EXISTS (
       SELECT 1

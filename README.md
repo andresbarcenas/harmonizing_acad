@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.7.0`
+- Current version: `v0.7.1`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions

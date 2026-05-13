@@ -169,6 +169,7 @@ function SelectedStudentProgress({
                       id: assignment.student.id,
                       name: assignment.student.user.name,
                       instrument: assignment.student.preferredInstrument,
+                      timezone: assignment.student.user.timezone,
                     }))}
                     defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
                     defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}

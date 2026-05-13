@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ClassSessionType, NotificationType, Role, SessionStatus } from "@prisma/client";
+import { ClassSessionType, NotificationType, RecurringTimezoneMode, Role, SessionStatus } from "@prisma/client";
 import { addDays, addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { randomUUID } from "crypto";
@@ -8,6 +8,7 @@ import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
+import { isSlotWithinAvailability } from "@/lib/scheduling";
 import { createRecurringSessionsSchema } from "@/lib/validators/sessions";
 
 export async function PATCH(req: Request) {
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
         },
         include: {
           teacher: {
-            include: { user: { select: { timezone: true } } },
+            include: { user: { select: { timezone: true } }, availability: true },
           },
           student: {
             include: { user: true },
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
 
   const [adminTeacher, adminStudent] = auth.user.role === Role.ADMIN
     ? await Promise.all([
-        db.teacherProfile.findUnique({ where: { id: teacherProfileId }, include: { user: { select: { timezone: true } } } }).catch(() => null),
+        db.teacherProfile.findUnique({ where: { id: teacherProfileId }, include: { user: { select: { timezone: true } }, availability: true } }).catch(() => null),
         db.studentProfile.findUnique({ where: { id: data.studentId }, include: { user: true } }),
       ])
     : [null, null];
@@ -133,9 +134,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante o docente no encontrada." : "Student or teacher not found." }, { status: 404 });
   }
 
-  const teacherTimezone = assignment?.teacher.user.timezone ?? adminTeacher?.user.timezone ?? "America/New_York";
+  const teacherTimezone = normalizeIanaTimezone(assignment?.teacher.user.timezone ?? adminTeacher?.user.timezone ?? "America/New_York");
   const student = assignment?.student ?? adminStudent!;
-  const recurrenceTimezone = normalizeIanaTimezone(data.timezone ?? teacherTimezone);
+  const studentTimezone = normalizeIanaTimezone(student.user.timezone);
+  const timezoneMode = data.timezoneMode ?? RecurringTimezoneMode.STUDENT_TIME;
+  if (auth.user.role !== Role.ADMIN && timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Solo administración puede usar una zona horaria personalizada." : "Only admins can use a custom timezone." }, { status: 403 });
+  }
+  if (timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE && !data.timezone) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Selecciona una zona horaria personalizada." : "Select a custom timezone." }, { status: 400 });
+  }
+
+  const recurrenceTimezone =
+    timezoneMode === RecurringTimezoneMode.TEACHER_TIME
+      ? teacherTimezone
+      : timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE
+        ? normalizeIanaTimezone(data.timezone)
+        : studentTimezone;
+  const teacherAvailability = assignment?.teacher.availability ?? adminTeacher?.availability ?? [];
 
   const { year, month, day } = parseDateParts(data.startsOnDate);
   const baseDate = new Date(Date.UTC(year, month - 1, day));
@@ -177,6 +193,18 @@ export async function POST(req: Request) {
       const startsAtUtc = fromZonedTime(localDateTime, recurrenceTimezone);
       const endsAtUtc = addMinutes(startsAtUtc, data.durationMin);
       if (endsAtUtc <= now) continue;
+
+      if (
+        teacherAvailability.length &&
+        !isSlotWithinAvailability(startsAtUtc, endsAtUtc, teacherAvailability, teacherTimezone)
+      ) {
+        conflictWindows.push(
+          auth.user.locale === "es"
+            ? `${localDateTime} fuera de disponibilidad docente`
+            : `${localDateTime} outside teacher availability`,
+        );
+        continue;
+      }
 
       const [teacherConflict, studentConflict] = await Promise.all([
         db.classSession.findFirst({
@@ -240,6 +268,7 @@ export async function POST(req: Request) {
         durationMin: data.durationMin,
         intervalWeeks: data.intervalWeeks,
         horizonWeeks: data.horizonWeeks,
+        timezoneMode,
         weekdays,
         meetingUrl: data.meetingUrl,
         lessonFocus: data.lessonFocus,

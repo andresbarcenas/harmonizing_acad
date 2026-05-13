@@ -15,6 +15,7 @@
 - [x] v0.6.0 scheduling management: recurring plus single class booking, student one-off requests, conflict checks, notifications, and schedule visibility
 - [x] v0.6.1 responsive stabilization: iPhone-safe drawer layering, iPad-friendly schedule grids, after-class workflow stepper, and responsive QA checklist
 - [x] v0.7.0 academy operations: historical imports, repertoire sheet attachments, instrument-specific after-class skills, recurring setup access, and Resend class reminders
+- [x] v0.7.1 timezone stabilization: student-anchored recurring classes, teacher-time preservation for existing series, and safer Colombia/U.S. daylight-saving handling
 
 ## Current MVP Status
 

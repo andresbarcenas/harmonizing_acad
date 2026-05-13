@@ -48,6 +48,12 @@ enum ClassSessionType {
   REPLACEMENT
 }
 
+enum RecurringTimezoneMode {
+  STUDENT_TIME
+  TEACHER_TIME
+  CUSTOM_TIMEZONE
+}
+
 enum RescheduleStatus {
   PENDING
   ACCEPTED
@@ -358,6 +364,7 @@ model RecurringClassSeries {
   studentId        String
   teacherId        String
   timezone         String
+  timezoneMode     RecurringTimezoneMode @default(STUDENT_TIME)
   startsOnDate     DateTime
   startTimeLocal   String
   startMinuteLocal Int

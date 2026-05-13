@@ -52,7 +52,7 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
         <CardDescription>{isSpanish ? "Crea una serie fija para estudiantes asignados." : "Create a fixed series for assigned students."}</CardDescription>
         <div className="mt-4">
           <RecurringClassForm
-            students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument }))}
+            students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument, timezone: assignment.student.user.timezone }))}
             defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
             defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink}
             selectedStudentId={data.selectedStudentId}
@@ -79,6 +79,9 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                       <Badge variant={session.status === SessionStatus.CANCELLED ? "danger" : session.status === SessionStatus.COMPLETED ? "success" : "default"}>{classStatusLabel(session.status, viewer.locale)}</Badge>
                     </div>
                     <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {Math.round((session.endsAtUtc.getTime() - session.startsAtUtc.getTime()) / 60000)} min</p>
+                    <p className="text-xs text-[var(--color-ink-soft)]">
+                      {isSpanish ? "Estudiante" : "Student"}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} ({session.student.user.timezone})
+                    </p>
                     {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -15,7 +15,8 @@ Both patterns produce `ClassSession` rows, so every class can later connect to l
 
 - student
 - teacher
-- timezone
+- anchor timezone
+- timezone mode
 - local start time
 - weekday list
 - duration
@@ -79,7 +80,17 @@ The app stores scheduled class times in UTC:
 
 Forms collect a local date/time plus an IANA timezone. The server converts that local time into UTC before saving.
 
-The saved `ClassSession.timezone` keeps the booking timezone visible for audit/debugging. Display should always use the viewer/student/teacher timezone through the existing i18n formatting helpers.
+The saved `ClassSession.timezone` keeps the booking/anchor timezone visible for audit/debugging. Display should always use the viewer/student/teacher timezone through the existing i18n formatting helpers.
+
+Recurring class series use `RecurringTimezoneMode`:
+
+- `STUDENT_TIME`: default for new series. The student's local class time remains stable, which prevents U.S. families from seeing lessons drift during daylight saving changes.
+- `TEACHER_TIME`: preserves the teacher's local class time. Existing recurring series are marked this way so already-booked UTC class times are not recalculated or shifted.
+- `CUSTOM_TIMEZONE`: admin-only override for unusual cases.
+
+Teachers in Colombia typically use `America/Bogota`, while U.S. students use their own IANA timezone such as `America/New_York`, `America/Chicago`, or `America/Los_Angeles`. The app never relies on fixed offsets like `-05:00`, because the U.S. observes daylight saving time and Colombia does not.
+
+Teacher availability is still evaluated in the teacher's local timezone for every generated occurrence. A student-time anchored class can therefore be skipped/reported if that occurrence falls outside the teacher's Bogotá availability after a daylight-saving shift.
 
 ## Permissions
 

@@ -70,6 +70,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
               id: assignment.student.id,
               name: assignment.student.user.name,
               instrument: assignment.student.preferredInstrument,
+              timezone: assignment.student.user.timezone,
             }))}
             defaultTimezone={viewer.timezone}
             defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}
@@ -94,6 +95,9 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
               </p>
               <p className="text-xs text-[var(--color-ink-soft)]">
                 {viewer.locale === "es" ? "Próximas clases" : "Upcoming classes"}: {series.sessions.length} · {dictionary.common.timezone}: {series.timezone}
+              </p>
+              <p className="text-xs text-[var(--color-ink-soft)]">
+                {viewer.locale === "es" ? "Modo" : "Mode"}: {recurringTimezoneModeLabel(series.timezoneMode, viewer.locale)}
               </p>
               <SeriesActions seriesId={series.id} isActive={series.active} locale={viewer.locale} />
             </div>
@@ -228,4 +232,10 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
 
 function withStudentContext(href: string, studentId?: string | null) {
   return studentId ? `${href}?studentId=${encodeURIComponent(studentId)}` : href;
+}
+
+function recurringTimezoneModeLabel(mode: string | null | undefined, locale: "en" | "es") {
+  if (mode === "TEACHER_TIME") return locale === "es" ? "hora docente" : "teacher time";
+  if (mode === "CUSTOM_TIMEZONE") return locale === "es" ? "zona personalizada" : "custom timezone";
+  return locale === "es" ? "hora del estudiante" : "student time";
 }
