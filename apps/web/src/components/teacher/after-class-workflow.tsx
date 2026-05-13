@@ -410,14 +410,14 @@ export function AfterClassWorkflow(props: WorkflowProps) {
             <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{props.student.preferredInstrument ?? "Música"} · {props.student.timezone}</p>
           </div>
         </div>
-        <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {steps.map((label, index) => (
             <button
               key={label}
               type="button"
               onClick={() => setStep(index)}
               className={cn(
-                "rounded-full border px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition",
+                "rounded-full border px-3.5 py-2 text-xs font-semibold transition",
                 index === step ? "border-[var(--color-gold)] bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "border-[var(--color-border)] bg-white/74 text-[var(--color-ink-soft)]",
               )}
             >
@@ -473,16 +473,16 @@ export function AfterClassWorkflow(props: WorkflowProps) {
 
       <div className="sticky bottom-3 z-10 rounded-[1.4rem] border border-[var(--color-border)] bg-white/88 p-3 shadow-[var(--shadow-card)] backdrop-blur-xl">
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => (step === 0 ? router.push(`/teacher/progress?studentId=${props.student.id}`) : setStep((current) => Math.max(0, current - 1)))}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => (step === 0 ? router.push(`/teacher/progress?studentId=${props.student.id}`) : setStep((current) => Math.max(0, current - 1)))}>
               {step === 0 ? c.exit : c.back}
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             {step < steps.length - 1 ? (
-              <Button type="button" variant="gold" disabled={!canContinue} onClick={() => setStep((current) => Math.min(steps.length - 1, current + 1))}>{c.next}</Button>
+              <Button className="w-full sm:w-auto" type="button" variant="gold" disabled={!canContinue} onClick={() => setStep((current) => Math.min(steps.length - 1, current + 1))}>{c.next}</Button>
             ) : (
-              <Button type="button" variant="gold" disabled={pending || saving} onClick={submit}>{pending || saving ? c.saving : c.save}</Button>
+              <Button className="w-full sm:w-auto" type="button" variant="gold" disabled={pending || saving} onClick={submit}>{pending || saving ? c.saving : c.save}</Button>
             )}
           </div>
         </div>

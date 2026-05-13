@@ -58,7 +58,7 @@ export function WeeklyCalendar({
       <div
         key={key}
         className={cn(
-          "min-w-[9.5rem] rounded-[1.1rem] border px-3 py-3 md:min-w-0",
+          "min-w-0 rounded-[1.1rem] border px-3 py-3",
           hasActivity ? "border-[var(--color-border)] bg-white/82" : "border-transparent bg-white/42",
         )}
       >
@@ -98,11 +98,11 @@ export function WeeklyCalendar({
           {slots.length} {dictionary.schedule.spaces}
         </div>
       </div>
-      <div className="-mx-1 mt-4 overflow-x-auto pb-1">
-        <div className="grid min-w-[46rem] grid-cols-7 gap-2 px-1 md:min-w-0">
-        {week.map((date) => (
-          <DaySummary key={dayKeyInTimezone(date, timezone)} date={date} />
-        ))}
+      <div className="-mx-1 mt-4 pb-1">
+        <div className="grid grid-cols-2 gap-2 px-1 sm:grid-cols-4 md:grid-cols-7">
+          {week.map((date) => (
+            <DaySummary key={dayKeyInTimezone(date, timezone)} date={date} />
+          ))}
         </div>
       </div>
     </div>

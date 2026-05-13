@@ -3,7 +3,7 @@
 Premium, mobile-first web app for an online music school serving Spanish-speaking students in the United States.
 
 ## Release Metadata
-- Current version: `v0.6.0`
+- Current version: `v0.6.1`
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Stack Decisions
@@ -58,6 +58,7 @@ Complete in this v1:
 - Student/parent progress portal with lesson summaries, practice assignments, completion notes, repertoire, video request links, skill snapshots, and reports
 - Single-class scheduling management for trial, makeup, extra, evaluation, replacement, and one-off private lessons
 - Student-requested one-off classes with teacher/admin review, approval/rejection notifications, and rejection reason visibility
+- Responsive navigation and schedule/workflow layouts tuned for iPhone and iPad portrait/landscape use
 - Admin metrics (students, teachers, MRR, weekly classes, workload)
 - WhatsApp plan management CTA surfaced in student-facing areas
 - Alegra invoicing v1: student invoices page, cached sync, admin monitor/relink tools
@@ -101,4 +102,5 @@ Demo fallback details:
 - Architecture: `docs/architecture.md`
 - Deployment: `docs/deployment.md`
 - Phases: `docs/phases.md`
+- Responsive QA: `docs/responsive-qa.md`
 - UX system: `docs/ux-system.md`

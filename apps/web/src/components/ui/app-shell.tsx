@@ -183,7 +183,7 @@ export async function AppShell({
                 <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">Academia musical</p>
               </div>
             </Link>
-            <div className="inline-flex max-w-[6.8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)]">
+            <div className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] sm:inline-flex">
               <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
               <span className="truncate">{userName}</span>
             </div>

@@ -11,6 +11,27 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.6.1",
+    date: "2026-05-12",
+    sections: [
+      {
+        title: "Fixed",
+        items: [
+          "Stabilized the mobile navigation drawer on iPhone by rendering it through a body-level portal above all page content.",
+          "Improved drawer viewport sizing, safe-area padding, and compact header behavior for iOS Safari.",
+          "Removed avoidable horizontal scrolling from the student weekly calendar, reschedule selector, and after-class workflow stepper.",
+          "Added shared overflow guardrails for cards and page hero text so long labels behave better on iPad.",
+        ],
+      },
+      {
+        title: "Added",
+        items: [
+          "Responsive QA checklist covering iPhone, iPad portrait, iPad landscape, and desktop smoke targets.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.6.0",
     date: "2026-05-08",
     sections: [

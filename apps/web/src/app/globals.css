@@ -51,6 +51,7 @@ body {
 
 .page-hero {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-3xl);
@@ -87,6 +88,7 @@ body {
   font-size: clamp(2rem, 4vw, 3.6rem);
   line-height: 1.02;
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 
 .page-copy {
@@ -94,6 +96,7 @@ body {
   max-width: 42rem;
   color: var(--color-ink-soft);
   font-size: 0.94rem;
+  overflow-wrap: anywhere;
 }
 
 .soft-divider {

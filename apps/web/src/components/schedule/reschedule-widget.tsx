@@ -180,8 +180,8 @@ export function RescheduleWidget({
             </div>
           </div>
 
-          <div className="-mx-1 mt-5 overflow-x-auto pb-1">
-            <div className="flex min-w-max gap-2 px-1 xl:grid xl:min-w-0 xl:grid-cols-7">
+          <div className="-mx-1 mt-5 pb-1">
+            <div className="grid grid-cols-2 gap-2 px-1 sm:grid-cols-4 md:grid-cols-7">
               {week.map((date) => {
                 const key = dayKeyInTimezone(date, timezone);
                 const active = key === selectedDayKey;
@@ -194,7 +194,7 @@ export function RescheduleWidget({
                     type="button"
                     onClick={() => setSelectedDayKey(key)}
                     className={cn(
-                      "min-w-[7.25rem] rounded-[1rem] border px-3 py-3 text-left transition xl:min-w-0",
+                      "min-w-0 rounded-[1rem] border px-3 py-3 text-left transition",
                       active
                         ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)] shadow-[var(--shadow-glow)]"
                         : "border-[var(--color-border)] bg-white/72 text-[var(--color-ink-soft)] hover:bg-white",
