@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PracticeAssignmentStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
+import { PracticeAssignmentStatus, ProgressReportStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
 import { endOfDay, startOfDay, startOfWeek, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
@@ -132,7 +132,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
   const selectedStudentId = await resolveAssignedStudentForTeacher(teacherId, options.studentId);
   const since = subDays(new Date(), 14);
 
-  const [assignments, skillCategories] = await Promise.all([
+  const [assignments, skillCategories, teacher] = await Promise.all([
     db.teacherAssignment.findMany({
       where: { teacherId },
       include: {
@@ -155,6 +155,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
       orderBy: { student: { user: { name: "asc" } } },
     }),
     db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
+    db.teacherProfile.findUnique({ where: { id: teacherId }, include: { user: true } }),
   ]);
 
   if (!selectedStudentId) {
@@ -175,6 +176,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
         };
       }),
       skillCategories,
+      teacher,
       selected: null,
     };
   }
@@ -191,7 +193,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
         orderBy: { startsAtUtc: "desc" },
         take: 12,
       },
-      repertoireItems: { where: { teacherId }, orderBy: { updatedAt: "desc" } },
+      repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" } },
       practiceAssignments: {
         where: { teacherId },
         include: { repertoireItem: true, skillCategory: true, practiceLogs: true },
@@ -216,6 +218,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
     selectedStudentId,
     students: assignments.map((assignment) => ({ assignmentId: assignment.id, student: assignment.student })),
     skillCategories,
+    teacher,
     selected,
   };
 }
@@ -245,10 +248,9 @@ export async function getTeacherClassCompletionData(viewer: AppViewer, classId: 
 
   if (!session) throw new ProgressDataError("SESSION_NOT_FOUND", 404);
 
-  const instruments = inferSkillInstruments(session.student.preferredInstrument);
   const [skillCategories, repertoireItems] = await Promise.all([
     db.skillCategory.findMany({
-      where: { active: true, instrument: { in: instruments } },
+      where: { active: true, instrument: { in: ["GENERAL", "PIANO", "VOICE"] } },
       orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }],
     }),
     db.repertoireItem.findMany({
@@ -284,6 +286,7 @@ export async function getStudentProgressData(viewer: AppViewer) {
       },
       repertoireItems: {
         include: {
+          attachments: { orderBy: { createdAt: "desc" } },
           practiceAssignments: { orderBy: { createdAt: "desc" }, take: 1 },
           practiceVideos: {
             include: { feedback: { include: { skillRatings: { include: { skillCategory: true } } } } },
@@ -303,7 +306,7 @@ export async function getStudentProgressData(viewer: AppViewer) {
         orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
       },
       practiceLogs: { include: { assignment: true, repertoireItem: true, skillCategory: true }, orderBy: { practicedOn: "desc" }, take: 20 },
-      progressReports: { orderBy: { createdAt: "desc" }, take: 6 },
+      progressReports: { where: { status: ProgressReportStatus.PUBLISHED }, orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }], take: 6 },
       practiceVideos: {
         include: {
           practiceAssignment: true,
@@ -452,7 +455,7 @@ function average(values: number[]) {
   return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
-function inferSkillInstruments(preferredInstrument?: string | null) {
+export function inferSkillInstruments(preferredInstrument?: string | null) {
   const normalized = (preferredInstrument ?? "").toLocaleLowerCase();
   const instruments = new Set(["GENERAL"]);
 
@@ -470,4 +473,16 @@ function inferSkillInstruments(preferredInstrument?: string | null) {
   }
 
   return Array.from(instruments);
+}
+
+export function inferLessonInstrument(value?: string | null): "PIANO" | "VOICE" {
+  const normalized = (value ?? "").toLocaleLowerCase();
+  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing")) {
+    return "VOICE";
+  }
+  return "PIANO";
+}
+
+export function skillInstrumentsForLesson(value?: string | null) {
+  return ["GENERAL", inferLessonInstrument(value)] as const;
 }

@@ -14,10 +14,11 @@
 - [x] v0.5.0 student/parent progress portal: lesson summaries, assignments with completion notes, practice logging, repertoire, video request links, skill snapshots
 - [x] v0.6.0 scheduling management: recurring plus single class booking, student one-off requests, conflict checks, notifications, and schedule visibility
 - [x] v0.6.1 responsive stabilization: iPhone-safe drawer layering, iPad-friendly schedule grids, after-class workflow stepper, and responsive QA checklist
+- [x] v0.7.0 academy operations: historical imports, repertoire sheet attachments, instrument-specific after-class skills, recurring setup access, and Resend class reminders
 
 ## Current MVP Status
 
-- MVP-complete locally: authenticated role workspaces, scheduling/rescheduling, recurring plus single-class visibility, practice upload/review, messaging, notifications, admin operations, and read-only invoicing.
+- MVP-complete locally: authenticated role workspaces, scheduling/rescheduling, recurring plus single-class visibility, practice upload/review, repertoire attachments, messaging, notifications, admin operations, historical imports, and read-only invoicing.
 - Release baseline: English is the default language; Spanish is selectable publicly and per account.
 - Validation baseline: `npm run typecheck`, `npm run lint`, `npm run build`, route smoke after `docker compose up --build`, and the responsive QA checklist in `docs/responsive-qa.md`.
 
@@ -25,5 +26,5 @@
 
 - Signed media URLs/CDN for practice videos.
 - Realtime messaging or SSE if live chat becomes required.
-- Background jobs for reminders/invoice sync beyond cron/manual triggers.
+- Background jobs for heavy async work beyond current Vercel cron/manual triggers.
 - Rate limiting, audit logs, production observability, and alerting.

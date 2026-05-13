@@ -9,6 +9,11 @@ const timezoneSchema = z
 
 export const createRecurringSessionsSchema = z.object({
   studentId: z.string().min(1),
+  teacherId: z.preprocess((value) => {
+    if (typeof value !== "string") return undefined;
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : undefined;
+  }, z.string().min(1).optional()),
   startsOnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTimeLocal: z.string().regex(/^\d{2}:\d{2}$/),
   weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7),

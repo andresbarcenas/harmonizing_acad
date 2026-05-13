@@ -76,6 +76,20 @@ enum NotificationType {
   SYSTEM
 }
 
+enum RepertoireAttachmentType {
+  SHEET_MUSIC
+}
+
+enum ClassReminderChannel {
+  EMAIL
+}
+
+enum ClassReminderStatus {
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum StudentLevel {
   BEGINNER
   INTERMEDIATE
@@ -117,6 +131,36 @@ enum ProgressReportStatus {
   DRAFT
   GENERATED
   FINALIZED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum HistoricalImportBatchStatus {
+  STAGED
+  REVIEWING
+  APPLIED
+  CANCELLED
+  FAILED
+}
+
+enum HistoricalImportRowStatus {
+  STAGED
+  APPROVED
+  APPLIED
+  SKIPPED
+  SOURCE_ONLY
+  ERROR
+}
+
+enum HistoricalImportSuggestionType {
+  STUDENT_LOG
+  LESSON_NOTE
+  REPERTOIRE
+  PRACTICE_ASSIGNMENT
+  PROGRESS_REPORT
+  SKILL_EVIDENCE
+  SOURCE_ONLY
+  UNKNOWN
 }
 
 enum InvoiceContactLinkStrategy {
@@ -161,8 +205,13 @@ model User {
   sentInvitations          Invitation[]      @relation("InvitationSender")
   acceptedInvitations      Invitation[]      @relation("InvitationAcceptedBy")
   generatedProgressReports ProgressReport[]  @relation("ProgressReportGeneratedBy")
+  publishedProgressReports ProgressReport[]  @relation("ProgressReportPublishedBy")
   requestedClassRequests   ClassRequest[]    @relation("ClassRequestRequestedBy")
   reviewedClassRequests    ClassRequest[]    @relation("ClassRequestReviewedBy")
+  historicalImportBatches  HistoricalImportBatch[] @relation("HistoricalImportCreatedBy")
+  reviewedImportRows       HistoricalImportRow[]   @relation("HistoricalImportRowReviewedBy")
+  uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
+  classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
 
   @@index([role])
 }
@@ -196,6 +245,8 @@ model StudentProfile {
   practiceLogs        PracticeLog[]
   progressReports     ProgressReport[]
   classRequests       ClassRequest[]
+  historicalImportBatches HistoricalImportBatch[]
+  historicalImportRows    HistoricalImportRow[]
 }
 
 model TeacherProfile {
@@ -294,6 +345,7 @@ model ClassSession {
   rescheduleRequests  RescheduleRequest[]
   lessonNote          LessonNote?
   practiceAssignments PracticeAssignment[]
+  reminderDeliveries  ClassReminderDelivery[]
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
@@ -527,9 +579,29 @@ model RepertoireItem {
   practiceAssignments PracticeAssignment[]
   practiceLogs        PracticeLog[]
   practiceVideos      PracticeVideo[]
+  attachments         RepertoireAttachment[]
 
   @@index([studentId, status])
   @@index([teacherId, status])
+}
+
+model RepertoireAttachment {
+  id               String                   @id @default(cuid())
+  repertoireItemId String
+  uploadedByUserId String
+  type             RepertoireAttachmentType @default(SHEET_MUSIC)
+  storageKey       String
+  originalName     String
+  mimeType         String
+  sizeBytes        Int
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  repertoireItem RepertoireItem @relation(fields: [repertoireItemId], references: [id], onDelete: Cascade)
+  uploadedBy     User           @relation("RepertoireAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([repertoireItemId, createdAt])
+  @@index([uploadedByUserId, createdAt])
 }
 
 model PracticeAssignment {
@@ -614,35 +686,69 @@ model VideoSkillRating {
 
 model ProgressReport {
   id                               String               @id @default(cuid())
+  reportKey                        String               @unique
   studentId                        String
   teacherId                        String?
   generatedByUserId                String
+  publishedByUserId                String?
   startDate                        DateTime
   endDate                          DateTime
-  status                           ProgressReportStatus @default(GENERATED)
+  status                           ProgressReportStatus @default(DRAFT)
+  generatedAt                      DateTime             @default(now())
+  publishedAt                      DateTime?
+  archivedAt                       DateTime?
+  rubricVersion                    String               @default("default-v1")
+  totalScheduledClasses            Int                  @default(0)
   attendanceCount                  Int                  @default(0)
   completedLessonsCount            Int                  @default(0)
+  missedLessonsCount               Int                  @default(0)
+  cancelledLessonsCount            Int                  @default(0)
   missedCancelledCount             Int                  @default(0)
+  singleClassesCount               Int                  @default(0)
+  recurringClassesCount            Int                  @default(0)
+  lessonNotesCompletedCount        Int                  @default(0)
+  missingLessonNotesCount          Int                  @default(0)
   totalPracticeMinutes             Int                  @default(0)
+  practiceLogCount                 Int                  @default(0)
+  practiceAssignmentCount          Int                  @default(0)
+  completedAssignmentCount         Int                  @default(0)
   practiceAssignmentCompletionRate Float                @default(0)
+  overdueAssignmentCount           Int                  @default(0)
   videoSubmissionsCount            Int                  @default(0)
+  reviewedVideoCount               Int                  @default(0)
+  repertoireWorkedCount            Int                  @default(0)
+  repertoireCompletedCount         Int                  @default(0)
   averageLessonRating              Float?
+  averagePreparednessRating        Float?
+  averageFocusRating               Float?
+  averageEffortRating              Float?
   averageSkillRatings              Json
+  categoryScores                   Json                 @default("{}")
+  skillSummary                     Json                 @default("{}")
+  attendanceSummary                Json                 @default("{}")
+  practiceSummary                  Json                 @default("{}")
+  videoSummary                     Json                 @default("{}")
+  repertoireSummary                Json                 @default("{}")
   repertoireProgressSummary        Json
   teacherSummary                   String?
   strengths                        String?
   improvementAreas                 String?
   recommendedNextFocus             String?
   finalGrade                       String?
+  gradeLetter                      String?
   gradePercentage                  Float?
+  adminNote                        String?
+  studentVisibleSummary            String?
   createdAt                        DateTime             @default(now())
   updatedAt                        DateTime             @updatedAt
 
   student     StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher     TeacherProfile? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
   generatedBy User            @relation("ProgressReportGeneratedBy", fields: [generatedByUserId], references: [id], onDelete: Cascade)
+  publishedBy User?           @relation("ProgressReportPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
 
   @@index([studentId, startDate, endDate])
+  @@index([studentId, status, startDate, endDate])
   @@index([teacherId, createdAt])
   @@index([status, createdAt])
 }
@@ -697,6 +803,61 @@ model StudentLogEntry {
   @@index([studentId, createdAt])
   @@index([authorId, createdAt])
   @@index([type, createdAt])
+}
+
+model HistoricalImportBatch {
+  id              String                      @id @default(cuid())
+  studentId       String
+  createdByUserId String?
+  sourceFilename  String
+  sourcePath      String?
+  sourceSha256    String
+  sourceType      String                      @default("PDF")
+  pageCount       Int
+  rowCount        Int                         @default(0)
+  status          HistoricalImportBatchStatus @default(STAGED)
+  environmentNote String?
+  dryRun          Boolean                     @default(false)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  student   StudentProfile        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy User?                 @relation("HistoricalImportCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  rows      HistoricalImportRow[]
+
+  @@unique([studentId, sourceFilename, sourceSha256])
+  @@index([studentId, createdAt])
+  @@index([status, createdAt])
+}
+
+model HistoricalImportRow {
+  id                String                         @id @default(cuid())
+  batchId           String
+  studentId         String
+  sourcePage        Int
+  rowHash           String
+  rawText           String?
+  suggestedType     HistoricalImportSuggestionType @default(UNKNOWN)
+  suggestedPayload  Json                           @default("{}")
+  confidence        Float                          @default(0)
+  status            HistoricalImportRowStatus      @default(STAGED)
+  appliedEntityType String?
+  appliedEntityId   String?
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  appliedAt         DateTime?
+  errorMessage      String?
+  createdAt         DateTime                       @default(now())
+  updatedAt         DateTime                       @updatedAt
+
+  batch      HistoricalImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  student    StudentProfile        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reviewedBy User?                 @relation("HistoricalImportRowReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([batchId, sourcePage, rowHash])
+  @@index([batchId, status, sourcePage])
+  @@index([studentId, status, createdAt])
+  @@index([suggestedType, confidence])
 }
 
 model Invitation {
@@ -763,6 +924,28 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model ClassReminderDelivery {
+  id              String              @id @default(cuid())
+  classSessionId  String
+  recipientUserId String
+  channel         ClassReminderChannel @default(EMAIL)
+  offsetMinutes   Int
+  scheduledForUtc DateTime
+  status          ClassReminderStatus  @default(SENT)
+  resendMessageId String?
+  errorMessage    String?
+  sentAt          DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  recipient    User         @relation("ClassReminderRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@unique([classSessionId, recipientUserId, channel, offsetMinutes])
+  @@index([recipientUserId, createdAt])
+  @@index([status, createdAt])
 }
 
 model Invoice {

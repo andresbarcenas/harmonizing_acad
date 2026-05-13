@@ -10,6 +10,11 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
 - `CRON_SECRET`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `CLASS_EMAIL_REMINDERS_ENABLED=true`
+- `CLASS_REMINDER_OFFSETS_MINUTES=1440,60`
+- `CLASS_REMINDER_WINDOW_MINUTES=20`
 - `STORAGE_PROVIDER=vercel-blob`
 - `BLOB_READ_WRITE_TOKEN`
 - `ALEGRA_API_BASE_URL`
@@ -27,10 +32,11 @@ Create the managed resources from `apps/web`:
 
 ```bash
 npx vercel@latest integration add neon --environment production
+npx vercel@latest integration add resend --environment production
 npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
 ```
 
-Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Blob injects `BLOB_READ_WRITE_TOKEN`.
+Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
 ## First-Time Link
 
@@ -95,5 +101,5 @@ It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual bec
 - Never run `npm run prisma:seed` against production.
 - The Vercel cron is configured in `apps/web/vercel.json` because `apps/web` is the deployed project root.
 - If `NEXTAUTH_URL` changes, redeploy so the new environment value applies.
-- The daily invoice cron is Hobby-safe. Use a more frequent schedule only after confirming the Vercel plan supports it.
+- The daily invoice cron is Hobby-safe. Class reminders use a frequent cron; confirm the Vercel plan supports the configured interval or reduce the schedule for the deployment plan.
 - Disable Vercel's native Git auto-deploy if this GitHub Actions workflow is the production deploy source, otherwise `main` pushes can create duplicate deployments.

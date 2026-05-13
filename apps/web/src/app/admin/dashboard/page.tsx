@@ -50,6 +50,9 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/availability">
             <Button variant="outline" size="sm">{dictionary.admin.editAvailability}</Button>
           </Link>
+          <Link href="/admin/imports">
+            <Button variant="outline" size="sm">{viewer.locale === "es" ? "Importaciones históricas" : "Historical imports"}</Button>
+          </Link>
         </div>
       </Card>
 

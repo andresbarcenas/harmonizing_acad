@@ -3,7 +3,7 @@ import { NotificationType, RepertoireStatus, Role, SessionStatus } from "@prisma
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { assertActiveSkillCategories, assertRepertoireForTeacherStudent, getProgressErrorResponse } from "@/lib/data/progress";
+import { assertRepertoireForTeacherStudent, getProgressErrorResponse, inferLessonInstrument, skillInstrumentsForLesson } from "@/lib/data/progress";
 import { createNotification } from "@/lib/notifications";
 import { completeClassWorkflowSchema } from "@/lib/validators/progress";
 
@@ -71,10 +71,30 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   try {
-    await assertActiveSkillCategories([
+    const skillCategoryIds = [
       ...input.skillRatings.map((rating) => rating.skillCategoryId),
       ...input.assignments.map((assignment) => assignment.skillCategoryId),
-    ]);
+    ].filter((id): id is string => Boolean(id));
+    if (skillCategoryIds.length) {
+      const allowedInstruments = skillInstrumentsForLesson(input.lessonInstrument ?? session.instrument ?? session.student.preferredInstrument);
+      const validSkillCount = await db.skillCategory.count({
+        where: {
+          id: { in: Array.from(new Set(skillCategoryIds)) },
+          active: true,
+          instrument: { in: [...allowedInstruments] },
+        },
+      });
+      if (validSkillCount !== new Set(skillCategoryIds).size) {
+        return NextResponse.json(
+          {
+            error: auth.user.locale === "es"
+              ? "Las habilidades seleccionadas no corresponden al tipo de clase."
+              : "Selected skills do not match the class lesson type.",
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     const repertoireIds = new Set<string>();
     input.repertoireUpdates.forEach((item) => repertoireIds.add(item.repertoireItemId));
@@ -101,6 +121,7 @@ export async function POST(req: Request, { params }: Params) {
       data: {
         status: input.status,
         completedAt: completed ? now : null,
+        instrument: completed ? (input.lessonInstrument ?? inferLessonInstrument(session.instrument ?? session.student.preferredInstrument)) : session.instrument,
         lastClassNotes: completed ? (lessonNote?.studentVisibleNote || lessonNote?.summary || session.lastClassNotes) : session.lastClassNotes,
       },
     });

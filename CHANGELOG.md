@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+## [0.7.0] - 2026-05-12
+
+### Added
+- Historical PDF import staging for Tommy's piano consolidated history, including Prisma import batch/row models, deterministic extraction script, and admin review UI at `/admin/imports`.
+- Generic student historical PDF import command for future onboarded students, with student email/name, teacher, instrument, locale, timezone, and PDF path options.
+- Local Tommy demo account (`tommy@harmonizing.com / demo123`) assigned to María for import validation.
+- Source provenance and idempotency strategy for applying imported rows into student logs, repertoire, reviewed historical assignments, and published historical reports.
+- Resend-backed class email reminders with `/api/cron/class-reminders`, Vercel Cron configuration, and idempotent `ClassReminderDelivery` tracking.
+- Repertoire song sheet attachments for PDF/image sheet music, with teacher/admin upload management and student-visible links in `/progress`.
+- Recurring-class setup access from teacher schedule, selected-student teacher progress context, and admin schedule.
+
+### Changed
+- After-class skill ratings now scope to the class lesson type: piano/general or singing/general, with server-side validation against mismatched skill submissions.
+- Teacher selected-student progress workspace is more iPad/mobile-friendly with less cramped grids and responsive repertoire/recurring setup sections.
+
 ## [0.6.1] - 2026-05-12
 
 ### Fixed

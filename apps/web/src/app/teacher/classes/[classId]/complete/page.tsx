@@ -33,6 +33,7 @@ export default async function TeacherClassCompletionPage({ params }: PageProps) 
         classDateLabel={classDateLabel}
         initialStatus={session.status}
         lessonFocus={session.lessonFocus}
+        initialLessonInstrument={session.instrument ?? session.student.preferredInstrument}
         student={{
           id: session.student.id,
           name: session.student.user.name,

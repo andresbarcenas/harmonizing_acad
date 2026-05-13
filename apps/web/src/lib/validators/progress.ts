@@ -1,4 +1,4 @@
-import { PracticeAssignmentStatus, ProgressReportStatus, RepertoireStatus, SessionStatus } from "@prisma/client";
+import { PracticeAssignmentStatus, RepertoireStatus, SessionStatus } from "@prisma/client";
 import { z } from "zod";
 
 const optionalString = (max = 2000) => z.preprocess((value) => {
@@ -20,6 +20,7 @@ const optionalId = z.preprocess((value) => {
 }, z.string().min(1).optional());
 
 const ratingSchema = z.number().int().min(1).max(5);
+const lessonInstrumentSchema = z.enum(["PIANO", "VOICE"]);
 const optionalPositiveInt = (max = 600) => z.preprocess((value) => {
   if (value === null || value === undefined || value === "") return undefined;
   const number = Number(value);
@@ -53,6 +54,7 @@ const completionStatuses = [
 export const completeClassWorkflowSchema = z.object({
   status: z.enum(completionStatuses),
   notifyStudent: z.boolean().default(true),
+  lessonInstrument: lessonInstrumentSchema.optional(),
   lessonNote: z.object({
     summary: completionText(2000),
     taughtToday: completionText(2000),
@@ -184,14 +186,18 @@ export const createPracticeLogSchema = z.object({
 
 export const generateProgressReportSchema = z.object({
   studentId: z.string().min(1),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
+  teacherId: optionalId,
+  month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  timezone: optionalString(80),
+  regenerate: z.boolean().optional(),
   teacherSummary: optionalString(3000),
   strengths: optionalString(2000),
   improvementAreas: optionalString(2000),
   recommendedNextFocus: optionalString(2000),
-  finalGrade: optionalString(20),
-  gradePercentage: z.number().min(0).max(100).optional(),
+  studentVisibleSummary: optionalString(3000),
+  adminNote: optionalString(3000),
 });
 
 export const updateProgressReportSchema = z.object({
@@ -199,7 +205,11 @@ export const updateProgressReportSchema = z.object({
   strengths: optionalString(2000),
   improvementAreas: optionalString(2000),
   recommendedNextFocus: optionalString(2000),
-  finalGrade: optionalString(20),
-  gradePercentage: z.number().min(0).max(100).optional(),
-  status: z.nativeEnum(ProgressReportStatus).optional(),
+  studentVisibleSummary: optionalString(3000),
+  adminNote: optionalString(3000),
+});
+
+export const publishProgressReportSchema = z.object({
+  adminNote: optionalString(3000),
+  studentVisibleSummary: optionalString(3000),
 });

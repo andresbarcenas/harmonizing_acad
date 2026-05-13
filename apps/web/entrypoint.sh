@@ -1,8 +1,14 @@
 #!/bin/sh
 set -e
 
-if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
+PACKAGE_LOCK_HASH="$(sha256sum package-lock.json 2>/dev/null | awk '{print $1}')"
+INSTALLED_LOCK_HASH="$(cat node_modules/.package-lock.hash 2>/dev/null || true)"
+
+if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ] || [ "$PACKAGE_LOCK_HASH" != "$INSTALLED_LOCK_HASH" ]; then
   npm install
+  if [ -n "$PACKAGE_LOCK_HASH" ]; then
+    echo "$PACKAGE_LOCK_HASH" > node_modules/.package-lock.hash
+  fi
 fi
 npm run prisma:generate
 npm run prisma:migrate

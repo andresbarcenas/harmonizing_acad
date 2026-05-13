@@ -11,6 +11,28 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.0",
+    date: "2026-05-12",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Historical PDF import staging and generic student import commands for onboarding legacy academy progress records.",
+          "Resend-backed class email reminders with Vercel Cron and idempotent delivery tracking.",
+          "Repertoire song sheet attachments for PDF/image sheet music with student-visible progress links.",
+          "Recurring-class setup from teacher schedule, selected-student teacher progress, and admin schedule.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "After-class skill ratings now show piano/general or singing/general skills based on the lesson type.",
+          "Teacher selected-student progress workspace now behaves better on iPad and mobile widths.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.6.1",
     date: "2026-05-12",
     sections: [

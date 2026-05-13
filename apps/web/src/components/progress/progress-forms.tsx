@@ -12,6 +12,7 @@ import type { AppLocale } from "@/lib/i18n/locales";
 type SkillOption = { id: string; name: string; instrument: string };
 type RepertoireOption = { id: string; title: string };
 type AssignmentOption = { id: string; title: string; status: PracticeAssignmentStatus };
+type AttachmentOption = { id: string; originalName: string; url: string; sizeBytes: number };
 type LessonNoteInitial = {
   summary?: string | null;
   taughtToday?: string | null;
@@ -47,6 +48,11 @@ function copy(locale: AppLocale) {
         chooseSkill: "Elegir habilidad",
         note: "Nota",
         addRepertoire: "Guardar repertorio",
+        sheetMusic: "Partitura / hoja de canción",
+        attachSheet: "Adjuntar partitura",
+        uploadSheet: "Subir archivo",
+        deleteSheet: "Eliminar",
+        noSheets: "Sin partituras adjuntas.",
         title: "Título",
         composer: "Compositor o artista",
         instrument: "Instrumento",
@@ -96,6 +102,11 @@ function copy(locale: AppLocale) {
         chooseSkill: "Choose skill",
         note: "Note",
         addRepertoire: "Save repertoire",
+        sheetMusic: "Sheet music / song sheet",
+        attachSheet: "Attach sheet music",
+        uploadSheet: "Upload file",
+        deleteSheet: "Delete",
+        noSheets: "No sheet music attached.",
         title: "Title",
         composer: "Composer or artist",
         instrument: "Instrument",
@@ -241,6 +252,68 @@ export function RepertoireForm({ studentId, locale }: { studentId: string; local
       <Button type="submit" variant="gold" className="md:col-span-2">{c.addRepertoire}</Button>
       {message ? <p className="text-xs text-[var(--color-ink-soft)] md:col-span-2">{message}</p> : null}
     </form>
+  );
+}
+
+export function RepertoireAttachmentForm({
+  repertoireItemId,
+  attachments,
+  locale,
+}: {
+  repertoireItemId: string;
+  attachments: AttachmentOption[];
+  locale: AppLocale;
+}) {
+  const router = useRouter();
+  const c = copy(locale);
+  const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function submit(formData: FormData) {
+    setPending(true);
+    setMessage("");
+    const response = await fetch(`/api/progress/repertoire/${repertoireItemId}/attachments`, {
+      method: "POST",
+      body: formData,
+    });
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    setMessage(response.ok ? c.saved : payload?.error ?? c.error);
+    setPending(false);
+    if (response.ok) router.refresh();
+  }
+
+  async function remove(attachmentId: string) {
+    setPending(true);
+    setMessage("");
+    const response = await fetch(`/api/progress/repertoire/${repertoireItemId}/attachments/${attachmentId}`, {
+      method: "DELETE",
+    });
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    setMessage(response.ok ? c.saved : payload?.error ?? c.error);
+    setPending(false);
+    if (response.ok) router.refresh();
+  }
+
+  return (
+    <div className="space-y-3 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{c.sheetMusic}</p>
+      <div className="space-y-2">
+        {attachments.map((attachment) => (
+          <div key={attachment.id} className="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-white/74 p-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+            <a href={attachment.url} target="_blank" rel="noreferrer" className="min-w-0 truncate font-semibold text-[var(--color-ink)]">
+              {attachment.originalName}
+            </a>
+            <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={() => remove(attachment.id)}>{c.deleteSheet}</Button>
+          </div>
+        ))}
+        {!attachments.length ? <p className="text-xs text-[var(--color-ink-soft)]">{c.noSheets}</p> : null}
+      </div>
+      <form action={submit} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" required aria-label={c.attachSheet} />
+        <Button type="submit" size="sm" variant="outline" disabled={pending}>{c.uploadSheet}</Button>
+      </form>
+      {message ? <p className="text-xs text-[var(--color-ink-soft)]">{message}</p> : null}
+    </div>
   );
 }
 

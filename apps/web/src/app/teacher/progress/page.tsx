@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
-import { LessonNoteForm, PracticeAssignmentForm, ProgressReportForm, RepertoireForm } from "@/components/progress/progress-forms";
+import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm } from "@/components/progress/progress-forms";
+import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
+import { getRepertoireAttachmentPublicUrl } from "@/lib/storage";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
 
@@ -69,19 +71,22 @@ function SelectedStudentProgress({
   isSpanish: boolean;
 }) {
   return (
-        <div className="space-y-4">
-          <Card>
+        <div className="space-y-4 min-w-0">
+          <Card className="overflow-hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <Avatar src={data.selected.user.image} alt={data.selected.user.name} fallback={data.selected.user.name.slice(0, 1)} />
-                <div>
+                <div className="min-w-0">
                   <CardTitle>{data.selected.user.name}</CardTitle>
                   <CardDescription>{data.selected.preferredInstrument ?? (isSpanish ? "Música" : "Music")} · {data.selected.user.timezone}</CardDescription>
                 </div>
               </div>
-              <Link href="/teacher/progress"><Button variant="outline" size="sm">{isSpanish ? "Ver todos" : "All students"}</Button></Link>
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/teacher/progress/reports/new?studentId=${data.selected.id}`}><Button variant="gold" size="sm">{isSpanish ? "Generar reporte" : "Generate report"}</Button></Link>
+                <Link href="/teacher/progress"><Button variant="outline" size="sm">{isSpanish ? "Ver todos" : "All students"}</Button></Link>
+              </div>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-4">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <Metric label={isSpanish ? "Repertorio" : "Repertoire"} value={data.selected.repertoireItems.length} />
               <Metric label={isSpanish ? "Tareas" : "Assignments"} value={data.selected.practiceAssignments.length} />
               <Metric label={isSpanish ? "Prácticas" : "Practice logs"} value={data.selected.practiceLogs.length} />
@@ -89,14 +94,14 @@ function SelectedStudentProgress({
             </div>
           </Card>
 
-          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card>
+          <div className="grid min-w-0 gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
+            <Card className="min-w-0 overflow-hidden">
               <CardTitle>{isSpanish ? "Notas de clase" : "Lesson notes"}</CardTitle>
               <CardDescription>{isSpanish ? "Abre una clase y registra evidencia estructurada." : "Open a class and capture structured evidence."}</CardDescription>
               <div className="mt-4 space-y-4">
                 {data.selected.sessions.map((session) => (
-                  <details key={session.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4" open={!session.lessonNote}>
-                    <summary className="cursor-pointer text-sm font-semibold">
+                  <details key={session.id} className="min-w-0 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4" open={!session.lessonNote}>
+                    <summary className="cursor-pointer break-words text-sm font-semibold">
                       {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {session.lessonFocus ?? (isSpanish ? "Clase" : "Lesson")}
                       {!session.lessonNote ? <Badge className="ml-2">{isSpanish ? "Falta nota" : "Missing note"}</Badge> : null}
                     </summary>
@@ -109,7 +114,7 @@ function SelectedStudentProgress({
                       <LessonNoteForm
                         sessionId={session.id}
                         initial={session.lessonNote}
-                        skillCategories={data.skillCategories}
+                        skillCategories={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
                         locale={viewer.locale}
                       />
                       {session.lessonNote ? (
@@ -119,7 +124,7 @@ function SelectedStudentProgress({
                             lessonNoteId={session.lessonNote.id}
                             classSessionId={session.id}
                             repertoire={data.selected.repertoireItems}
-                            skills={data.skillCategories}
+                            skills={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
                             locale={viewer.locale}
                           />
                         </div>
@@ -131,18 +136,46 @@ function SelectedStudentProgress({
               </div>
             </Card>
 
-            <div className="space-y-4">
-              <Card>
+            <div className="min-w-0 space-y-4">
+              <Card className="overflow-hidden">
                 <CardTitle>{isSpanish ? "Repertorio" : "Repertoire"}</CardTitle>
                 <div className="mt-3 space-y-2">
                   {data.selected.repertoireItems.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
-                      <p className="text-sm font-semibold">{item.title}</p>
+                    <div key={item.id} className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
+                      <p className="break-words text-sm font-semibold">{item.title}</p>
                       <p className="text-xs text-[var(--color-ink-soft)]">{item.status} · {item.masteryPercent}% · {item.currentFocusSection ?? "-"}</p>
+                      <RepertoireAttachmentForm
+                        repertoireItemId={item.id}
+                        locale={viewer.locale}
+                        attachments={item.attachments.map((attachment) => ({
+                          id: attachment.id,
+                          originalName: attachment.originalName,
+                          sizeBytes: attachment.sizeBytes,
+                          url: getRepertoireAttachmentPublicUrl(attachment.storageKey),
+                        }))}
+                      />
                     </div>
                   ))}
                 </div>
                 <div className="mt-4"><RepertoireForm studentId={data.selected.id} locale={viewer.locale} /></div>
+              </Card>
+
+              <Card className="overflow-hidden">
+                <CardTitle>{isSpanish ? "Configurar clases recurrentes" : "Set up recurring classes"}</CardTitle>
+                <CardDescription>{isSpanish ? "Crea una serie fija para este estudiante sin salir del contexto." : "Create a fixed series for this student without leaving the context."}</CardDescription>
+                <div className="mt-4">
+                  <RecurringClassForm
+                    students={data.students.map((assignment) => ({
+                      id: assignment.student.id,
+                      name: assignment.student.user.name,
+                      instrument: assignment.student.preferredInstrument,
+                    }))}
+                    defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
+                    defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}
+                    locale={viewer.locale}
+                    selectedStudentId={data.selected.id}
+                  />
+                </div>
               </Card>
 
               <Card>
@@ -160,14 +193,17 @@ function SelectedStudentProgress({
 
               <Card>
                 <CardTitle>{isSpanish ? "Reporte de progreso" : "Progress report"}</CardTitle>
-                <ProgressReportForm studentId={data.selected.id} locale={viewer.locale} />
                 <div className="mt-3 space-y-2">
                   {data.selected.progressReports.map((report) => (
-                    <div key={report.id} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm">
+                    <Link key={report.id} href={`/teacher/progress/reports/${report.id}`} className="block rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm transition hover:bg-white">
                       <p className="font-semibold">{formatDate(report.startDate, viewer.locale)} - {formatDate(report.endDate, viewer.locale)}</p>
-                      <p className="text-xs text-[var(--color-ink-soft)]">{report.teacherSummary ?? (isSpanish ? "Reporte generado" : "Generated report")}</p>
-                    </div>
+                      <p className="text-xs text-[var(--color-ink-soft)]">{report.gradeLetter ?? report.finalGrade ?? report.status} · {report.teacherSummary ?? (isSpanish ? "Reporte generado" : "Generated report")}</p>
+                    </Link>
                   ))}
+                  {!data.selected.progressReports.length ? <CardDescription>{isSpanish ? "Aún no hay reportes." : "No reports yet."}</CardDescription> : null}
+                </div>
+                <div className="mt-4">
+                  <Link href={`/teacher/progress/reports/new?studentId=${data.selected.id}`}><Button variant="outline" className="w-full">{isSpanish ? "Crear nuevo reporte" : "Create new report"}</Button></Link>
                 </div>
               </Card>
             </div>
@@ -178,4 +214,12 @@ function SelectedStudentProgress({
 
 function Metric({ label, value }: { label: string; value: number }) {
   return <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3"><p className="font-display text-3xl">{value}</p><p className="text-xs text-[var(--color-ink-soft)]">{label}</p></div>;
+}
+
+function skillCategoriesForInstrument<T extends { instrument: string }>(skills: T[], instrument?: string | null) {
+  const normalized = (instrument ?? "").toLocaleLowerCase();
+  const lessonInstrument = normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing") || normalized.includes("voice")
+    ? "VOICE"
+    : "PIANO";
+  return skills.filter((skill) => skill.instrument === "GENERAL" || skill.instrument === lessonInstrument);
 }

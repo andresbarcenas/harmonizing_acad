@@ -84,7 +84,10 @@ export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
+  if (
+    (auth.user.role !== Role.TEACHER && auth.user.role !== Role.ADMIN) ||
+    (auth.user.role === Role.TEACHER && !auth.user.teacherProfile)
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -94,27 +97,45 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
-  const teacherProfileId = auth.user.teacherProfile.id;
+  const teacherProfileId = auth.user.role === Role.TEACHER ? auth.user.teacherProfile?.id : data.teacherId;
+  if (!teacherProfileId) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Selecciona una docente." : "Select a teacher." }, { status: 400 });
+  }
 
-  const assignment = await db.teacherAssignment.findFirst({
-    where: {
-      teacherId: teacherProfileId,
-      studentId: data.studentId,
-    },
-    include: {
-      teacher: {
-        include: { user: { select: { timezone: true } } },
-      },
-      student: {
-        include: { user: true },
-      },
-    },
-  });
+  const assignment = auth.user.role === Role.TEACHER
+    ? await db.teacherAssignment.findFirst({
+        where: {
+          teacherId: teacherProfileId,
+          studentId: data.studentId,
+        },
+        include: {
+          teacher: {
+            include: { user: { select: { timezone: true } } },
+          },
+          student: {
+            include: { user: true },
+          },
+        },
+      })
+    : null;
 
-  if (!assignment) {
+  const [adminTeacher, adminStudent] = auth.user.role === Role.ADMIN
+    ? await Promise.all([
+        db.teacherProfile.findUnique({ where: { id: teacherProfileId }, include: { user: { select: { timezone: true } } } }).catch(() => null),
+        db.studentProfile.findUnique({ where: { id: data.studentId }, include: { user: true } }),
+      ])
+    : [null, null];
+
+  if (auth.user.role === Role.TEACHER && !assignment) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "El estudiante no está asignado a esta docente." : "The student is not assigned to this teacher." }, { status: 400 });
   }
-  const recurrenceTimezone = normalizeIanaTimezone(data.timezone ?? assignment.teacher.user.timezone);
+  if (auth.user.role === Role.ADMIN && (!adminTeacher || !adminStudent)) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante o docente no encontrada." : "Student or teacher not found." }, { status: 404 });
+  }
+
+  const teacherTimezone = assignment?.teacher.user.timezone ?? adminTeacher?.user.timezone ?? "America/New_York";
+  const student = assignment?.student ?? adminStudent!;
+  const recurrenceTimezone = normalizeIanaTimezone(data.timezone ?? teacherTimezone);
 
   const { year, month, day } = parseDateParts(data.startsOnDate);
   const baseDate = new Date(Date.UTC(year, month - 1, day));
@@ -193,7 +214,7 @@ export async function POST(req: Request) {
         lessonFocus: data.lessonFocus,
         type: ClassSessionType.RECURRING,
         timezone: recurrenceTimezone,
-        instrument: assignment.student.preferredInstrument,
+        instrument: student.preferredInstrument,
         status: SessionStatus.SCHEDULED,
       });
     }
@@ -232,7 +253,7 @@ export async function POST(req: Request) {
   });
 
   await createNotification({
-    userId: assignment.student.userId,
+    userId: student.userId,
     type: NotificationType.CLASS_REMINDER,
     title: "New recurring classes",
     body: `Your teacher scheduled ${sessionsToCreate.length} class(es) in a new series.`,

@@ -3,6 +3,7 @@ import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
 
 import { ClassRequestActions } from "@/components/schedule/class-request-actions";
 import { SingleClassBookingForm } from "@/components/schedule/single-class-booking-form";
+import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,20 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
             students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument }))}
             defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
             defaultTeacherId={data.teacher?.id}
+            defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink}
+            selectedStudentId={data.selectedStudentId}
+            locale={viewer.locale}
+          />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{isSpanish ? "Configurar clases recurrentes" : "Set up recurring classes"}</CardTitle>
+        <CardDescription>{isSpanish ? "Crea una serie fija para estudiantes asignados." : "Create a fixed series for assigned students."}</CardDescription>
+        <div className="mt-4">
+          <RecurringClassForm
+            students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument }))}
+            defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
             defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink}
             selectedStudentId={data.selectedStudentId}
             locale={viewer.locale}

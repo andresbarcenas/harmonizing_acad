@@ -86,12 +86,14 @@ The saved `ClassSession.timezone` keeps the booking timezone visible for audit/d
 Admin can:
 
 - book a single class for any student and teacher
+- create recurring class series for selected student/teacher pairs
 - view all classes
 - approve/reject class requests
 
 Teacher can:
 
 - book one-off classes only for assigned students
+- create recurring class series only for assigned students
 - view assigned recurring and single classes
 - approve/reject requests for assigned students
 - complete a class through the after-class workflow
@@ -118,6 +120,12 @@ When a request is accepted or rejected:
 
 - student receives an in-app notification
 - accepted requests link to the created class detail when available
+
+Class email reminders:
+
+- Resend sends reminder emails for scheduled classes through `/api/cron/class-reminders`.
+- Default reminders are 24 hours and 1 hour before class.
+- `ClassReminderDelivery` prevents duplicate reminder emails for the same class, recipient, channel, and offset.
 - rejected requests store and show a student-visible rejection reason
 
 ## Routes
@@ -125,10 +133,12 @@ When a request is accepted or rejected:
 Admin:
 
 - `/admin/schedule` creates one-off classes, lists all sessions, and reviews requests.
+- `/admin/schedule` also creates recurring class series for selected student/teacher pairs.
 
 Teacher:
 
 - `/teacher/schedule` creates one-off classes for assigned students, lists assigned sessions, and reviews requests.
+- `/teacher/schedule` also creates recurring class series for assigned students.
 
 Student:
 

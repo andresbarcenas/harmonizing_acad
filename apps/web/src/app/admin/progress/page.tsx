@@ -1,7 +1,9 @@
 import { Role } from "@prisma/client";
+import Link from "next/link";
 
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
@@ -16,6 +18,15 @@ export default async function AdminProgressPage() {
   return (
     <AppShell role={viewer.role} activePath="/admin/progress" userName={viewer.name} locale={viewer.locale}>
       <PageIntro eyebrow={isSpanish ? "Visibilidad académica" : "Academic visibility"} title={isSpanish ? "Detecta huecos antes de que se vuelvan operación manual." : "Spot gaps before they become manual operations."} description={isSpanish ? "Monitorea notas faltantes, baja práctica, reportes y categorías de habilidad desde la administración." : "Monitor missing notes, low practice, reports, and skill categories from admin."} />
+      <Card>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>{isSpanish ? "Reportes mensuales y calificaciones" : "Monthly reports and grades"}</CardTitle>
+            <CardDescription>{isSpanish ? "Genera, revisa, publica y archiva reportes por estudiante y período." : "Generate, review, publish, and archive reports by student and period."}</CardDescription>
+          </div>
+          <Link href="/admin/progress/reports"><Button variant="gold">{isSpanish ? "Abrir reportes" : "Open reports"}</Button></Link>
+        </div>
+      </Card>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardTitle>{isSpanish ? "Notas de clase faltantes" : "Missing lesson notes"}</CardTitle>
@@ -46,13 +57,13 @@ export default async function AdminProgressPage() {
           <CardTitle>{isSpanish ? "Reportes recientes" : "Recent reports"}</CardTitle>
           <div className="mt-3 space-y-2">
             {data.reports.map((report) => (
-              <div key={report.id} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm">
+              <Link key={report.id} href={`/admin/progress/reports/${report.id}`} className="block rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm transition hover:bg-white">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-semibold">{report.student.user.name}</p>
                   <Badge>{report.status}</Badge>
                 </div>
                 <p className="text-xs text-[var(--color-ink-soft)]">{formatDate(report.startDate, viewer.locale)} - {formatDate(report.endDate, viewer.locale)} · {report.totalPracticeMinutes} min</p>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>

@@ -12,6 +12,7 @@ import type { AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
 type CompletionStatus = "COMPLETED" | "NO_SHOW" | "CANCELLED" | "RESCHEDULE_PENDING";
+type LessonInstrument = "PIANO" | "VOICE";
 type RepertoireStatus = "ASSIGNED" | "LEARNING" | "IMPROVING" | "PERFORMANCE_READY" | "COMPLETED" | "PAUSED";
 
 type SkillOption = { id: string; name: string; instrument: string };
@@ -87,6 +88,7 @@ type WorkflowProps = {
   classId: string;
   classDateLabel: string;
   initialStatus: CompletionStatus | "SCHEDULED";
+  initialLessonInstrument?: string | null;
   lessonFocus?: string | null;
   student: {
     id: string;
@@ -124,6 +126,10 @@ function copy(locale: AppLocale) {
     repertoire: "Repertorio",
     practice: "Práctica",
     review: "Revisar",
+    lessonType: "Tipo de clase",
+    piano: "Piano",
+    singing: "Canto / técnica vocal",
+    skillScope: "Mostrando habilidades de",
     summary: "Resumen de la clase",
     taught: "Temas trabajados",
     didWell: "Lo que hizo bien",
@@ -184,6 +190,10 @@ function copy(locale: AppLocale) {
     repertoire: "Repertoire",
     practice: "Practice",
     review: "Review",
+    lessonType: "Lesson type",
+    piano: "Piano",
+    singing: "Singing / vocal technique",
+    skillScope: "Showing skills for",
     summary: "Lesson summary",
     taught: "Topics worked on",
     didWell: "What went well",
@@ -246,6 +256,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
   const [message, setMessage] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
   const [notifyStudent, setNotifyStudent] = useState(true);
   const [status, setStatus] = useState<CompletionStatus>(props.initialStatus === "SCHEDULED" ? "COMPLETED" : props.initialStatus);
+  const [lessonInstrument, setLessonInstrument] = useState<LessonInstrument>(() => inferLessonInstrument(props.initialLessonInstrument ?? props.student.preferredInstrument));
   const [step, setStep] = useState(0);
   const [hydratedDraft, setHydratedDraft] = useState(false);
   const [lessonNote, setLessonNote] = useState<LessonNoteState>(() => ({
@@ -284,7 +295,9 @@ export function AfterClassWorkflow(props: WorkflowProps) {
     ? [c.status, c.note, c.skills, c.repertoire, c.practice, c.review]
     : [c.status, c.review];
   const activeStepLabel = steps[Math.min(step, steps.length - 1)];
-  const selectedRatings = skillRatings.filter((rating) => rating.rating > 0);
+  const filteredSkills = useMemo(() => filterSkillsForLesson(props.skillCategories, lessonInstrument), [lessonInstrument, props.skillCategories]);
+  const filteredSkillIds = useMemo(() => new Set(filteredSkills.map((skill) => skill.id)), [filteredSkills]);
+  const selectedRatings = skillRatings.filter((rating) => rating.rating > 0 && filteredSkillIds.has(rating.skillCategoryId));
   const selectedRepertoire = repertoireUpdates.filter((item) => item.selected);
   const validAssignments = assignments.filter((assignment) => assignment.title.trim() && assignment.instructions.trim());
   const videoRequested = validAssignments.some((assignment) => assignment.requiresVideo);
@@ -298,6 +311,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
     try {
       const draft = JSON.parse(stored) as Partial<{
         status: CompletionStatus;
+        lessonInstrument: LessonInstrument;
         notifyStudent: boolean;
         lessonNote: LessonNoteState;
         skillRatings: SkillRatingState[];
@@ -306,6 +320,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
         assignments: AssignmentState[];
       }>;
       if (draft.status) setStatus(draft.status);
+      if (draft.lessonInstrument) setLessonInstrument(draft.lessonInstrument);
       if (typeof draft.notifyStudent === "boolean") setNotifyStudent(draft.notifyStudent);
       if (draft.lessonNote) setLessonNote(draft.lessonNote);
       if (draft.skillRatings) setSkillRatings(draft.skillRatings);
@@ -322,8 +337,8 @@ export function AfterClassWorkflow(props: WorkflowProps) {
 
   useEffect(() => {
     if (!hydratedDraft) return;
-    window.localStorage.setItem(draftKey, JSON.stringify({ status, notifyStudent, lessonNote, skillRatings, repertoireUpdates, newRepertoire, assignments }));
-  }, [assignments, draftKey, hydratedDraft, lessonNote, newRepertoire, notifyStudent, repertoireUpdates, skillRatings, status]);
+    window.localStorage.setItem(draftKey, JSON.stringify({ status, lessonInstrument, notifyStudent, lessonNote, skillRatings, repertoireUpdates, newRepertoire, assignments }));
+  }, [assignments, draftKey, hydratedDraft, lessonInstrument, lessonNote, newRepertoire, notifyStudent, repertoireUpdates, skillRatings, status]);
 
   useEffect(() => {
     if (step > steps.length - 1) setStep(steps.length - 1);
@@ -340,6 +355,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
     setSaving(true);
     const payload = {
       status,
+      lessonInstrument,
       notifyStudent,
       lessonNote,
       skillRatings: status === "COMPLETED" ? selectedRatings.map(({ skillCategoryId, rating, note }) => ({ skillCategoryId, rating, note })) : [],
@@ -407,7 +423,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
           <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/74 p-4 text-sm lg:min-w-72">
             <p className="font-semibold text-[var(--color-ink)]">{props.student.name}</p>
             <p className="text-xs text-[var(--color-ink-soft)]">{props.classDateLabel}</p>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{props.student.preferredInstrument ?? "Música"} · {props.student.timezone}</p>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{lessonInstrumentLabel(lessonInstrument, props.locale)} · {props.student.timezone}</p>
           </div>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
@@ -429,11 +445,14 @@ export function AfterClassWorkflow(props: WorkflowProps) {
 
       <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
         <Card className="min-h-[28rem]">
+          {status === "COMPLETED" ? (
+            <LessonInstrumentSelector c={c} locale={props.locale} value={lessonInstrument} onChange={setLessonInstrument} skillCount={filteredSkills.length} />
+          ) : null}
           {activeStepLabel === c.status ? <StatusStep locale={props.locale} status={status} onChange={setStatus} /> : null}
           {activeStepLabel === c.note && status === "COMPLETED" ? <LessonNoteStep c={c} note={lessonNote} onChange={setLessonNote} /> : null}
-          {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} skills={props.skillCategories} ratings={skillRatings} onChange={setSkillRatings} /> : null}
+          {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} skills={filteredSkills} ratings={skillRatings} onChange={setSkillRatings} /> : null}
           {activeStepLabel === c.repertoire && status === "COMPLETED" ? <RepertoireStep c={c} items={repertoireUpdates} setItems={setRepertoireUpdates} newItem={newRepertoire} setNewItem={setNewRepertoire} /> : null}
-          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={props.skillCategories} repertoire={props.repertoireItems} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
+          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
           {activeStepLabel === c.review ? (
             <ReviewStep
               c={c}
@@ -441,7 +460,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
               status={status}
               summary={lessonNote.summary}
               ratings={selectedRatings}
-              skills={props.skillCategories}
+              skills={filteredSkills}
               repertoire={selectedRepertoire}
               assignments={validAssignments}
               videoRequested={videoRequested}
@@ -512,6 +531,35 @@ function StatusStep({ locale, status, onChange }: { locale: AppLocale; status: C
   );
 }
 
+function LessonInstrumentSelector({
+  c,
+  locale,
+  value,
+  onChange,
+  skillCount,
+}: {
+  c: ReturnType<typeof copy>;
+  locale: AppLocale;
+  value: LessonInstrument;
+  onChange: (value: LessonInstrument) => void;
+  skillCount: number;
+}) {
+  return (
+    <div className="mb-4 rounded-[1.2rem] border border-[var(--color-border)] bg-white/74 p-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.lessonType}</p>
+          <p className="text-sm text-[var(--color-ink-soft)]">{c.skillScope} {lessonInstrumentLabel(value, locale)} · {skillCount} {locale === "es" ? "habilidades" : "skills"}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:min-w-72">
+          <Button type="button" size="sm" variant={value === "PIANO" ? "gold" : "outline"} onClick={() => onChange("PIANO")}>{c.piano}</Button>
+          <Button type="button" size="sm" variant={value === "VOICE" ? "gold" : "outline"} onClick={() => onChange("VOICE")}>{c.singing}</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LessonNoteStep({ c, note, onChange }: { c: ReturnType<typeof copy>; note: LessonNoteState; onChange: (note: LessonNoteState) => void }) {
   return (
     <div className="space-y-3">
@@ -542,9 +590,8 @@ function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy
   }
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {ratings.map((rating) => {
-        const skill = skills.find((item) => item.id === rating.skillCategoryId);
-        if (!skill) return null;
+      {skills.map((skill) => {
+        const rating = ratings.find((item) => item.skillCategoryId === skill.id) ?? { skillCategoryId: skill.id, rating: 0, note: "" };
         return (
           <div key={rating.skillCategoryId} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-3">
             <div className="flex items-start justify-between gap-2">
@@ -708,4 +755,21 @@ function numberOrUndefined(value: unknown) {
 function statusLabel(status: CompletionStatus, locale: AppLocale) {
   const option = statusOptions.find((item) => item.value === status);
   return option ? (locale === "es" ? option.es : option.en) : status;
+}
+
+function inferLessonInstrument(value?: string | null): LessonInstrument {
+  const normalized = (value ?? "").toLocaleLowerCase();
+  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing") || normalized.includes("voice")) {
+    return "VOICE";
+  }
+  return "PIANO";
+}
+
+function filterSkillsForLesson(skills: SkillOption[], lessonInstrument: LessonInstrument) {
+  return skills.filter((skill) => skill.instrument === "GENERAL" || skill.instrument === lessonInstrument);
+}
+
+function lessonInstrumentLabel(value: LessonInstrument, locale: AppLocale) {
+  if (value === "VOICE") return locale === "es" ? "Canto / técnica vocal" : "Singing / vocal technique";
+  return "Piano";
 }

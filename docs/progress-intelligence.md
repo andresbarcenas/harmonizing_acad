@@ -73,6 +73,14 @@ Progress reports are deterministic. For a selected student/date range, the app s
 
 Teacher/admin text fields remain editable and manual: summary, strengths, improvement areas, recommended focus, final grade, and grade percentage.
 
+## Repertoire Attachments And Skill Scope
+
+- Repertoire items can include student-visible PDF/image song sheet attachments through `RepertoireAttachment`.
+- Teachers can upload/delete attachments only for students assigned to them; admins can manage attachments globally.
+- Students see their own song sheet links in the progress portal, but cannot manage teacher-uploaded attachments.
+- The after-class workflow scopes skill ratings by lesson type: piano classes show `GENERAL` + `PIANO`, and singing/vocal classes show `GENERAL` + `VOICE`.
+- The selected lesson type is stored on `ClassSession.instrument`, and the API rejects skill ratings outside that instrument scope.
+
 ## RBAC
 
 - Teachers can edit progress data only for students assigned to them through `TeacherAssignment`.
@@ -91,7 +99,7 @@ The Prisma migration history was squashed into a single baseline migration after
 Current intent:
 
 - Fresh staging/production databases should use `npm run db:deploy` from `apps/web`, which runs `prisma migrate deploy`.
-- Local Docker remains compatible with the existing boot flow, which still uses `prisma db push` for fast local iteration.
+- Local Docker remains compatible with the existing boot flow, which still uses `prisma db push` for fast local iteration. Before `db push`, `scripts/prisma-prepush-reports.cjs` safely backfills `ProgressReport.reportKey` and creates the expected unique index on existing dev databases so report upgrades do not require `--force-reset`.
 - Existing local databases that were created before the baseline may continue working with `db push`; for a clean migration-style reset, use a fresh database or reset Docker volumes.
 - Migration correctness should be checked with:
 

@@ -26,7 +26,7 @@ async function main() {
   // Security-sensitive: never store plaintext passwords, only bcrypt hashes.
   const passwordHash = await hash("demo123", 12);
 
-  const [adminUser, teacherUser, studentUser, studentTwoUser] = await Promise.all([
+  const [adminUser, teacherUser, studentUser, studentTwoUser, tommyUser] = await Promise.all([
     prisma.user.upsert({
       where: { email: "admin@harmonizing.com" },
       update: {},
@@ -79,6 +79,19 @@ async function main() {
         image: "/demo/student-2.svg",
       },
     }),
+    prisma.user.upsert({
+      where: { email: "tommy@harmonizing.com" },
+      update: {},
+      create: {
+        name: "Tommy",
+        email: "tommy@harmonizing.com",
+        passwordHash,
+        role: Role.STUDENT,
+        locale: "es",
+        timezone: "America/New_York",
+        image: "/demo/student.svg",
+      },
+    }),
   ]);
 
   const teacherProfile = await prisma.teacherProfile.upsert({
@@ -97,7 +110,7 @@ async function main() {
     },
   });
 
-  const [studentProfile, studentTwoProfile] = await Promise.all([
+  const [studentProfile, studentTwoProfile, tommyProfile] = await Promise.all([
     prisma.studentProfile.upsert({
       where: { userId: studentUser.id },
       update: {},
@@ -118,6 +131,16 @@ async function main() {
         bio: "Busco mejorar respiración y afinación.",
       },
     }),
+    prisma.studentProfile.upsert({
+      where: { userId: tommyUser.id },
+      update: {},
+      create: {
+        userId: tommyUser.id,
+        phone: "+1 305 555 0140",
+        preferredInstrument: "Piano",
+        bio: "Cuenta local para importar el consolidado histórico de piano.",
+      },
+    }),
   ]);
 
   await Promise.all([
@@ -130,6 +153,11 @@ async function main() {
       where: { studentId: studentTwoProfile.id },
       update: { teacherId: teacherProfile.id },
       create: { studentId: studentTwoProfile.id, teacherId: teacherProfile.id, assignedBy: adminUser.id },
+    }),
+    prisma.teacherAssignment.upsert({
+      where: { studentId: tommyProfile.id },
+      update: { teacherId: teacherProfile.id },
+      create: { studentId: tommyProfile.id, teacherId: teacherProfile.id, assignedBy: adminUser.id },
     }),
   ]);
 
@@ -166,6 +194,18 @@ async function main() {
         studentId: studentTwoProfile.id,
         planId: plan.id,
         startsAt: subDays(new Date(), 5),
+        monthlyClassLimit: 4,
+        active: true,
+      },
+    }),
+    prisma.activeSubscription.upsert({
+      where: { id: "sub_tommy_historical" },
+      update: { active: true, monthlyClassLimit: 4 },
+      create: {
+        id: "sub_tommy_historical",
+        studentId: tommyProfile.id,
+        planId: plan.id,
+        startsAt: subDays(new Date(), 365 * 3),
         monthlyClassLimit: 4,
         active: true,
       },
@@ -1050,22 +1090,73 @@ async function main() {
     },
   });
 
+  const publishedReportStart = subDays(now, 30);
+  const publishedReportEnd = now;
+  const publishedReportKey = `${studentProfile.id}:${teacherProfile.id}:${publishedReportStart.toISOString()}:${publishedReportEnd.toISOString()}`;
+  const reportCategoryScores = {
+    attendance: { score: 86, weight: 0.15, explanation: { es: "Buena asistencia en el período.", en: "Good attendance in the period." } },
+    practiceConsistency: { score: 72, weight: 0.2, explanation: { es: "Práctica registrada, con espacio para mayor constancia.", en: "Practice was logged, with room for more consistency." } },
+    assignmentCompletion: { score: 70, weight: 0.2, explanation: { es: "Tareas en progreso.", en: "Assignments are in progress." } },
+    skillProgress: { score: 84, weight: 0.25, explanation: { es: "Mejora clara en coordinación.", en: "Clear improvement in coordination." } },
+    repertoireProgress: { score: 78, weight: 0.1, explanation: { es: "Repertorio avanzando por secciones.", en: "Repertoire is moving section by section." } },
+    effortFocus: { score: 90, weight: 0.1, explanation: { es: "Muy buena actitud y enfoque.", en: "Very good attitude and focus." } },
+  };
+  const reportSkillSummary = {
+    items: [
+      { skillCategoryId: rhythm.id, name: "Rhythm", instrument: "PIANO", latestAverage: 3, firstAverage: 2.5, lastAverage: 3, delta: 0.5, trend: "UP", ratingCount: 2, recentNotes: ["Still rushing eighth notes"] },
+      { skillCategoryId: handCoordination.id, name: "Hand coordination", instrument: "PIANO", latestAverage: 4, firstAverage: 3.5, lastAverage: 4, delta: 0.5, trend: "UP", ratingCount: 2, recentNotes: ["Improved hands-together control"] },
+      { skillCategoryId: sightReading.id, name: "Sight reading", instrument: "PIANO", latestAverage: 2, firstAverage: 2, lastAverage: 2, delta: 0, trend: "FLAT", ratingCount: 1, recentNotes: ["Needs more repetition"] },
+    ],
+    strongest: [{ name: "Hand coordination", latestAverage: 4 }],
+    needsPractice: [{ name: "Sight reading", latestAverage: 2 }],
+    insufficientData: false,
+  };
+
   await prisma.progressReport.upsert({
     where: { id: "report_isabella_april_foundation" },
     update: {
+      reportKey: publishedReportKey,
+      status: ProgressReportStatus.PUBLISHED,
+      generatedAt: publishedReportStart,
+      publishedAt: now,
+      publishedByUserId: adminUser.id,
+      rubricVersion: "default-v1",
+      totalScheduledClasses: 2,
       attendanceCount: 1,
       completedLessonsCount: 1,
+      missedLessonsCount: 1,
+      cancelledLessonsCount: 0,
       missedCancelledCount: 1,
+      singleClassesCount: 0,
+      recurringClassesCount: 2,
+      lessonNotesCompletedCount: 1,
+      missingLessonNotesCount: 0,
       totalPracticeMinutes: 40,
+      practiceLogCount: 2,
+      practiceAssignmentCount: 1,
+      completedAssignmentCount: 0,
       practiceAssignmentCompletionRate: 0,
+      overdueAssignmentCount: 0,
       videoSubmissionsCount: 1,
+      reviewedVideoCount: 1,
+      repertoireWorkedCount: 1,
+      repertoireCompletedCount: 0,
       averageLessonRating: 4,
+      averagePreparednessRating: 4,
+      averageFocusRating: 4,
+      averageEffortRating: 5,
       averageSkillRatings: {
         Rhythm: 3,
         "Hand coordination": 4,
         "Sight reading": 2,
         Posture: 4,
       },
+      categoryScores: reportCategoryScores,
+      skillSummary: reportSkillSummary,
+      attendanceSummary: { totalScheduled: 2, completed: 1, missed: 1, cancelled: 0, recurring: 2, single: 0, lessonNotesCompleted: 1, missingLessonNotes: 0 },
+      practiceSummary: { totalMinutes: 40, logCount: 2, assignmentCount: 1, completedAssignmentCount: 0, overdueAssignmentCount: 0, completionRate: 0, averageMinutesPerWeek: 10 },
+      videoSummary: { submitted: 1, reviewed: 1, pending: 0, highlights: [{ comment: videoFeedback.comment, videoId: video.id }] },
+      repertoireSummary: { worked: 1, completed: 0, averageMasteryPercent: 68, items: [{ id: repertoire.id, title: repertoire.title, status: repertoire.status, masteryPercent: repertoire.masteryPercent, focus: repertoire.currentFocusSection }] },
       repertoireProgressSummary: {
         activeItems: 1,
         averageMasteryPercent: 68,
@@ -1076,29 +1167,60 @@ async function main() {
       improvementAreas: "Lectura a primera vista y estabilidad rítmica con ambas manos.",
       recommendedNextFocus: "Mantener metrónomo y ampliar de compases 1-8 a 1-16.",
       finalGrade: "B+",
+      gradeLetter: "B+",
       gradePercentage: 86,
+      studentVisibleSummary: "Isabella está avanzando con buen enfoque. Este mes debe mantener metrónomo, reforzar lectura y seguir trabajando coordinación por secciones.",
+      adminNote: "Demo publicado para vista de estudiante/familia.",
     },
     create: {
       id: "report_isabella_april_foundation",
+      reportKey: publishedReportKey,
       studentId: studentProfile.id,
       teacherId: teacherProfile.id,
       generatedByUserId: teacherUser.id,
-      startDate: subDays(now, 30),
-      endDate: now,
-      status: ProgressReportStatus.GENERATED,
+      publishedByUserId: adminUser.id,
+      startDate: publishedReportStart,
+      endDate: publishedReportEnd,
+      status: ProgressReportStatus.PUBLISHED,
+      generatedAt: publishedReportStart,
+      publishedAt: now,
+      rubricVersion: "default-v1",
+      totalScheduledClasses: 2,
       attendanceCount: 1,
       completedLessonsCount: 1,
+      missedLessonsCount: 1,
+      cancelledLessonsCount: 0,
       missedCancelledCount: 1,
+      singleClassesCount: 0,
+      recurringClassesCount: 2,
+      lessonNotesCompletedCount: 1,
+      missingLessonNotesCount: 0,
       totalPracticeMinutes: 40,
+      practiceLogCount: 2,
+      practiceAssignmentCount: 1,
+      completedAssignmentCount: 0,
       practiceAssignmentCompletionRate: 0,
+      overdueAssignmentCount: 0,
       videoSubmissionsCount: 1,
+      reviewedVideoCount: 1,
+      repertoireWorkedCount: 1,
+      repertoireCompletedCount: 0,
       averageLessonRating: 4,
+      averagePreparednessRating: 4,
+      averageFocusRating: 4,
+      averageEffortRating: 5,
       averageSkillRatings: {
         Rhythm: 3,
         "Hand coordination": 4,
         "Sight reading": 2,
         Posture: 4,
       },
+      categoryScores: reportCategoryScores,
+      skillSummary: reportSkillSummary,
+      attendanceSummary: { totalScheduled: 2, completed: 1, missed: 1, cancelled: 0, recurring: 2, single: 0, lessonNotesCompleted: 1, missingLessonNotes: 0 },
+      practiceSummary: { totalMinutes: 40, logCount: 2, assignmentCount: 1, completedAssignmentCount: 0, overdueAssignmentCount: 0, completionRate: 0, averageMinutesPerWeek: 10 },
+      videoSummary: { submitted: 1, reviewed: 1, pending: 0, highlights: [{ comment: videoFeedback.comment, videoId: video.id }] },
+      repertoireSummary: { worked: 1, completed: 0, averageMasteryPercent: 68, items: [{ id: repertoire.id, title: repertoire.title, status: repertoire.status, masteryPercent: repertoire.masteryPercent, focus: repertoire.currentFocusSection }] },
       repertoireProgressSummary: {
         activeItems: 1,
         averageMasteryPercent: 68,
@@ -1109,7 +1231,88 @@ async function main() {
       improvementAreas: "Lectura a primera vista y estabilidad rítmica con ambas manos.",
       recommendedNextFocus: "Mantener metrónomo y ampliar de compases 1-8 a 1-16.",
       finalGrade: "B+",
+      gradeLetter: "B+",
       gradePercentage: 86,
+      studentVisibleSummary: "Isabella está avanzando con buen enfoque. Este mes debe mantener metrónomo, reforzar lectura y seguir trabajando coordinación por secciones.",
+      adminNote: "Demo publicado para vista de estudiante/familia.",
+    },
+  });
+
+  const draftReportStart = subDays(now, 14);
+  const draftReportEnd = now;
+  await prisma.progressReport.upsert({
+    where: { id: "report_isabella_current_draft" },
+    update: {
+      reportKey: `${studentProfile.id}:${teacherProfile.id}:${draftReportStart.toISOString()}:${draftReportEnd.toISOString()}`,
+      status: ProgressReportStatus.DRAFT,
+      generatedAt: draftReportStart,
+      totalScheduledClasses: 1,
+      completedLessonsCount: 1,
+      lessonNotesCompletedCount: 1,
+      totalPracticeMinutes: 40,
+      practiceLogCount: 2,
+      practiceAssignmentCount: 1,
+      completedAssignmentCount: 0,
+      practiceAssignmentCompletionRate: 0,
+      videoSubmissionsCount: 1,
+      reviewedVideoCount: 1,
+      repertoireWorkedCount: 1,
+      averageLessonRating: 4,
+      averageSkillRatings: { Rhythm: 3, "Hand coordination": 4 },
+      categoryScores: reportCategoryScores,
+      skillSummary: reportSkillSummary,
+      attendanceSummary: { totalScheduled: 1, completed: 1, missed: 0, cancelled: 0, recurring: 1, single: 0, lessonNotesCompleted: 1, missingLessonNotes: 0 },
+      practiceSummary: { totalMinutes: 40, logCount: 2, assignmentCount: 1, completedAssignmentCount: 0, overdueAssignmentCount: 0, completionRate: 0, averageMinutesPerWeek: 20 },
+      videoSummary: { submitted: 1, reviewed: 1, pending: 0, highlights: [{ comment: videoFeedback.comment, videoId: video.id }] },
+      repertoireSummary: { worked: 1, completed: 0, averageMasteryPercent: 68, items: [{ id: repertoire.id, title: repertoire.title, status: repertoire.status, masteryPercent: repertoire.masteryPercent, focus: repertoire.currentFocusSection }] },
+      repertoireProgressSummary: { activeItems: 1, averageMasteryPercent: 68, byStatus: { IMPROVING: 1 } },
+      teacherSummary: "Borrador para revisión administrativa.",
+      strengths: "Buena actitud y progreso técnico.",
+      improvementAreas: "Reforzar lectura y pulso interno.",
+      recommendedNextFocus: "Preparar un bloque corto de lectura cada día.",
+      gradeLetter: "B",
+      finalGrade: "B",
+      gradePercentage: 84,
+      studentVisibleSummary: "Borrador no publicado.",
+    },
+    create: {
+      id: "report_isabella_current_draft",
+      reportKey: `${studentProfile.id}:${teacherProfile.id}:${draftReportStart.toISOString()}:${draftReportEnd.toISOString()}`,
+      studentId: studentProfile.id,
+      teacherId: teacherProfile.id,
+      generatedByUserId: teacherUser.id,
+      startDate: draftReportStart,
+      endDate: draftReportEnd,
+      status: ProgressReportStatus.DRAFT,
+      generatedAt: draftReportStart,
+      totalScheduledClasses: 1,
+      completedLessonsCount: 1,
+      lessonNotesCompletedCount: 1,
+      totalPracticeMinutes: 40,
+      practiceLogCount: 2,
+      practiceAssignmentCount: 1,
+      completedAssignmentCount: 0,
+      practiceAssignmentCompletionRate: 0,
+      videoSubmissionsCount: 1,
+      reviewedVideoCount: 1,
+      repertoireWorkedCount: 1,
+      averageLessonRating: 4,
+      averageSkillRatings: { Rhythm: 3, "Hand coordination": 4 },
+      categoryScores: reportCategoryScores,
+      skillSummary: reportSkillSummary,
+      attendanceSummary: { totalScheduled: 1, completed: 1, missed: 0, cancelled: 0, recurring: 1, single: 0, lessonNotesCompleted: 1, missingLessonNotes: 0 },
+      practiceSummary: { totalMinutes: 40, logCount: 2, assignmentCount: 1, completedAssignmentCount: 0, overdueAssignmentCount: 0, completionRate: 0, averageMinutesPerWeek: 20 },
+      videoSummary: { submitted: 1, reviewed: 1, pending: 0, highlights: [{ comment: videoFeedback.comment, videoId: video.id }] },
+      repertoireSummary: { worked: 1, completed: 0, averageMasteryPercent: 68, items: [{ id: repertoire.id, title: repertoire.title, status: repertoire.status, masteryPercent: repertoire.masteryPercent, focus: repertoire.currentFocusSection }] },
+      repertoireProgressSummary: { activeItems: 1, averageMasteryPercent: 68, byStatus: { IMPROVING: 1 } },
+      teacherSummary: "Borrador para revisión administrativa.",
+      strengths: "Buena actitud y progreso técnico.",
+      improvementAreas: "Reforzar lectura y pulso interno.",
+      recommendedNextFocus: "Preparar un bloque corto de lectura cada día.",
+      gradeLetter: "B",
+      finalGrade: "B",
+      gradePercentage: 84,
+      studentVisibleSummary: "Borrador no publicado.",
     },
   });
 
@@ -1129,6 +1332,13 @@ async function main() {
         title: "Tu solicitud de cambio está pendiente",
         body: "Tu profesora revisará la propuesta en breve.",
         actionUrl: "/schedule",
+      },
+      {
+        userId: studentUser.id,
+        type: NotificationType.SYSTEM,
+        title: "Tu reporte de progreso está listo",
+        body: "Ya puedes revisar tu resumen mensual, calificación y próximo enfoque.",
+        actionUrl: "/progress/reports/report_isabella_april_foundation",
       },
       {
         userId: teacherUser.id,

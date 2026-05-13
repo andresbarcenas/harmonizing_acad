@@ -16,6 +16,13 @@ type StudentOption = {
   instrument?: string | null;
 };
 
+type TeacherOption = {
+  id: string;
+  name: string;
+  timezone: string;
+  meetingUrl?: string | null;
+};
+
 const weekdayOptions = [
   { value: 0, en: "Sun", es: "Dom" },
   { value: 1, en: "Mon", es: "Lun" },
@@ -28,14 +35,20 @@ const weekdayOptions = [
 
 export function RecurringClassForm({
   students,
+  teachers = [],
+  role = "teacher",
   defaultTimezone,
   defaultMeetingUrl,
+  defaultTeacherId,
   locale = "en",
   selectedStudentId,
 }: {
   students: StudentOption[];
+  teachers?: TeacherOption[];
+  role?: "teacher" | "admin";
   defaultTimezone: string;
   defaultMeetingUrl?: string | null;
+  defaultTeacherId?: string | null;
   locale?: AppLocale;
   selectedStudentId?: string | null;
 }) {
@@ -46,7 +59,9 @@ export function RecurringClassForm({
   const [success, setSuccess] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [weekdays, setWeekdays] = useState<number[]>([1]);
-  const normalizedDefaultTimezone = normalizeIanaTimezone(defaultTimezone);
+  const [selectedTeacherId, setSelectedTeacherId] = useState(defaultTeacherId ?? teachers[0]?.id ?? "");
+  const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId) ?? null;
+  const normalizedDefaultTimezone = normalizeIanaTimezone(selectedTeacher?.timezone ?? defaultTimezone);
   const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? null;
 
   const initialDate = useMemo(() => {
@@ -63,6 +78,7 @@ export function RecurringClassForm({
 
     const payload = {
       studentId: selectedStudent?.id ?? String(formData.get("studentId") ?? ""),
+      teacherId: role === "admin" ? String(formData.get("teacherId") ?? "") : undefined,
       startsOnDate: String(formData.get("startsOnDate") ?? ""),
       startTimeLocal: String(formData.get("startTimeLocal") ?? ""),
       weekdays,
@@ -134,6 +150,27 @@ export function RecurringClassForm({
             </select>
           </div>
         )}
+        {role === "admin" ? (
+          <div className="space-y-1.5">
+            <label htmlFor="recurringTeacherId" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {locale === "es" ? "Docente" : "Teacher"}
+            </label>
+            <select
+              id="recurringTeacherId"
+              name="teacherId"
+              value={selectedTeacherId}
+              onChange={(event) => setSelectedTeacherId(event.target.value)}
+              className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+              required
+            >
+              {teachers.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
         <div className="space-y-1.5">
           <label htmlFor="meetingUrl" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             {locale === "es" ? "Link de clase" : "Class link"}
@@ -142,7 +179,7 @@ export function RecurringClassForm({
             id="meetingUrl"
             name="meetingUrl"
             type="url"
-            defaultValue={defaultMeetingUrl ?? ""}
+            defaultValue={selectedTeacher?.meetingUrl ?? defaultMeetingUrl ?? ""}
             placeholder="https://zoom.us/j/..."
             required
           />
@@ -225,7 +262,7 @@ export function RecurringClassForm({
         <Textarea id="lessonFocus" name="lessonFocus" rows={2} placeholder={dictionary.teacher.lessonFocusPlaceholder} />
       </div>
 
-      <Button type="submit" variant="gold" size="sm" disabled={pending || !students.length}>
+      <Button type="submit" variant="gold" size="sm" disabled={pending || !students.length || (role === "admin" && !teachers.length)}>
         {pending ? dictionary.teacher.scheduling : dictionary.teacher.scheduleRecurring}
       </Button>
 
