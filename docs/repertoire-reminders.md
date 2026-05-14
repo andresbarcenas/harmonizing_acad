@@ -21,7 +21,9 @@ The after-class workflow uses the lesson instrument to decide which skill catego
 
 ## Resend class email reminders
 
-Class reminders are sent through Resend from `/api/cron/class-reminders`. The endpoint supports both `GET` and `POST`; production calls must include `Authorization: Bearer $CRON_SECRET`. Vercel Cron is configured in `apps/web/vercel.json`.
+Class reminders can be sent through Resend from `/api/cron/class-reminders`. The endpoint supports both `GET` and `POST`; production calls must include `Authorization: Bearer $CRON_SECRET`.
+
+The endpoint is intentionally **not** scheduled in `apps/web/vercel.json` yet because Vercel Hobby projects only allow daily cron schedules. Keep reminders manual until the project is upgraded or a daily reminder strategy is chosen.
 
 Required production env vars:
 
@@ -42,7 +44,7 @@ Reminder delivery is idempotent through `ClassReminderDelivery` with a unique ke
 
 1. Set Resend env vars locally or in Vercel.
 2. Create a scheduled class inside one of the configured reminder windows.
-3. Trigger `POST /api/cron/class-reminders` locally or wait for Vercel Cron in production.
+3. Trigger `POST /api/cron/class-reminders` locally or manually with `Authorization: Bearer $CRON_SECRET`.
 4. Confirm Resend receives one email for the student and one for the teacher.
 5. Trigger the endpoint again and confirm no duplicate email is sent.
 6. Cancel or complete a class and confirm no reminder is sent for it.

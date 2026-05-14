@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+- Removed the high-frequency class reminder Vercel Cron schedule so Hobby production deployments can complete; the Resend reminder endpoint remains available for manual or future scheduled use.
+
 ## [0.7.1] - 2026-05-13
 
 ### Added

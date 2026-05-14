@@ -12,7 +12,7 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `CRON_SECRET`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
-- `CLASS_EMAIL_REMINDERS_ENABLED=true`
+- `CLASS_EMAIL_REMINDERS_ENABLED=false`
 - `CLASS_REMINDER_OFFSETS_MINUTES=1440,60`
 - `CLASS_REMINDER_WINDOW_MINUTES=20`
 - `STORAGE_PROVIDER=vercel-blob`
@@ -99,7 +99,7 @@ It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual bec
 ## Safety Notes
 
 - Never run `npm run prisma:seed` against production.
-- The Vercel cron is configured in `apps/web/vercel.json` because `apps/web` is the deployed project root.
+- Vercel cron is configured in `apps/web/vercel.json` because `apps/web` is the deployed project root.
 - If `NEXTAUTH_URL` changes, redeploy so the new environment value applies.
-- The daily invoice cron is Hobby-safe. Class reminders use a frequent cron; confirm the Vercel plan supports the configured interval or reduce the schedule for the deployment plan.
+- The daily invoice cron is Hobby-safe. Class reminder email code remains available at `/api/cron/class-reminders`, but it is not scheduled on Vercel yet because Hobby accounts reject more-than-daily cron schedules.
 - Disable Vercel's native Git auto-deploy if this GitHub Actions workflow is the production deploy source, otherwise `main` pushes can create duplicate deployments.

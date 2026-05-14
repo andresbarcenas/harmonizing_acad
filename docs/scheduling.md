@@ -134,10 +134,11 @@ When a request is accepted or rejected:
 
 Class email reminders:
 
-- Resend sends reminder emails for scheduled classes through `/api/cron/class-reminders`.
+- Resend can send reminder emails for scheduled classes through `/api/cron/class-reminders`.
 - Default reminders are 24 hours and 1 hour before class.
 - `ClassReminderDelivery` prevents duplicate reminder emails for the same class, recipient, channel, and offset.
 - rejected requests store and show a student-visible rejection reason
+- The endpoint is not scheduled in Vercel yet because Hobby cron schedules are limited to daily execution; add it later when the plan or reminder strategy changes.
 
 ## Routes
 
