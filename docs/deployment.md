@@ -38,6 +38,8 @@ npx vercel@latest blob create-store harmonizing-media --access public --yes --en
 
 Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
+Profile images, practice videos, and repertoire attachments use Vercel Blob in production when `STORAGE_PROVIDER=vercel-blob`. `NEXT_PUBLIC_MEDIA_BASE_URL` is only needed for local MinIO/S3-style storage and should not be required for the Vercel Blob production path.
+
 ## First-Time Link
 
 Run these commands from the app directory:

@@ -1,17 +1,9 @@
 import { NextResponse } from "next/server";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { getPublicMediaBaseUrl } from "@/lib/media-url";
-import { mediaBucket, minioClient } from "@/lib/minio";
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
-function safeFileName(value: string) {
-  return value.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
+import { MAX_PROFILE_IMAGE_SIZE_BYTES, isAllowedProfileImageType, storeProfileImage } from "@/lib/storage";
 
 export async function POST(req: Request) {
   const auth = await requireApiUser();
@@ -47,36 +39,30 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!file.type.startsWith("image/")) {
+  if (!isAllowedProfileImageType(file.type)) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "El archivo debe ser una imagen." : "The file must be an image." }, { status: 400 });
   }
 
-  if (file.size > MAX_IMAGE_BYTES) {
+  if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "La imagen excede el límite de 5MB." : "The image exceeds the 5MB limit." }, { status: 400 });
   }
 
-  const mediaBase = getPublicMediaBaseUrl();
-  if (!mediaBase) {
+  const ownerIdForKey = assignedUserId ?? auth.user.id;
+  let imageUrl: string;
+  try {
+    const stored = await storeProfileImage(file, ownerIdForKey);
+    imageUrl = stored.imageUrl;
+  } catch (error) {
+    console.error("Profile image upload failed", error);
     return NextResponse.json(
-      { error: auth.user.locale === "es" ? "MEDIA base URL no configurada. Define NEXT_PUBLIC_MEDIA_BASE_URL." : "MEDIA base URL is not configured. Set NEXT_PUBLIC_MEDIA_BASE_URL." },
+      {
+        error: auth.user.locale === "es"
+          ? "No se pudo subir la imagen. Verifica la configuración de almacenamiento."
+          : "Could not upload the image. Check storage configuration.",
+      },
       { status: 500 },
     );
   }
-
-  const ownerIdForKey = assignedUserId ?? auth.user.id;
-  const key = `profiles/${ownerIdForKey}/${Date.now()}-${safeFileName(file.name)}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  await minioClient.send(
-    new PutObjectCommand({
-      Bucket: mediaBucket,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    }),
-  );
-
-  const imageUrl = `${mediaBase}/${key}`;
 
   if (assignedUserId) {
     await db.user.update({

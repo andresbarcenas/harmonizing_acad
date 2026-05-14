@@ -12,6 +12,7 @@ import { mediaBucket, minioClient } from "@/lib/minio";
 export const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
 export const ALLOWED_VIDEO_MIME_TYPES = ["video/mp4", "video/quicktime", "video/webm"] as const;
 export const MAX_REPERTOIRE_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024;
+export const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 export const ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES = [
   "application/pdf",
   "image/jpeg",
@@ -37,6 +38,10 @@ export function isAllowedVideoType(mimeType: string) {
 
 export function isAllowedRepertoireAttachmentType(mimeType: string) {
   return ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES.includes(mimeType as (typeof ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES)[number]);
+}
+
+export function isAllowedProfileImageType(mimeType: string) {
+  return mimeType.startsWith("image/");
 }
 
 export function getVideoPublicUrl(storageKey: string) {
@@ -134,4 +139,45 @@ export async function storeRepertoireAttachment(file: File, repertoireItemId: st
   );
 
   return { storageKey: key };
+}
+
+export async function storeProfileImage(file: File, userId: string) {
+  const safeName = sanitizeFilename(file.name);
+  const key = `profiles/${userId}/${Date.now()}-${randomUUID()}-${safeName}`;
+
+  if (getStorageProvider() === "local") {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const localRoot = process.env.LOCAL_PROFILE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "profiles");
+    const localKey = key.replace(/^profiles\//, "");
+    const targetPath = path.join(localRoot, localKey);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, buffer);
+    return { imageUrl: `/uploads/profiles/${localKey}` };
+  }
+
+  if (getStorageProvider() === "vercel-blob") {
+    const blob = await put(`profile-images/${key}`, file, {
+      access: "public",
+    });
+
+    return { imageUrl: blob.url };
+  }
+
+  const mediaBase = getPublicMediaBaseUrl();
+  if (!mediaBase) {
+    throw new Error("S3 media base URL is not configured. Set MEDIA_BASE_URL or NEXT_PUBLIC_MEDIA_BASE_URL, or use STORAGE_PROVIDER=vercel-blob in production.");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await minioClient.send(
+    new PutObjectCommand({
+      Bucket: mediaBucket,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type || "image/jpeg",
+    }),
+  );
+
+  return { imageUrl: `${mediaBase}/${key}` };
 }

@@ -5,7 +5,7 @@
 Teachers and admins can attach song sheets or sheet music to a `RepertoireItem`. Attachments are stored through the same configurable media layer used by practice videos:
 
 - Local/S3/MinIO: stores an object key and resolves it with `NEXT_PUBLIC_MEDIA_BASE_URL`.
-- Vercel Blob: stores the public blob URL as the storage key.
+- Vercel Blob: stores the public blob URL as the storage key. Production should use `STORAGE_PROVIDER=vercel-blob` with `BLOB_READ_WRITE_TOKEN`.
 - Local filesystem mode: stores files under `LOCAL_REPERTOIRE_STORAGE_DIR` and serves them from `/uploads/repertoire`.
 
 Allowed attachment formats are PDF, JPG, PNG, and WEBP. The current upload limit is 20MB. Teachers can only manage attachments for assigned students; admins can manage all; students only see their own repertoire attachments from the progress portal.

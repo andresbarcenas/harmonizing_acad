@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Browser-default language detection for public/auth pages and accounts without a saved language preference.
 
 ### Changed
+- Profile image uploads now use the shared media storage layer so Vercel Blob production no longer requires `NEXT_PUBLIC_MEDIA_BASE_URL`.
 - Magic-link authenticated users can set a new password from `/settings` without entering the temporary/current password for that session.
 - Admin navigation is now organized by functional area so operational, people, learning, communication, and system pages do not appear as one long flat menu.
 - Instrument entry is now standardized to Piano/Voice dropdowns across student, teacher, class, repertoire, import, and after-class workflows, with legacy values like `Voz` normalized safely.
