@@ -11,6 +11,40 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.2",
+    date: "2026-05-14",
+    sections: [
+      {
+        title: "Changed",
+        items: [
+          "Removed the high-frequency class reminder Vercel Cron schedule so Hobby production deployments can complete.",
+          "Kept the Resend class reminder endpoint available for manual testing and future scheduled infrastructure.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "0.7.1",
+    date: "2026-05-13",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Student-anchored recurring timezone mode so new recurring classes keep the student's local time stable across U.S. daylight saving changes.",
+          "Recurring timezone mode selector for student time, teacher time, and admin-only custom timezone anchoring.",
+          "Schedule and class detail surfaces now show both student and teacher local times for cross-country scheduling clarity.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Existing recurring series remain teacher-time anchored during migration so already-booked UTC class times do not shift.",
+          "Recurring class creation now checks teacher availability in the teacher's timezone for every generated occurrence.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-05-12",
     sections: [
@@ -18,7 +52,7 @@ export const changelogEntries: ChangelogEntry[] = [
         title: "Added",
         items: [
           "Historical PDF import staging and generic student import commands for onboarding legacy academy progress records.",
-          "Resend-backed class email reminders with Vercel Cron and idempotent delivery tracking.",
+          "Resend-backed class email reminder endpoint with idempotent delivery tracking.",
           "Repertoire song sheet attachments for PDF/image sheet music with student-visible progress links.",
           "Recurring-class setup from teacher schedule, selected-student teacher progress, and admin schedule.",
         ],
