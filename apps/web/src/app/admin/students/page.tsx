@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
+import { planLabel } from "@/lib/billing/manual-plans";
 import { db } from "@/lib/db";
 import { formatDate, getDictionary } from "@/lib/i18n";
 
@@ -100,7 +101,7 @@ export default async function AdminStudentsPage() {
                   {dictionary.common.teacher}: {student.assignment?.teacher.user.name ?? dictionary.common.unassigned}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  {dictionary.common.plan}: {student.subscriptions[0]?.plan.name ?? dictionary.admin.noActivePlan}
+                  {dictionary.common.plan}: {student.subscriptions[0] ? planLabel(student.subscriptions[0].plan, viewer.locale) : dictionary.admin.noActivePlan}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.common.joined}: {formatDate(student.joinedAt, viewer.locale)}
@@ -120,6 +121,13 @@ export default async function AdminStudentsPage() {
                     preferredInstrument: student.preferredInstrument,
                     bio: student.bio,
                     profileImage: student.user.image,
+                    activePlan: student.subscriptions[0]
+                      ? {
+                          monthlyClassCount: student.subscriptions[0].monthlyClassLimit,
+                          priceUsd: student.subscriptions[0].plan.priceUsd,
+                          label: planLabel(student.subscriptions[0].plan, viewer.locale),
+                        }
+                      : null,
                   }}
                   locale={viewer.locale}
                 />

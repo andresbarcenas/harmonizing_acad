@@ -50,6 +50,8 @@ export function StudentOnboardingForm({
       email: String(formData.get("email") ?? "").trim(),
       temporaryPassword: String(formData.get("temporaryPassword") ?? ""),
       teacherId: String(formData.get("teacherId") ?? ""),
+      monthlyClassCount: Number(formData.get("monthlyClassCount") ?? 4),
+      priceUsd: Number(formData.get("priceUsd") ?? Number.NaN),
       profileImage: profileImage.trim() || undefined,
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
@@ -200,8 +202,34 @@ export function StudentOnboardingForm({
         <Textarea id="bio" name="bio" rows={3} placeholder={dictionary.forms.studentGoalPlaceholder} />
       </div>
 
-      <div className="rounded-[1.1rem] border border-[var(--color-border)] bg-white/72 px-4 py-3 text-sm text-[var(--color-ink-soft)]">
-        {dictionary.admin.planAutoActivated}
+      <div className="rounded-[1.35rem] border border-[var(--color-border)] bg-white/72 p-4 shadow-[0_12px_30px_rgba(78,55,30,0.04)]">
+        <div className="mb-3">
+          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.manualPlanTitle}</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.admin.manualPlanDescription}</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-1.5">
+            <label htmlFor="monthlyClassCount" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.forms.monthlyClasses}
+            </label>
+            <select
+              id="monthlyClassCount"
+              name="monthlyClassCount"
+              defaultValue="4"
+              required
+              className="h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]"
+            >
+              <option value="4">{dictionary.forms.fourClasses}</option>
+              <option value="8">{dictionary.forms.eightClasses}</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="priceUsd" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.forms.monthlyAmountUsd}
+            </label>
+            <Input id="priceUsd" name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={90} required />
+          </div>
+        </div>
       </div>
 
       <Button type="submit" variant="gold" disabled={pending || !teachers.length} className="w-full sm:w-auto">

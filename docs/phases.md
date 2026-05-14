@@ -17,6 +17,7 @@
 - [x] v0.7.0 academy operations: historical imports, repertoire sheet attachments, instrument-specific after-class skills, recurring setup access, and Resend class reminders
 - [x] v0.7.1 timezone stabilization: student-anchored recurring classes, teacher-time preservation for existing series, and safer Colombia/U.S. daylight-saving handling
 - [x] v0.7.2 deployment hotfix: removed high-frequency class reminder Vercel Cron from Hobby production deploys while keeping the endpoint available
+- [x] v0.7.3 manual billing controls: selectable 4/8-class plans, editable active student plans with subscription history, and dev monthly report demo fixtures
 
 ## Current MVP Status
 

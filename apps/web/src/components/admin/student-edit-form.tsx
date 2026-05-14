@@ -31,6 +31,11 @@ export function StudentEditForm({
     preferredInstrument?: string | null;
     bio?: string | null;
     profileImage?: string | null;
+    activePlan?: {
+      monthlyClassCount: number;
+      priceUsd: number;
+      label: string;
+    } | null;
   };
   teachers: TeacherOption[];
   locale?: AppLocale;
@@ -54,6 +59,8 @@ export function StudentEditForm({
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       teacherId: String(formData.get("teacherId") ?? "").trim() || undefined,
+      monthlyClassCount: Number(formData.get("monthlyClassCount") ?? initial.activePlan?.monthlyClassCount ?? 4),
+      priceUsd: Number(formData.get("priceUsd") ?? initial.activePlan?.priceUsd ?? Number.NaN),
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
@@ -148,6 +155,31 @@ export function StudentEditForm({
           <div className="grid gap-2 md:grid-cols-2">
             <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
             <Input name="preferredInstrument" defaultValue={initial.preferredInstrument ?? ""} placeholder={dictionary.forms.preferredInstrumentOptional} />
+          </div>
+          <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
+            <div className="mb-2">
+              <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.currentPlanTitle}</p>
+              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                {initial.activePlan?.label ?? dictionary.admin.noActivePlan}. {dictionary.admin.currentPlanDescription}
+              </p>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              <label className="space-y-1 text-left">
+                <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyClasses}</span>
+                <select
+                  name="monthlyClassCount"
+                  defaultValue={String(initial.activePlan?.monthlyClassCount ?? 4)}
+                  className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="4">{dictionary.forms.fourClasses}</option>
+                  <option value="8">{dictionary.forms.eightClasses}</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-left">
+                <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyAmountUsd}</span>
+                <Input name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={initial.activePlan?.priceUsd ?? 90} required />
+              </label>
+            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input

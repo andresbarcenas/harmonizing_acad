@@ -3,29 +3,11 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
+import { manualPlanDescription, manualPlanId, manualPlanName, planLabel } from "@/lib/billing/manual-plans";
 import { db } from "@/lib/db";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
 import { createStudentSchema } from "@/lib/validators/admin";
-
-const DEFAULT_PLAN_ID = "plan_harmonizing_90";
-
-async function resolveDefaultPlan() {
-  const configured = await db.subscriptionPlan.findUnique({
-    where: { id: DEFAULT_PLAN_ID },
-  });
-
-  if (configured?.active) return configured;
-
-  return db.subscriptionPlan.findFirst({
-    where: {
-      active: true,
-      priceUsd: 90,
-      monthlyClassCount: 4,
-    },
-    orderBy: { createdAt: "asc" },
-  });
-}
 
 export async function POST(req: Request) {
   const auth = await requireApiUser();
@@ -42,7 +24,7 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
 
-  const [existingUser, teacher, plan, adminUser] = await Promise.all([
+  const [existingUser, teacher, adminUser] = await Promise.all([
     db.user.findUnique({
       where: { email: data.email },
       select: { id: true },
@@ -51,7 +33,6 @@ export async function POST(req: Request) {
       where: { id: data.teacherId },
       include: { user: true },
     }),
-    resolveDefaultPlan(),
     db.user.findUnique({
       where: { id: auth.user.id },
       select: { timezone: true },
@@ -66,16 +47,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
   }
 
-  if (!plan) {
-    return NextResponse.json({ error: auth.user.locale === "es" ? "No hay plan activo configurado." : "No active plan is configured." }, { status: 400 });
-  }
-
   try {
     const adminTimezone = normalizeIanaTimezone(adminUser?.timezone ?? auth.user.timezone);
     const studentTimezone = normalizeIanaTimezone(data.timezone ?? adminTimezone);
     const passwordHash = await hash(data.temporaryPassword, 10);
 
     const created = await db.$transaction(async (tx) => {
+      const plan = await tx.subscriptionPlan.upsert({
+        where: { id: manualPlanId(data.monthlyClassCount, data.priceUsd) },
+        update: {
+          name: manualPlanName(data.monthlyClassCount, auth.user.locale),
+          priceUsd: data.priceUsd,
+          monthlyClassCount: data.monthlyClassCount,
+          description: manualPlanDescription(auth.user.locale),
+          active: true,
+        },
+        create: {
+          id: manualPlanId(data.monthlyClassCount, data.priceUsd),
+          name: manualPlanName(data.monthlyClassCount, auth.user.locale),
+          priceUsd: data.priceUsd,
+          monthlyClassCount: data.monthlyClassCount,
+          description: manualPlanDescription(auth.user.locale),
+          active: true,
+        },
+      });
+
       const user = await tx.user.create({
         data: {
           name: data.name.trim(),
@@ -110,12 +106,12 @@ export async function POST(req: Request) {
           studentId: studentProfile.id,
           planId: plan.id,
           startsAt: new Date(),
-          monthlyClassLimit: plan.monthlyClassCount,
+          monthlyClassLimit: data.monthlyClassCount,
           active: true,
         },
       });
 
-      return { user, studentProfile, activeSubscription };
+      return { user, studentProfile, activeSubscription, plan };
     });
 
     await createNotification({
@@ -134,8 +130,8 @@ export async function POST(req: Request) {
         email: created.user.email,
         image: created.user.image,
         teacherName: teacher.user.name,
-        planName: plan.name,
-        planLabel: `$${plan.priceUsd} USD / ${plan.monthlyClassCount} classes`,
+        planName: created.plan.name,
+        planLabel: planLabel(created.plan, auth.user.locale),
       },
     });
   } catch (error) {

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.3] - 2026-05-14
+
+### Added
+- Dev-only monthly report demo fixture script (`npm run seed:report-demo`) for teacher-facing draft and published report mock data across assigned students.
+- Admin student onboarding plan controls for 4-class or 8-class manual billing plans with custom whole-dollar USD amounts.
+- Admin student edit plan controls that update the active plan immediately while preserving prior subscription history.
+
+### Changed
+- Student plan labels now show the recorded manual billing amount and monthly class allowance instead of relying on the old fixed $90 / 4 classes copy.
+
 ## [0.7.2] - 2026-05-14
 
 ### Changed

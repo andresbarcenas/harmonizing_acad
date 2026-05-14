@@ -11,6 +11,26 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.3",
+    date: "2026-05-14",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Dev-only monthly report demo fixture script for teacher-facing draft and published report mock data.",
+          "Admin student onboarding controls for 4-class or 8-class manual billing plans with custom USD amounts.",
+          "Admin student edit controls for changing active plans immediately while preserving prior subscription history.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Student plan labels now show the recorded billing amount and monthly class allowance instead of fixed plan copy.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.2",
     date: "2026-05-14",
     sections: [
