@@ -1,7 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import {
+  Archive,
+  Bell,
+  CalendarDays,
+  ChevronDown,
+  ClipboardList,
+  Clock3,
+  FileSignature,
+  GraduationCap,
+  House,
+  KeyRound,
+  LayoutDashboard,
+  Mail,
+  Menu,
+  Music2,
+  ReceiptText,
+  RefreshCcw,
+  ScrollText,
+  Settings,
+  TrendingUp,
+  UsersRound,
+  Video,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -11,15 +34,42 @@ import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { type AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
+export type NavIconKey =
+  | "archive"
+  | "bell"
+  | "calendar"
+  | "clipboard"
+  | "clock"
+  | "dashboard"
+  | "graduation"
+  | "house"
+  | "key"
+  | "mail"
+  | "music"
+  | "receipt"
+  | "refresh"
+  | "scroll"
+  | "settings"
+  | "signature"
+  | "trending"
+  | "users"
+  | "video";
+
 export type AppShellNavLink = {
   href: string;
   label: string;
+  icon: NavIconKey;
   active: boolean;
   badgeCount?: number;
 };
 
-type MobileNavDrawerProps = {
+export type AppShellNavGroup = {
+  label: string;
   items: AppShellNavLink[];
+};
+
+type MobileNavDrawerProps = {
+  groups: AppShellNavGroup[];
   userName: string;
   locale: AppLocale;
   signOutLabel: string;
@@ -39,8 +89,9 @@ type MobileNavDrawerProps = {
   };
 };
 
-export function MobileNavDrawer({ items, userName, locale, signOutLabel, version, homeHref, labels, settingsHref, billing }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, labels, settingsHref, billing }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<string[]>(() => defaultOpenGroups(groups));
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +109,10 @@ export function MobileNavDrawer({ items, userName, locale, signOutLabel, version
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [open]);
+
+  function toggleGroup(label: string) {
+    setOpenGroups((current) => current.includes(label) ? current.filter((item) => item !== label) : [...current, label]);
+  }
 
   const drawer = open && typeof document !== "undefined"
     ? createPortal(
@@ -118,33 +173,30 @@ export function MobileNavDrawer({ items, userName, locale, signOutLabel, version
               <LanguageToggle locale={locale} authenticated compact />
             </div>
 
-            <nav className="mt-5 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto pr-1" aria-label={labels.primaryNavigation}>
-              {items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={item.active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200",
-                    item.active
-                      ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
-                      : "bg-white/72 text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
-                  )}
-                >
-                  <span>{item.label}</span>
-                  {item.badgeCount ? (
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                        item.active ? "bg-white/90 text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
-                      )}
+            <nav className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-label={labels.primaryNavigation}>
+              {groups.map((group) => {
+                const expanded = openGroups.includes(group.label);
+                return (
+                  <div key={group.label} className="rounded-[1.35rem] border border-[var(--color-border)] bg-white/58 p-2">
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      onClick={() => toggleGroup(group.label)}
+                      className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2 text-left text-[0.68rem] font-semibold tracking-[0.18em] text-[var(--color-gold-deep)] uppercase transition hover:bg-[var(--color-gold-soft)]"
                     >
-                      {item.badgeCount > 99 ? "99+" : item.badgeCount}
-                    </span>
-                  ) : null}
-                </Link>
-              ))}
+                      <span>{group.label}</span>
+                      <ChevronDown className={cn("h-4 w-4 transition-transform", expanded ? "rotate-180" : "")} aria-hidden="true" />
+                    </button>
+                    {expanded ? (
+                      <div className="mt-1 grid gap-1.5">
+                        {group.items.map((item) => (
+                          <MobileNavLink key={item.href} item={item} onNavigate={() => setOpen(false)} />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </nav>
 
             <div className="grid shrink-0 gap-3 pt-4">
@@ -174,4 +226,70 @@ export function MobileNavDrawer({ items, userName, locale, signOutLabel, version
       {drawer}
     </>
   );
+}
+
+function MobileNavLink({ item, onNavigate }: { item: AppShellNavLink; onNavigate: () => void }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={item.active ? "page" : undefined}
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition-all duration-200",
+        item.active
+          ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
+          : "bg-white/72 text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          className={cn(
+            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border",
+            item.active ? "border-white/24 bg-white/16" : "border-[var(--color-border)] bg-white/70",
+          )}
+        >
+          <NavIcon icon={item.icon} className="h-4 w-4" />
+        </span>
+        <span className="truncate">{item.label}</span>
+      </span>
+      {item.badgeCount ? (
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-bold",
+            item.active ? "bg-white/90 text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
+          )}
+        >
+          {item.badgeCount > 99 ? "99+" : item.badgeCount}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function defaultOpenGroups(groups: AppShellNavGroup[]) {
+  const activeGroups = groups.filter((group) => group.items.some((item) => item.active)).map((group) => group.label);
+  if (activeGroups.length) return activeGroups;
+  return groups[0]?.label ? [groups[0].label] : [];
+}
+
+function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) {
+  if (icon === "archive") return <Archive className={className} aria-hidden="true" />;
+  if (icon === "bell") return <Bell className={className} aria-hidden="true" />;
+  if (icon === "calendar") return <CalendarDays className={className} aria-hidden="true" />;
+  if (icon === "clipboard") return <ClipboardList className={className} aria-hidden="true" />;
+  if (icon === "clock") return <Clock3 className={className} aria-hidden="true" />;
+  if (icon === "dashboard") return <LayoutDashboard className={className} aria-hidden="true" />;
+  if (icon === "graduation") return <GraduationCap className={className} aria-hidden="true" />;
+  if (icon === "house") return <House className={className} aria-hidden="true" />;
+  if (icon === "key") return <KeyRound className={className} aria-hidden="true" />;
+  if (icon === "mail") return <Mail className={className} aria-hidden="true" />;
+  if (icon === "music") return <Music2 className={className} aria-hidden="true" />;
+  if (icon === "receipt") return <ReceiptText className={className} aria-hidden="true" />;
+  if (icon === "refresh") return <RefreshCcw className={className} aria-hidden="true" />;
+  if (icon === "scroll") return <ScrollText className={className} aria-hidden="true" />;
+  if (icon === "settings") return <Settings className={className} aria-hidden="true" />;
+  if (icon === "signature") return <FileSignature className={className} aria-hidden="true" />;
+  if (icon === "trending") return <TrendingUp className={className} aria-hidden="true" />;
+  if (icon === "users") return <UsersRound className={className} aria-hidden="true" />;
+  return <Video className={className} aria-hidden="true" />;
 }

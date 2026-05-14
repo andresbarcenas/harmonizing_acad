@@ -20,23 +20,41 @@ export async function PATCH(req: Request) {
 
   const user = await db.user.findUnique({
     where: { id: auth.user.id },
-    select: { id: true, locale: true, passwordHash: true },
+    select: { id: true, passwordHash: true },
   });
 
-  if (!user?.passwordHash) {
+  if (!user) {
     return NextResponse.json(
-      { error: message(auth.user.locale, "This account does not have a password configured.", "Esta cuenta no tiene contraseña configurada.") },
-      { status: 400 },
+      { error: message(auth.user.locale, "Account not found.", "No encontramos esta cuenta.") },
+      { status: 404 },
     );
   }
 
-  // Security-sensitive: verify the current password before replacing the stored bcrypt hash.
-  const currentPasswordMatches = await compare(parsed.data.currentPassword, user.passwordHash);
-  if (!currentPasswordMatches) {
-    return NextResponse.json(
-      { error: message(auth.user.locale, "Current password is incorrect.", "La contraseña actual no es correcta.") },
-      { status: 400 },
-    );
+  const allowPasswordSetupWithoutCurrent = auth.user.authMethod === "magic-link";
+
+  if (!allowPasswordSetupWithoutCurrent) {
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: message(auth.user.locale, "This account does not have a password configured.", "Esta cuenta no tiene contraseña configurada.") },
+        { status: 400 },
+      );
+    }
+
+    if (!parsed.data.currentPassword) {
+      return NextResponse.json(
+        { error: message(auth.user.locale, "Enter your current password.", "Ingresa tu contraseña actual.") },
+        { status: 400 },
+      );
+    }
+
+    // Security-sensitive: verify the current password before replacing the stored bcrypt hash.
+    const currentPasswordMatches = await compare(parsed.data.currentPassword, user.passwordHash);
+    if (!currentPasswordMatches) {
+      return NextResponse.json(
+        { error: message(auth.user.locale, "Current password is incorrect.", "La contraseña actual no es correcta.") },
+        { status: 400 },
+      );
+    }
   }
 
   const passwordHash = await hash(parsed.data.newPassword, 12);

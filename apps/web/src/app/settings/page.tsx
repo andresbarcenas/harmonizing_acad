@@ -16,6 +16,7 @@ export default async function SettingsPage() {
   const dictionary = getDictionary(viewer.locale);
   const consentStatus = viewer.role === "STUDENT" ? await getConsentStatusForUser(viewer.id) : null;
   const isSpanish = viewer.locale === "es";
+  const canSetPasswordFromMagicLink = viewer.authMethod === "magic-link";
 
   return (
     <AppShell role={viewer.role} activePath="/settings" userName={viewer.name} locale={viewer.locale}>
@@ -49,8 +50,12 @@ export default async function SettingsPage() {
 
         <Card>
           <CardTitle>{dictionary.settings.passwordSecurity}</CardTitle>
-          <CardDescription>{dictionary.settings.passwordSecurityDescription}</CardDescription>
-          <PasswordChangeForm locale={viewer.locale} />
+          <CardDescription>
+            {canSetPasswordFromMagicLink
+              ? dictionary.settings.setPasswordDescription
+              : dictionary.settings.passwordSecurityDescription}
+          </CardDescription>
+          <PasswordChangeForm locale={viewer.locale} allowPasswordSetupWithoutCurrent={canSetPasswordFromMagicLink} />
         </Card>
 
         {consentStatus?.signature ? (

@@ -1,5 +1,8 @@
 import "server-only";
 
+import { EmailDeliveryType } from "@prisma/client";
+
+import { createEmailDeliveryLog, markEmailDeliveryFailed, markEmailDeliverySent, recordSkippedEmailDelivery } from "@/lib/email/delivery-log";
 import { getResendClient } from "@/lib/resend";
 import type { AppLocale } from "@/lib/i18n/locales";
 
@@ -47,15 +50,25 @@ function magicLinkEmailHtml(input: { name: string; url: string; expiresMinutes: 
 export async function sendMagicLinkEmail(input: {
   to: string;
   name: string;
+  recipientUserId?: string;
   locale: AppLocale;
   url: string;
   expiresMinutes: number;
 }) {
-  const resend = getResendClient();
-  if (!resend) return { sent: false, skipped: true, reason: "RESEND_API_KEY missing" } as const;
-
   const isSpanish = input.locale === "es";
   const subject = isSpanish ? "Tu enlace para ingresar - Harmonizing Academy" : "Your sign-in link - Harmonizing Academy";
+  const logInput = {
+    type: EmailDeliveryType.MAGIC_LINK,
+    recipientEmail: input.to,
+    recipientUserId: input.recipientUserId,
+    subject,
+  };
+  const resend = getResendClient();
+  if (!resend) {
+    await recordSkippedEmailDelivery(logInput, "RESEND_API_KEY missing");
+    return { sent: false, skipped: true, reason: "RESEND_API_KEY missing" } as const;
+  }
+
   const text = [
     isSpanish ? `Hola ${input.name},` : `Hi ${input.name},`,
     "",
@@ -71,6 +84,7 @@ export async function sendMagicLinkEmail(input: {
     "Harmonizing Academy",
   ].join("\n");
 
+  const logId = await createEmailDeliveryLog(logInput);
   const result = await resend.emails.send({
     from: fromEmail(),
     to: input.to,
@@ -79,6 +93,10 @@ export async function sendMagicLinkEmail(input: {
     html: magicLinkEmailHtml(input),
   });
 
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await markEmailDeliveryFailed(logId, { errorMessage: result.error.message });
+    throw new Error(result.error.message);
+  }
+  await markEmailDeliverySent(logId, { providerMessageId: result.data?.id });
   return { sent: true, messageId: result.data?.id } as const;
 }

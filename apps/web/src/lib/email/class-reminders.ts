@@ -1,9 +1,10 @@
 import "server-only";
 
-import { ClassReminderStatus, NotificationType, SessionStatus } from "@prisma/client";
+import { ClassReminderStatus, EmailDeliveryType, NotificationType, SessionStatus } from "@prisma/client";
 import { addMinutes } from "date-fns";
 
 import { db } from "@/lib/db";
+import { createEmailDeliveryLog, markEmailDeliveryFailed, markEmailDeliverySent, recordSkippedEmailDelivery } from "@/lib/email/delivery-log";
 import { formatDateTimeInZone } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { createNotification } from "@/lib/notifications";
@@ -162,23 +163,39 @@ export async function sendDueClassReminders(now = new Date()) {
           continue;
         }
 
+        const subject = subjectFor(recipient.locale, offsetMinutes);
+        const logInput = {
+          type: EmailDeliveryType.CLASS_REMINDER,
+          recipientEmail: recipient.email,
+          recipientUserId: recipient.userId,
+          subject,
+          classSessionId: session.id,
+          metadata: {
+            offsetMinutes,
+            scheduledForUtc: session.startsAtUtc.toISOString(),
+            recipientRole: recipient.role,
+          },
+        };
         const resend = getResendClient();
         if (!recipient.email || !resend) {
+          const reason = !recipient.email ? "Recipient email missing" : "RESEND_API_KEY missing";
+          await recordSkippedEmailDelivery(logInput, reason);
           await db.classReminderDelivery.update({
             where: { id: delivery.id },
             data: {
-              status: ClassReminderStatus.FAILED,
-              errorMessage: !recipient.email ? "Recipient email missing" : "RESEND_API_KEY missing",
+              status: ClassReminderStatus.SKIPPED,
+              errorMessage: reason,
             },
           });
-          failed += 1;
+          skipped += 1;
           continue;
         }
 
+        let logId: string | null = null;
         try {
-          const subject = subjectFor(recipient.locale, offsetMinutes);
           const text = textFor({ recipient, studentName: session.student.user.name, teacherName: session.teacher.user.name, startsAtUtc: session.startsAtUtc, classUrl, offsetMinutes });
           const html = htmlFor({ recipient, studentName: session.student.user.name, teacherName: session.teacher.user.name, startsAtUtc: session.startsAtUtc, classUrl, offsetMinutes });
+          logId = await createEmailDeliveryLog(logInput);
           const result = await resend.emails.send({
             from: fromEmail(),
             to: recipient.email,
@@ -188,6 +205,7 @@ export async function sendDueClassReminders(now = new Date()) {
           });
 
           if (result.error) throw new Error(result.error.message);
+          await markEmailDeliverySent(logId, { providerMessageId: result.data?.id });
 
           await db.classReminderDelivery.update({
             where: { id: delivery.id },
@@ -209,6 +227,7 @@ export async function sendDueClassReminders(now = new Date()) {
           });
           sent += 1;
         } catch (error) {
+          await markEmailDeliveryFailed(logId, { errorMessage: error instanceof Error ? error.message : "Unknown Resend error" });
           await db.classReminderDelivery.update({
             where: { id: delivery.id },
             data: {

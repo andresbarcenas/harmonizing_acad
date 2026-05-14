@@ -18,6 +18,7 @@ export type AppViewer = {
   locale: AppLocale;
   localePreference: LocalePreference;
   timezone: string;
+  authMethod?: "credentials" | "magic-link";
   studentProfileId?: string;
   teacherProfileId?: string;
 };
@@ -71,6 +72,7 @@ export async function requireViewer(expectedRoles?: Role[], options?: RequireVie
     locale,
     localePreference: normalizeLocalePreference(dbUser.locale),
     timezone: dbUser.timezone,
+    authMethod: session.user.authMethod,
     studentProfileId: dbUser.studentProfile?.id,
     teacherProfileId: dbUser.teacherProfile?.id,
   };

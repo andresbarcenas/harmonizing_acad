@@ -75,11 +75,12 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as { role: Role }).role;
         token.locale = normalizeLocale((user as { locale?: string }).locale);
         token.timezone = (user as { timezone: string }).timezone;
+        token.authMethod = account?.provider === "magic-link" ? "magic-link" : "credentials";
       }
       return token;
     },
@@ -89,6 +90,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = (token.role as Role) ?? Role.STUDENT;
         session.user.locale = normalizeLocale(token.locale);
         session.user.timezone = (token.timezone as string) ?? "America/New_York";
+        session.user.authMethod = token.authMethod;
       }
       return session;
     },

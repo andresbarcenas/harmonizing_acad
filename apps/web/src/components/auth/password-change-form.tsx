@@ -17,7 +17,13 @@ function errorMessage(error: ApiError | undefined, fallback: string) {
   return fallback;
 }
 
-export function PasswordChangeForm({ locale = "en" }: { locale?: AppLocale }) {
+export function PasswordChangeForm({
+  allowPasswordSetupWithoutCurrent = false,
+  locale = "en",
+}: {
+  allowPasswordSetupWithoutCurrent?: boolean;
+  locale?: AppLocale;
+}) {
   const dictionary = getDictionary(locale);
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, setPending] = useState(false);
@@ -29,14 +35,19 @@ export function PasswordChangeForm({ locale = "en" }: { locale?: AppLocale }) {
     setError(null);
     setSuccess(null);
 
+    const payload: Record<string, string> = {
+      newPassword: String(formData.get("newPassword") ?? ""),
+      confirmPassword: String(formData.get("confirmPassword") ?? ""),
+    };
+
+    if (!allowPasswordSetupWithoutCurrent) {
+      payload.currentPassword = String(formData.get("currentPassword") ?? "");
+    }
+
     const response = await fetch("/api/viewer/password", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        currentPassword: String(formData.get("currentPassword") ?? ""),
-        newPassword: String(formData.get("newPassword") ?? ""),
-        confirmPassword: String(formData.get("confirmPassword") ?? ""),
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -53,11 +64,13 @@ export function PasswordChangeForm({ locale = "en" }: { locale?: AppLocale }) {
 
   return (
     <form ref={formRef} action={onSubmit} className="mt-4 space-y-3">
-      <div className="grid gap-3 md:grid-cols-3">
-        <label className="space-y-1.5 text-left">
-          <span className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.currentPassword}</span>
-          <Input name="currentPassword" type="password" autoComplete="current-password" required />
-        </label>
+      <div className={`grid gap-3 ${allowPasswordSetupWithoutCurrent ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
+        {!allowPasswordSetupWithoutCurrent ? (
+          <label className="space-y-1.5 text-left">
+            <span className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.currentPassword}</span>
+            <Input name="currentPassword" type="password" autoComplete="current-password" required />
+          </label>
+        ) : null}
         <label className="space-y-1.5 text-left">
           <span className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.newPassword}</span>
           <Input name="newPassword" type="password" minLength={8} autoComplete="new-password" required />
@@ -69,7 +82,11 @@ export function PasswordChangeForm({ locale = "en" }: { locale?: AppLocale }) {
       </div>
       <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.passwordHint}</p>
       <Button type="submit" variant="gold" disabled={pending}>
-        {pending ? dictionary.common.saving : dictionary.settings.changePassword}
+        {pending
+          ? dictionary.common.saving
+          : allowPasswordSetupWithoutCurrent
+            ? dictionary.settings.setPassword
+            : dictionary.settings.changePassword}
       </Button>
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       {success ? <p className="text-sm text-emerald-700">{success}</p> : null}

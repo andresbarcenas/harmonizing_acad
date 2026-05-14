@@ -11,7 +11,7 @@ export const securePasswordSchema = z
 
 export const passwordChangeSchema = z
   .object({
-    currentPassword: z.string().min(1, "Ingresa tu contraseña actual."),
+    currentPassword: z.string().optional(),
     newPassword: securePasswordSchema,
     confirmPassword: z.string().min(1, "Confirma la nueva contraseña."),
   })

@@ -107,6 +107,24 @@ enum ConsentEmailStatus {
   SKIPPED
 }
 
+enum EmailDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum EmailDeliveryType {
+  MAGIC_LINK
+  WELCOME
+  CONSENT_COPY
+  CLASS_REMINDER
+}
+
+enum EmailProvider {
+  RESEND
+}
+
 enum StudentLevel {
   BEGINNER
   INTERMEDIATE
@@ -231,6 +249,7 @@ model User {
   classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
   consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
   createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
+  emailDeliveryLogs             EmailDeliveryLog[] @relation("EmailDeliveryRecipient")
 
   @@index([role])
 }
@@ -365,6 +384,7 @@ model ClassSession {
   lessonNote          LessonNote?
   practiceAssignments PracticeAssignment[]
   reminderDeliveries  ClassReminderDelivery[]
+  emailDeliveryLogs    EmailDeliveryLog[]
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
@@ -1036,11 +1056,42 @@ model ConsentSignature {
 
   user     User            @relation("ConsentSignedUser", fields: [userId], references: [id], onDelete: Cascade)
   document ConsentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  emailDeliveryLogs EmailDeliveryLog[]
 
   @@unique([userId, documentId])
   @@index([userId, signedAt])
   @@index([documentId, signedAt])
   @@index([emailStatus, signedAt])
+}
+
+model EmailDeliveryLog {
+  id                 String              @id @default(cuid())
+  status             EmailDeliveryStatus @default(PENDING)
+  type               EmailDeliveryType
+  provider           EmailProvider       @default(RESEND)
+  recipientEmail     String?
+  recipientUserId    String?
+  subject            String
+  providerMessageId  String?
+  errorMessage       String?
+  classSessionId     String?
+  consentSignatureId String?
+  metadata           Json?
+  attemptedAt        DateTime            @default(now())
+  sentAt             DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  recipient        User?             @relation("EmailDeliveryRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  classSession     ClassSession?     @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
+  consentSignature ConsentSignature? @relation(fields: [consentSignatureId], references: [id], onDelete: SetNull)
+
+  @@index([status, attemptedAt])
+  @@index([type, attemptedAt])
+  @@index([recipientUserId, attemptedAt])
+  @@index([recipientEmail])
+  @@index([classSessionId])
+  @@index([consentSignatureId])
 }
 
 model Invoice {

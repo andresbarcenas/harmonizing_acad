@@ -8,6 +8,7 @@ import { getRequestLocale } from "@/lib/i18n/request";
 
 const MAGIC_LINK_PREFIX = "magic-link";
 export const MAGIC_LINK_MAX_AGE_SECONDS = 15 * 60;
+export const WELCOME_MAGIC_LINK_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 export function normalizeMagicLinkEmail(email: string) {
   return email.trim().toLowerCase();
@@ -28,10 +29,11 @@ export function buildMagicLinkUrl(input: { baseUrl: string; email: string; token
   return url.toString();
 }
 
-export async function createMagicLinkToken(email: string) {
+export async function createMagicLinkToken(email: string, options: { maxAgeSeconds?: number } = {}) {
   const normalizedEmail = normalizeMagicLinkEmail(email);
   const token = randomBytes(32).toString("base64url");
-  const expires = new Date(Date.now() + MAGIC_LINK_MAX_AGE_SECONDS * 1000);
+  const maxAgeSeconds = options.maxAgeSeconds ?? MAGIC_LINK_MAX_AGE_SECONDS;
+  const expires = new Date(Date.now() + maxAgeSeconds * 1000);
   const identifier = identifierForEmail(normalizedEmail);
 
   // Security-sensitive: keep only the latest login link per email and store a hash, never the raw token.

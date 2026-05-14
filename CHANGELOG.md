@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Admin email delivery log at `/admin/emails` with status/type/recipient/subject/provider/time tracking for magic links, welcome emails, consent copies, and class reminders.
+- Central `EmailDeliveryLog` audit model and migration for Resend send attempts, skipped sends, provider message ids, and failure reasons.
+- Branded welcome emails for newly created student and teacher accounts, including 24-hour onboarding magic links and settings/password setup guidance.
+- Grouped, icon-enhanced navigation for student, teacher, and admin menus with collapsible mobile drawer sections.
 - Shared repertoire/song catalog management for admin and teacher workspaces, including catalog search, create/edit flows, and student assignment outside the after-class workflow.
 - Searchable catalog song selection inside the after-class repertoire step while preserving custom song entry.
 - Ten dev seed repertoire catalog songs for testing long-list search and student assignment flows.
@@ -19,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Browser-default language detection for public/auth pages and accounts without a saved language preference.
 
 ### Changed
+- Magic-link authenticated users can set a new password from `/settings` without entering the temporary/current password for that session.
+- Admin navigation is now organized by functional area so operational, people, learning, communication, and system pages do not appear as one long flat menu.
 - Instrument entry is now standardized to Piano/Voice dropdowns across student, teacher, class, repertoire, import, and after-class workflows, with legacy values like `Voz` normalized safely.
 - Profile language preferences now support Browser default, English, and Español, with saved account choices persisted permanently.
 - Teacher profile creation/editing no longer captures Zoom or Google Meet defaults; meeting links now stay on scheduled classes and recurring series.

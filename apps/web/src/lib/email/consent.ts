@@ -1,8 +1,9 @@
 import "server-only";
 
-import { ConsentEmailStatus } from "@prisma/client";
+import { ConsentEmailStatus, EmailDeliveryType } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { createEmailDeliveryLog, markEmailDeliveryFailed, markEmailDeliverySent, recordSkippedEmailDelivery } from "@/lib/email/delivery-log";
 import { getResendClient } from "@/lib/resend";
 
 function fromEmail() {
@@ -44,8 +45,24 @@ export async function sendConsentSignedEmail(signatureId: string) {
   });
   if (!signature) return null;
 
+  const subject = signature.locale === "es"
+    ? "Copia de consentimiento firmado - Harmonizing Academy"
+    : "Signed consent copy - Harmonizing Academy";
+  const logInput = {
+    type: EmailDeliveryType.CONSENT_COPY,
+    recipientEmail: signature.signerEmail,
+    recipientUserId: signature.userId,
+    subject,
+    consentSignatureId: signature.id,
+    metadata: {
+      signerName: signature.signerName,
+      signerRelationship: signature.signerRelationship,
+      documentVersion: signature.document.version,
+    },
+  };
   const resend = getResendClient();
   if (!resend) {
+    await recordSkippedEmailDelivery(logInput, "RESEND_API_KEY missing");
     return db.consentSignature.update({
       where: { id: signature.id },
       data: {
@@ -55,10 +72,8 @@ export async function sendConsentSignedEmail(signatureId: string) {
     });
   }
 
+  let logId: string | null = null;
   try {
-    const subject = signature.locale === "es"
-      ? "Copia de consentimiento firmado - Harmonizing Academy"
-      : "Signed consent copy - Harmonizing Academy";
     const text = [
       `Hola ${signature.signerName},`,
       "",
@@ -71,6 +86,7 @@ export async function sendConsentSignedEmail(signatureId: string) {
       "Harmonizing Academy",
     ].join("\n");
 
+    logId = await createEmailDeliveryLog(logInput);
     const result = await resend.emails.send({
       from: fromEmail(),
       to: signature.signerEmail,
@@ -86,6 +102,7 @@ export async function sendConsentSignedEmail(signatureId: string) {
     });
 
     if (result.error) throw new Error(result.error.message);
+    await markEmailDeliverySent(logId, { providerMessageId: result.data?.id });
 
     return db.consentSignature.update({
       where: { id: signature.id },
@@ -97,6 +114,7 @@ export async function sendConsentSignedEmail(signatureId: string) {
       },
     });
   } catch (error) {
+    await markEmailDeliveryFailed(logId, { errorMessage: error instanceof Error ? error.message : "Unknown Resend error" });
     return db.consentSignature.update({
       where: { id: signature.id },
       data: {

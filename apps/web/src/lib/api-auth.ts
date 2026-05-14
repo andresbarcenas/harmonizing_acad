@@ -34,6 +34,7 @@ export async function requireApiUser(options?: RequireApiUserOptions) {
     ...user,
     locale,
     localePreference: normalizeLocalePreference(user.locale),
+    authMethod: session.user.authMethod,
   };
 
   if (!options?.skipConsent) {

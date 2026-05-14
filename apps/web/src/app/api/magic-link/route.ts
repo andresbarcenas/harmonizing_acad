@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     const delivery = await sendMagicLinkEmail({
       to: user.email,
       name: user.name,
+      recipientUserId: user.id,
       locale,
       url,
       expiresMinutes,

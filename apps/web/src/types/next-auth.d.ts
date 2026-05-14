@@ -2,6 +2,8 @@ import type { DefaultSession } from "next-auth";
 import type { Role } from "@prisma/client";
 import type { AppLocale } from "@/lib/i18n/locales";
 
+export type AuthMethod = "credentials" | "magic-link";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -9,6 +11,7 @@ declare module "next-auth" {
       role: Role;
       locale: AppLocale;
       timezone: string;
+      authMethod?: AuthMethod;
     } & DefaultSession["user"];
   }
 
@@ -24,5 +27,6 @@ declare module "next-auth/jwt" {
     role?: Role;
     locale?: AppLocale;
     timezone?: string;
+    authMethod?: AuthMethod;
   }
 }
