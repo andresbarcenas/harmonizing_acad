@@ -4,7 +4,7 @@ import { Role } from "@prisma/client";
 import { createMagicLinkToken, buildMagicLinkUrl, MAGIC_LINK_MAX_AGE_SECONDS, normalizeMagicLinkEmail } from "@/lib/auth/magic-link";
 import { db } from "@/lib/db";
 import { sendMagicLinkEmail } from "@/lib/email/magic-link";
-import { normalizeLocale } from "@/lib/i18n/locales";
+import { getRequestLocale } from "@/lib/i18n/request";
 import { magicLinkRequestSchema } from "@/lib/validators/auth";
 
 function baseUrlFromRequest(request: Request) {
@@ -22,7 +22,8 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = magicLinkRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Email inválido." }, { status: 400 });
+    const locale = await getRequestLocale();
+    return NextResponse.json({ error: locale === "es" ? "Email inválido." : "Invalid email." }, { status: 400 });
   }
 
   const email = normalizeMagicLinkEmail(parsed.data.email);
@@ -41,10 +42,11 @@ export async function POST(request: Request) {
   const expiresMinutes = Math.round(MAGIC_LINK_MAX_AGE_SECONDS / 60);
 
   try {
+    const locale = await getRequestLocale(user.locale);
     const delivery = await sendMagicLinkEmail({
       to: user.email,
       name: user.name,
-      locale: normalizeLocale(user.locale),
+      locale,
       url,
       expiresMinutes,
     });

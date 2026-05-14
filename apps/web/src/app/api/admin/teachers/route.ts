@@ -49,7 +49,6 @@ export async function POST(req: Request) {
           email: data.email,
           passwordHash,
           role: Role.TEACHER,
-          locale: "en",
           timezone: teacherTimezone,
           image: data.profileImage ?? null,
         },

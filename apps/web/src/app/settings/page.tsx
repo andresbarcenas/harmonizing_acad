@@ -30,7 +30,7 @@ export default async function SettingsPage() {
           <CardTitle>{dictionary.settings.profile}</CardTitle>
           <CardDescription>{viewer.email}</CardDescription>
           <p className="mt-3 text-sm text-[var(--color-ink-soft)]">{dictionary.settings.detectedTimezone}: {viewer.timezone}</p>
-          <LanguagePreferenceForm locale={viewer.locale} />
+          <LanguagePreferenceForm locale={viewer.locale} preference={viewer.localePreference} />
           <ProfileImageForm initialImage={viewer.image} userName={viewer.name} locale={viewer.locale} />
           <div className="mt-4">
             <SignOutButton label={dictionary.common.signOut} />

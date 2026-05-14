@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ConsentRequiredError, ensureStudentConsent } from "@/lib/consent/service";
-import { normalizeLocale, type AppLocale } from "@/lib/i18n/locales";
+import { normalizeLocalePreference, type AppLocale, type LocalePreference } from "@/lib/i18n/locales";
+import { getRequestLocale } from "@/lib/i18n/request";
 import { defaultRouteForRole } from "@/lib/rbac";
 
 export type AppViewer = {
@@ -15,6 +16,7 @@ export type AppViewer = {
   image?: string | null;
   role: Role;
   locale: AppLocale;
+  localePreference: LocalePreference;
   timezone: string;
   studentProfileId?: string;
   teacherProfileId?: string;
@@ -47,9 +49,11 @@ export async function requireViewer(expectedRoles?: Role[], options?: RequireVie
     redirect(defaultRouteForRole(dbUser.role));
   }
 
+  const locale = await getRequestLocale(dbUser.locale);
+
   if (!options?.skipConsent) {
     try {
-      await ensureStudentConsent(dbUser);
+      await ensureStudentConsent({ ...dbUser, locale });
     } catch (error) {
       if (error instanceof ConsentRequiredError) {
         redirect("/consent");
@@ -64,7 +68,8 @@ export async function requireViewer(expectedRoles?: Role[], options?: RequireVie
     email: dbUser.email,
     image: dbUser.image,
     role: dbUser.role,
-    locale: normalizeLocale(dbUser.locale),
+    locale,
+    localePreference: normalizeLocalePreference(dbUser.locale),
     timezone: dbUser.timezone,
     studentProfileId: dbUser.studentProfile?.id,
     teacherProfileId: dbUser.teacherProfile?.id,

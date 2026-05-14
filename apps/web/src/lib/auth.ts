@@ -7,6 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { consumeMagicLinkToken } from "@/lib/auth/magic-link";
 import { db } from "@/lib/db";
 import { normalizeLocale } from "@/lib/i18n/locales";
+import { getRequestLocale } from "@/lib/i18n/request";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -50,7 +51,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role: user.role,
-          locale: normalizeLocale(user.locale),
+          locale: await getRequestLocale(user.locale),
           timezone: user.timezone,
         };
       },

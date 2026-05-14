@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ConsentRequiredError, consentRequiredResponse, ensureStudentConsent } from "@/lib/consent/service";
 import { db } from "@/lib/db";
-import { normalizeLocale } from "@/lib/i18n/locales";
+import { normalizeLocalePreference } from "@/lib/i18n/locales";
+import { getRequestLocale } from "@/lib/i18n/request";
 
 type RequireApiUserOptions = {
   skipConsent?: boolean;
@@ -28,17 +29,23 @@ export async function requireApiUser(options?: RequireApiUserOptions) {
     return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) } as const;
   }
 
+  const locale = await getRequestLocale(user.locale);
+  const resolvedUser = {
+    ...user,
+    locale,
+    localePreference: normalizeLocalePreference(user.locale),
+  };
+
   if (!options?.skipConsent) {
     try {
-      await ensureStudentConsent(user);
+      await ensureStudentConsent(resolvedUser);
     } catch (error) {
       if (error instanceof ConsentRequiredError) {
-        const locale = normalizeLocale(user.locale);
         return { error: NextResponse.json(consentRequiredResponse(locale), { status: 428 }) } as const;
       }
       throw error;
     }
   }
 
-  return { user } as const;
+  return { user: resolvedUser } as const;
 }

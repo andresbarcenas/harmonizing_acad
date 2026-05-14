@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "crypto";
 import { Role } from "@prisma/client";
 
 import { db } from "@/lib/db";
-import { normalizeLocale } from "@/lib/i18n/locales";
+import { getRequestLocale } from "@/lib/i18n/request";
 
 const MAGIC_LINK_PREFIX = "magic-link";
 export const MAGIC_LINK_MAX_AGE_SECONDS = 15 * 60;
@@ -74,7 +74,7 @@ export async function consumeMagicLinkToken(input: { email: string; token: strin
     email: user.email,
     image: user.image,
     role: user.role,
-    locale: normalizeLocale(user.locale),
+    locale: await getRequestLocale(user.locale),
     timezone: user.timezone,
   };
 }

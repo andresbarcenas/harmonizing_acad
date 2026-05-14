@@ -54,7 +54,7 @@ export async function hasSignedActiveConsent(userId: string) {
   return status.signed;
 }
 
-export async function ensureStudentConsent(user: { id: string; role: Role; locale?: string }) {
+export async function ensureStudentConsent(user: { id: string; role: Role; locale?: string | null }) {
   if (user.role !== Role.STUDENT) return;
   const signed = await hasSignedActiveConsent(user.id);
   if (!signed) throw new ConsentRequiredError(normalizeLocale(user.locale));

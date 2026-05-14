@@ -1,5 +1,6 @@
 export const SUPPORTED_LOCALES = ["en", "es"] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
+export type LocalePreference = AppLocale | null;
 
 export const DEFAULT_LOCALE: AppLocale = "en";
 export const LOCALE_COOKIE = "harmonizing:locale";
@@ -10,6 +11,10 @@ export function isSupportedLocale(value: unknown): value is AppLocale {
 
 export function normalizeLocale(value: unknown): AppLocale {
   return isSupportedLocale(value) ? value : DEFAULT_LOCALE;
+}
+
+export function normalizeLocalePreference(value: unknown): LocalePreference {
+  return isSupportedLocale(value) ? value : null;
 }
 
 export function intlLocale(locale: AppLocale) {

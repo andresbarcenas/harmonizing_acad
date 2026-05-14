@@ -16,9 +16,11 @@ All notable changes to this project will be documented in this file.
 - Admin `/admin/access` password reset center for student, teacher, and admin accounts.
 - Password change card in `/settings` for authenticated users to update their own password securely.
 - Student/teacher-only magic-link sign-in via Resend while admin accounts remain password-only.
+- Browser-default language detection for public/auth pages and accounts without a saved language preference.
 
 ### Changed
 - Instrument entry is now standardized to Piano/Voice dropdowns across student, teacher, class, repertoire, import, and after-class workflows, with legacy values like `Voz` normalized safely.
+- Profile language preferences now support Browser default, English, and Español, with saved account choices persisted permanently.
 - Teacher profile creation/editing no longer captures Zoom or Google Meet defaults; meeting links now stay on scheduled classes and recurring series.
 - Teacher and student profile identity controls now link directly to `/settings` from the top bar and mobile drawer.
 - Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
