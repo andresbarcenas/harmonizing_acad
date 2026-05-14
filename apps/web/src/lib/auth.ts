@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+import { consumeMagicLinkToken } from "@/lib/auth/magic-link";
 import { db } from "@/lib/db";
 import { normalizeLocale } from "@/lib/i18n/locales";
 
@@ -52,6 +53,23 @@ export const authOptions: NextAuthOptions = {
           locale: normalizeLocale(user.locale),
           timezone: user.timezone,
         };
+      },
+    }),
+    CredentialsProvider({
+      id: "magic-link",
+      name: "Magic Link",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials.token) return null;
+
+        // Security-sensitive: this provider only accepts one-time magic links for student/teacher accounts.
+        return consumeMagicLinkToken({
+          email: credentials.email,
+          token: credentials.token,
+        });
       },
     }),
   ],

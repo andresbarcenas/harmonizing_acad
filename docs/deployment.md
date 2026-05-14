@@ -36,7 +36,7 @@ npx vercel@latest integration add resend --environment production
 npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
 ```
 
-Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Consent receipt emails and class reminder emails both use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
+Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
 ## First-Time Link
 

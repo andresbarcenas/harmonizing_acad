@@ -46,6 +46,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/teacher/progress", label: nav.progress },
     { href: "/messages", label: nav.messages },
     { href: "/notifications", label: nav.notifications },
+    { href: "/settings", label: nav.profile },
   ];
   const adminNav: NavItem[] = [
     { href: "/admin/dashboard", label: nav.overview },
@@ -55,6 +56,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/admin/students", label: nav.students },
     { href: "/admin/assignments", label: nav.assignments },
     { href: "/admin/availability", label: nav.availability },
+    { href: "/admin/access", label: nav.access },
     { href: "/admin/progress", label: nav.progress },
     { href: "/admin/consents", label: nav.consents },
     { href: "/admin/imports", label: nav.imports },
@@ -175,6 +177,7 @@ export async function AppShell({
               homeHref={homeHrefForRole(role, validTeacherStudentId)}
               labels={mobileNavLabels}
               billing={billing}
+              settingsHref="/settings"
             />
             <Link href={homeHrefForRole(role, validTeacherStudentId)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
               <BrandLogo compact />
@@ -185,10 +188,10 @@ export async function AppShell({
                 <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">Academia musical</p>
               </div>
             </Link>
-            <div className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] sm:inline-flex">
+            <Link href="/settings" className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none sm:inline-flex">
               <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
               <span className="truncate">{userName}</span>
-            </div>
+            </Link>
           </div>
 
           <div className="hidden items-center justify-between gap-4 lg:flex">
@@ -201,7 +204,7 @@ export async function AppShell({
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               <BillingStatusBadge billing={billing} />
               <LanguageToggle locale={activeLocale} authenticated compact />
-              <UserBadge userName={userName} />
+              <UserBadge userName={userName} href="/settings" />
             </div>
           </div>
 
@@ -245,12 +248,21 @@ function BillingStatusBadge({ billing }: { billing: BillingStatus }) {
   );
 }
 
-function UserBadge({ userName }: { userName: string }) {
-  return (
-    <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)]">
+function UserBadge({ userName, href }: { userName: string; href?: string }) {
+  const className = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none";
+  const content = (
+    <>
       <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
       <span className="truncate">{userName}</span>
-    </div>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 

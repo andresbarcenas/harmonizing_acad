@@ -31,6 +31,7 @@ type MobileNavDrawerProps = {
     navigationMenu: string;
     primaryNavigation: string;
   };
+  settingsHref?: string;
   billing: {
     label: string;
     title: string;
@@ -38,7 +39,7 @@ type MobileNavDrawerProps = {
   };
 };
 
-export function MobileNavDrawer({ items, userName, locale, signOutLabel, version, homeHref, labels, billing }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ items, userName, locale, signOutLabel, version, homeHref, labels, settingsHref, billing }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -106,10 +107,14 @@ export function MobileNavDrawer({ items, userName, locale, signOutLabel, version
                 <span className={cn("h-2 w-2 rounded-full", billing.live ? "bg-emerald-500" : "bg-amber-500")} />
                 <span>{billing.label}</span>
               </div>
-              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)]">
+              <Link
+                href={settingsHref ?? "/settings"}
+                onClick={() => setOpen(false)}
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none"
+              >
                 <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
                 <span className="truncate">{userName}</span>
-              </div>
+              </Link>
               <LanguageToggle locale={locale} authenticated compact />
             </div>
 

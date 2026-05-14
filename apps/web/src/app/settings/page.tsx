@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/ui/app-shell";
+import { PasswordChangeForm } from "@/components/auth/password-change-form";
 import { ProfileImageForm } from "@/components/auth/profile-image-form";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LanguagePreferenceForm } from "@/components/i18n/language-toggle";
@@ -44,6 +45,12 @@ export default async function SettingsPage() {
               <Button variant="gold">{dictionary.common.managePlan}</Button>
             </a>
           </div>
+        </Card>
+
+        <Card>
+          <CardTitle>{dictionary.settings.passwordSecurity}</CardTitle>
+          <CardDescription>{dictionary.settings.passwordSecurityDescription}</CardDescription>
+          <PasswordChangeForm locale={viewer.locale} />
         </Card>
 
         {consentStatus?.signature ? (

@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 - Signed consent PDF generation with Harmonizing branding, cursive typed signature rendering, audit metadata, private PDF download access, and Resend email receipt support.
 - Admin consent tracking page for signed/missing consent status, email delivery status, and signed PDF downloads.
 - Student settings consent status card with signed PDF access.
+- Admin `/admin/access` password reset center for student, teacher, and admin accounts.
+- Password change card in `/settings` for authenticated users to update their own password securely.
+- Student/teacher-only magic-link sign-in via Resend while admin accounts remain password-only.
+
+### Changed
+- Teacher and student profile identity controls now link directly to `/settings` from the top bar and mobile drawer.
+- Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
 
 ### Fixed
 - Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.

@@ -112,7 +112,7 @@ Demo fallback details:
 - For production verification before deploy, use `npm run build && npm run start` from `apps/web`.
 - Vercel deployment runbook: [`docs/deployment.md`](./docs/deployment.md)
 - Optional dev mail preview: set `NOTIFICATION_SMTP_MIRROR=true` to mirror in-app notifications to MailHog inbox.
-- Class reminders use Resend in production. Configure `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CLASS_EMAIL_REMINDERS_ENABLED=true`, `CLASS_REMINDER_OFFSETS_MINUTES`, and `CRON_SECRET`.
+- Magic-link sign-in, consent receipts, and class reminders use Resend in production. Configure `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CLASS_EMAIL_REMINDERS_ENABLED=true`, `CLASS_REMINDER_OFFSETS_MINUTES`, and `CRON_SECRET`.
 - Vercel production should keep `NEXTAUTH_URL` as deployed URL and disable local-only hostnames/ports.
 
 ## Docs
