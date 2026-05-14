@@ -60,8 +60,6 @@ export async function POST(req: Request) {
           userId: user.id,
           specialty: data.specialty.trim(),
           bio: data.bio ?? null,
-          zoomLink: data.zoomLink ?? null,
-          meetLink: data.meetLink ?? null,
         },
       });
 

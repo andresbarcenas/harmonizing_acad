@@ -75,8 +75,6 @@ export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale })
       specialty: String(formData.get("specialty") ?? "").trim(),
       profileImage: profileImage.trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
-      zoomLink: String(formData.get("zoomLink") ?? "").trim() || undefined,
-      meetLink: String(formData.get("meetLink") ?? "").trim() || undefined,
       availability: availability.map((row) => ({
         weekday: row.weekday,
         startMinuteLocal: toMinutes(row.start),
@@ -170,21 +168,6 @@ export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale })
             {dictionary.forms.teacherSpecialty}
           </label>
           <InstrumentSelect id="specialty" name="specialty" locale={locale} required />
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-1.5">
-          <label htmlFor="zoomLink" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            {dictionary.forms.zoomOptional}
-          </label>
-          <Input id="zoomLink" name="zoomLink" type="url" placeholder="https://zoom.us/j/..." />
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor="meetLink" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-            {dictionary.forms.meetOptional}
-          </label>
-          <Input id="meetLink" name="meetLink" type="url" placeholder="https://meet.google.com/..." />
         </div>
       </div>
 

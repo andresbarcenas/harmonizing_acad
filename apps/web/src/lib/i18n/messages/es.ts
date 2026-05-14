@@ -173,8 +173,6 @@ export const es: typeof en = {
     saveChanges: "Guardar cambios",
     teacherSpecialty: "Instrumento",
     specialtyPlaceholder: "Elige Piano o Voz",
-    zoomOptional: "Zoom link (opcional)",
-    meetOptional: "Google Meet link (opcional)",
     initialAvailability: "Disponibilidad inicial (opcional)",
     initialAvailabilityHelp: "Puedes dejarlo vacío y configurarlo luego en Disponibilidad.",
     profileImagePreviewStudent: "Preview estudiante",

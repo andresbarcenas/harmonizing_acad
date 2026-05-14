@@ -171,8 +171,6 @@ export const en = {
     saveChanges: "Save changes",
     teacherSpecialty: "Instrument",
     specialtyPlaceholder: "Choose Piano or Voice",
-    zoomOptional: "Zoom link (optional)",
-    meetOptional: "Google Meet link (optional)",
     initialAvailability: "Initial availability (optional)",
     initialAvailabilityHelp: "You can leave it empty and configure it later in Availability.",
     profileImagePreviewStudent: "Student preview",

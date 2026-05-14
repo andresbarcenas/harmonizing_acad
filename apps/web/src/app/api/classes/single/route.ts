@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: validation.message, code: validation.code }, { status: validation.status });
   }
 
-  const meetingUrl = payload.meetingUrl ?? teacher.zoomLink ?? teacher.meetLink ?? "https://meet.google.com/harmonizing-class";
+  const meetingUrl = payload.meetingUrl ?? "https://meet.google.com/harmonizing-class";
   const session = await db.classSession.create({
     data: {
       studentId: payload.studentId,

@@ -60,8 +60,6 @@ export async function PATCH(
         data: {
           specialty: data.specialty,
           bio: data.bio ?? null,
-          zoomLink: data.zoomLink ?? null,
-          meetLink: data.meetLink ?? null,
         },
       });
 

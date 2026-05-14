@@ -35,12 +35,6 @@ function isValidProfileImage(value: string) {
   }
 }
 
-const optionalUrlString = z.preprocess((value) => {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : undefined;
-}, z.string().url("URL inválida").max(500).optional());
-
 const optionalProfileImageString = z.preprocess((value) => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -123,8 +117,6 @@ export const createTeacherSchema = z.object({
   specialty: requiredInstrumentSchema,
   timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
-  zoomLink: optionalUrlString,
-  meetLink: optionalUrlString,
   profileImage: optionalProfileImageString,
   availability: z.array(teacherAvailabilityBlockSchema).max(21).optional(),
 });
@@ -160,8 +152,6 @@ export const updateTeacherSchema = z.object({
   specialty: requiredInstrumentSchema,
   timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
-  zoomLink: optionalUrlString,
-  meetLink: optionalUrlString,
   profileImage: optionalProfileImageString,
 });
 

@@ -77,8 +77,6 @@ export default async function AdminTeachersPage() {
                     email: teacher.user.email,
                     specialty: teacher.specialty,
                     bio: teacher.bio,
-                    zoomLink: teacher.zoomLink,
-                    meetLink: teacher.meetLink,
                     profileImage: teacher.user.image,
                   }}
                   locale={viewer.locale}

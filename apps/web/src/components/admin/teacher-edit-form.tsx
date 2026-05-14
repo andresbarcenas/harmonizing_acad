@@ -23,8 +23,6 @@ export function TeacherEditForm({
     email: string;
     specialty: string;
     bio?: string | null;
-    zoomLink?: string | null;
-    meetLink?: string | null;
     profileImage?: string | null;
   };
   locale?: AppLocale;
@@ -49,8 +47,6 @@ export function TeacherEditForm({
       email: String(formData.get("email") ?? "").trim(),
       specialty: String(formData.get("specialty") ?? "").trim(),
       bio: String(formData.get("bio") ?? "").trim() || undefined,
-      zoomLink: String(formData.get("zoomLink") ?? "").trim() || undefined,
-      meetLink: String(formData.get("meetLink") ?? "").trim() || undefined,
       profileImage: profileImage.trim() || undefined,
     };
 
@@ -128,10 +124,6 @@ export function TeacherEditForm({
           </div>
           <div className="grid gap-2 md:grid-cols-1">
             <InstrumentSelect name="specialty" defaultValue={initial.specialty} locale={locale} compact required aria-label={dictionary.forms.teacherSpecialty} />
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <Input name="zoomLink" type="url" defaultValue={initial.zoomLink ?? ""} placeholder="Zoom URL" />
-            <Input name="meetLink" type="url" defaultValue={initial.meetLink ?? ""} placeholder="Google Meet URL" />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input

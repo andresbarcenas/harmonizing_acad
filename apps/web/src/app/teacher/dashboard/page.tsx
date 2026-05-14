@@ -74,7 +74,6 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
               timezone: assignment.student.user.timezone,
             }))}
             defaultTimezone={viewer.timezone}
-            defaultMeetingUrl={data.teacher?.zoomLink ?? data.teacher?.meetLink ?? ""}
             locale={viewer.locale}
             selectedStudentId={data.selectedStudentId}
           />

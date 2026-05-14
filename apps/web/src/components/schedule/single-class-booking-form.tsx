@@ -24,7 +24,6 @@ type TeacherOption = {
   id: string;
   name: string;
   timezone: string;
-  meetingUrl?: string | null;
 };
 
 const classTypeOptions = [
@@ -49,7 +48,6 @@ export function SingleClassBookingForm({
   teachers = [],
   defaultTimezone,
   defaultTeacherId,
-  defaultMeetingUrl,
   selectedStudentId,
   locale = "en",
 }: {
@@ -58,7 +56,6 @@ export function SingleClassBookingForm({
   teachers?: TeacherOption[];
   defaultTimezone: string;
   defaultTeacherId?: string | null;
-  defaultMeetingUrl?: string | null;
   selectedStudentId?: string | null;
   locale?: AppLocale;
 }) {
@@ -171,7 +168,7 @@ export function SingleClassBookingForm({
         <Field label={isSpanish ? "Instrumento" : "Instrument"} htmlFor="instrument">
           <InstrumentSelect id="instrument" name="instrument" locale={locale} defaultValue={selectedStudent?.instrument} required />
         </Field>
-        <Field label={isSpanish ? "Link de clase" : "Class link"} htmlFor="meetingUrl"><Input id="meetingUrl" name="meetingUrl" type="url" defaultValue={selectedTeacher?.meetingUrl ?? defaultMeetingUrl ?? ""} placeholder="https://zoom.us/j/..." /></Field>
+        <Field label={isSpanish ? "Link de clase" : "Class link"} htmlFor="meetingUrl"><Input id="meetingUrl" name="meetingUrl" type="url" placeholder="https://zoom.us/j/..." /></Field>
       </div>
 
       <Field label={isSpanish ? "Enfoque de la clase" : "Lesson focus"} htmlFor="lessonFocus"><Textarea id="lessonFocus" name="lessonFocus" rows={2} placeholder={isSpanish ? "Ej: clase de recuperación para repertorio..." : "Example: makeup lesson for repertoire..."} /></Field>

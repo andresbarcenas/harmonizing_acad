@@ -23,7 +23,6 @@ type TeacherOption = {
   id: string;
   name: string;
   timezone: string;
-  meetingUrl?: string | null;
 };
 
 const weekdayOptions = [
@@ -41,7 +40,6 @@ export function RecurringClassForm({
   teachers = [],
   role = "teacher",
   defaultTimezone,
-  defaultMeetingUrl,
   defaultTeacherId,
   locale = "en",
   selectedStudentId,
@@ -50,7 +48,6 @@ export function RecurringClassForm({
   teachers?: TeacherOption[];
   role?: "teacher" | "admin";
   defaultTimezone: string;
-  defaultMeetingUrl?: string | null;
   defaultTeacherId?: string | null;
   locale?: AppLocale;
   selectedStudentId?: string | null;
@@ -201,7 +198,6 @@ export function RecurringClassForm({
             id="meetingUrl"
             name="meetingUrl"
             type="url"
-            defaultValue={selectedTeacher?.meetingUrl ?? defaultMeetingUrl ?? ""}
             placeholder="https://zoom.us/j/..."
             required
           />

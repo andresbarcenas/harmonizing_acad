@@ -98,7 +98,7 @@ export async function PATCH(req: Request, { params }: Params) {
           timezone: request.timezone,
           instrument: normalizeInstrument(request.student.preferredInstrument) ?? "Piano",
           locationMode: "ONLINE",
-          meetingUrl: request.teacher.zoomLink ?? request.teacher.meetLink ?? "https://meet.google.com/harmonizing-class",
+          meetingUrl: "https://meet.google.com/harmonizing-class",
           status: SessionStatus.SCHEDULED,
           lessonFocus: input.reviewerResponse ?? request.studentMessage,
           studentVisibleNote: input.reviewerResponse,
