@@ -110,3 +110,37 @@ Student:
 3. Open the latest published report.
 4. Confirm grade, attendance, practice, assignments, videos, songs, strengths, areas to improve, and next focus render.
 5. Confirm drafts, archived reports, admin notes, and teacher private notes are not visible.
+
+## Production Migration Recovery Note
+
+If production reports Prisma `P3009` for `202605121830_monthly_progress_reports`, do not reset the database and do not use `db push --force-reset` or `--accept-data-loss`.
+
+Use a direct Neon migration connection string, not a pooled PgBouncer URL. The deploy script prefers `MIGRATION_DATABASE_URL`, `DATABASE_URL_UNPOOLED`, or `POSTGRES_URL_NON_POOLING` before `DATABASE_URL`.
+
+Before resolving the failed migration, inspect production state:
+
+```sql
+SELECT migration_name, started_at, finished_at, rolled_back_at, logs
+FROM "_prisma_migrations"
+WHERE migration_name = '202605121830_monthly_progress_reports';
+
+SELECT column_name
+FROM information_schema.columns
+WHERE table_name = 'ProgressReport'
+  AND column_name IN ('reportKey', 'publishedByUserId', 'categoryScores', 'skillSummary');
+
+SELECT indexname
+FROM pg_indexes
+WHERE tablename = 'ProgressReport'
+  AND indexname IN ('ProgressReport_reportKey_key', 'ProgressReport_studentId_status_startDate_endDate_idx');
+```
+
+After the patched migration files are deployed, mark the failed production attempt as rolled back, then rerun deploy migrations:
+
+```bash
+cd apps/web
+npx prisma migrate resolve --rolled-back 202605121830_monthly_progress_reports
+npm run prisma:deploy
+```
+
+The patched `202605121830_monthly_progress_reports` migration is idempotent enough to retry after a partial failure. The follow-up `202605131100_progress_report_status_backfill` migration converts legacy `GENERATED` and `FINALIZED` rows to `PUBLISHED` only after PostgreSQL has committed the new enum value.
