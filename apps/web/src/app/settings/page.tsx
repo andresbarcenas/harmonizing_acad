@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
+import { getConsentStatusForUser } from "@/lib/consent/service";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { buildWhatsAppPlanLink } from "@/lib/whatsapp";
 
 export default async function SettingsPage() {
   const viewer = await requireViewer();
   const dictionary = getDictionary(viewer.locale);
+  const consentStatus = viewer.role === "STUDENT" ? await getConsentStatusForUser(viewer.id) : null;
+  const isSpanish = viewer.locale === "es";
 
   return (
     <AppShell role={viewer.role} activePath="/settings" userName={viewer.name} locale={viewer.locale}>
@@ -42,6 +45,22 @@ export default async function SettingsPage() {
             </a>
           </div>
         </Card>
+
+        {consentStatus?.signature ? (
+          <Card>
+            <CardTitle>{isSpanish ? "Consentimiento firmado" : "Signed consent"}</CardTitle>
+            <CardDescription>
+              {isSpanish
+                ? `Firmado por ${consentStatus.signature.signerName}. Puedes descargar la copia PDF cuando la necesites.`
+                : `Signed by ${consentStatus.signature.signerName}. You can download the PDF copy whenever needed.`}
+            </CardDescription>
+            <div className="mt-4">
+              <a href={`/api/consent/signatures/${consentStatus.signature.id}/pdf`}>
+                <Button variant="outline">{isSpanish ? "Descargar PDF firmado" : "Download signed PDF"}</Button>
+              </a>
+            </div>
+          </Card>
+        ) : null}
       </div>
     </AppShell>
   );

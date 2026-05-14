@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
 
+@font-face {
+  font-family: "Dancing Signature";
+  src: url("/fonts/dancing-script/DancingScript-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--color-paper);
   --color-foreground: var(--color-ink);
@@ -32,6 +40,10 @@ body {
 
 .font-display {
   font-family: var(--font-display), serif;
+}
+
+.font-signature {
+  font-family: "Dancing Signature", "Snell Roundhand", "Brush Script MT", cursive;
 }
 
 ::selection {

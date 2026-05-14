@@ -6,7 +6,7 @@ import { detectTimezoneFromHeaders } from "@/lib/timezone";
 import { viewerTimezoneSchema } from "@/lib/validators/viewer";
 
 export async function PATCH(req: Request) {
-  const auth = await requireApiUser();
+  const auth = await requireApiUser({ skipConsent: true });
   if ("error" in auth) return auth.error;
 
   const parsed = viewerTimezoneSchema.safeParse(await req.json());
@@ -22,4 +22,3 @@ export async function PATCH(req: Request) {
 
   return NextResponse.json({ ok: true, timezone });
 }
-

@@ -66,6 +66,13 @@ Core entities:
 - Optional MailHog SMTP mirroring via `NOTIFICATION_SMTP_MIRROR=true`
 - Production class reminder email is handled by Resend through `/api/cron/class-reminders` and deduped with `ClassReminderDelivery`
 
+## Privacy and Consent Model
+- Student accounts must have a signed active privacy/media consent before using protected student routes or mutation APIs.
+- Consent is versioned in `ConsentDocument`; signed records live in `ConsentSignature` with parent/guardian signer details, audit metadata, text hash, private PDF bytes, PDF hash, and Resend email delivery status.
+- `/consent` is the pre-access student signing page, while `/admin/consents` tracks signed/missing students and signed PDF downloads.
+- Teachers and admins are not blocked by the student consent gate.
+- See [privacy-consent.md](./privacy-consent.md) for the workflow, RBAC rules, email/PDF handling, and manual QA.
+
 ## Invoicing Model (Alegra v1)
 - Invoice source of truth is Alegra; Harmonizing stores cached snapshots for fast reads.
 - Student-contact mapping defaults to exact email match and can be manually overridden by admin.

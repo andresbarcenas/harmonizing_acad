@@ -36,7 +36,7 @@ npx vercel@latest integration add resend --environment production
 npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
 ```
 
-Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Blob injects `BLOB_READ_WRITE_TOKEN`.
+Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Consent receipt emails and class reminder emails both use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
 ## First-Time Link
 
@@ -101,5 +101,6 @@ It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual bec
 - Never run `npm run prisma:seed` against production.
 - Vercel cron is configured in `apps/web/vercel.json` because `apps/web` is the deployed project root.
 - If `NEXTAUTH_URL` changes, redeploy so the new environment value applies.
+- Student consent signing stores the generated PDF privately in Postgres and sends a copy by Resend. If Resend is unavailable, the signature remains valid and `/admin/consents` shows the skipped/failed email state.
 - The daily invoice cron is Hobby-safe. Class reminder email code remains available at `/api/cron/class-reminders`, but it is not scheduled on Vercel yet because Hobby accounts reject more-than-daily cron schedules.
 - Disable Vercel's native Git auto-deploy if this GitHub Actions workflow is the production deploy source, otherwise `main` pushes can create duplicate deployments.

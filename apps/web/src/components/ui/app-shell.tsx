@@ -56,6 +56,7 @@ function navByRole(role: Role, nav: ReturnType<typeof getDictionary>["shell"]["n
     { href: "/admin/assignments", label: nav.assignments },
     { href: "/admin/availability", label: nav.availability },
     { href: "/admin/progress", label: nav.progress },
+    { href: "/admin/consents", label: nav.consents },
     { href: "/admin/imports", label: nav.imports },
     { href: "/admin/changelog", label: nav.changelog },
     { href: "/notifications", label: nav.notifications },

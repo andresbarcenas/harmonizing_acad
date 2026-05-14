@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Student privacy and media consent gate requiring student accounts to sign the active bilingual consent before using protected app operations.
+- Signed consent PDF generation with Harmonizing branding, cursive typed signature rendering, audit metadata, private PDF download access, and Resend email receipt support.
+- Admin consent tracking page for signed/missing consent status, email delivery status, and signed PDF downloads.
+- Student settings consent status card with signed PDF access.
+
+### Fixed
+- Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.
+
 ## [0.7.3] - 2026-05-14
 
 ### Added

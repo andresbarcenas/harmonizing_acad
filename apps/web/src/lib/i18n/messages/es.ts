@@ -65,6 +65,7 @@ export const es: typeof en = {
       students: "Estudiantes",
       assignments: "Asignaciones",
       availability: "Disponibilidad",
+      consents: "Consentimientos",
       imports: "Importaciones",
       changelog: "Cambios",
       settings: "Configuración",

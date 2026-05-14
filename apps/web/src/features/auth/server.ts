@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { ConsentRequiredError, ensureStudentConsent } from "@/lib/consent/service";
 import { normalizeLocale, type AppLocale } from "@/lib/i18n/locales";
 import { defaultRouteForRole } from "@/lib/rbac";
 
@@ -19,7 +20,11 @@ export type AppViewer = {
   teacherProfileId?: string;
 };
 
-export async function requireViewer(expectedRoles?: Role[]): Promise<AppViewer> {
+type RequireViewerOptions = {
+  skipConsent?: boolean;
+};
+
+export async function requireViewer(expectedRoles?: Role[], options?: RequireViewerOptions): Promise<AppViewer> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id || !session.user.email) {
@@ -40,6 +45,17 @@ export async function requireViewer(expectedRoles?: Role[]): Promise<AppViewer> 
 
   if (expectedRoles && !expectedRoles.includes(dbUser.role)) {
     redirect(defaultRouteForRole(dbUser.role));
+  }
+
+  if (!options?.skipConsent) {
+    try {
+      await ensureStudentConsent(dbUser);
+    } catch (error) {
+      if (error instanceof ConsentRequiredError) {
+        redirect("/consent");
+      }
+      throw error;
+    }
   }
 
   return {

@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 }
 
 async function updatePreferences(req: Request) {
-  const auth = await requireApiUser();
+  const auth = await requireApiUser({ skipConsent: true });
   if ("error" in auth) return auth.error;
 
   const body = (await req.json().catch(() => ({}))) as { locale?: string };

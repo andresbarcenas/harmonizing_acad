@@ -96,6 +96,17 @@ enum ClassReminderStatus {
   SKIPPED
 }
 
+enum ConsentSignerRole {
+  PARENT_GUARDIAN
+}
+
+enum ConsentEmailStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum StudentLevel {
   BEGINNER
   INTERMEDIATE
@@ -218,6 +229,7 @@ model User {
   reviewedImportRows       HistoricalImportRow[]   @relation("HistoricalImportRowReviewedBy")
   uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
   classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
+  consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
 
   @@index([role])
 }
@@ -953,6 +965,54 @@ model ClassReminderDelivery {
   @@unique([classSessionId, recipientUserId, channel, offsetMinutes])
   @@index([recipientUserId, createdAt])
   @@index([status, createdAt])
+}
+
+model ConsentDocument {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  titleEn     String
+  titleEs     String
+  bodyEn      String
+  bodyEs      String
+  active      Boolean  @default(false)
+  effectiveAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  signatures ConsentSignature[]
+
+  @@index([active, effectiveAt])
+}
+
+model ConsentSignature {
+  id                 String             @id @default(cuid())
+  userId             String
+  documentId         String
+  signerRole         ConsentSignerRole  @default(PARENT_GUARDIAN)
+  signerName         String
+  signerRelationship String
+  signerEmail        String
+  signedAt           DateTime           @default(now())
+  locale             String             @default("en")
+  ipAddress          String?
+  userAgent          String?
+  consentTextHash    String
+  pdfBytes           Bytes
+  pdfSha256          String
+  emailStatus        ConsentEmailStatus @default(PENDING)
+  resendMessageId    String?
+  emailError         String?
+  emailSentAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user     User            @relation("ConsentSignedUser", fields: [userId], references: [id], onDelete: Cascade)
+  document ConsentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@index([userId, signedAt])
+  @@index([documentId, signedAt])
+  @@index([emailStatus, signedAt])
 }
 
 model Invoice {
