@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura de Harmonizing Academy</title>
+  <desc id="desc">Mapa visual owner-friendly con personas, portal seguro, datos y servicios, y despliegue.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffaf2"/>
+      <stop offset="55%" stop-color="#f7efe3"/>
+      <stop offset="100%" stop-color="#eadcc8"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.98"/>
+      <stop offset="100%" stop-color="#fff7ec" stop-opacity="0.95"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#6f4a21" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L12 7 L2 12 Z" fill="#d78200"/>
+    </marker>
+    <style>
+      .brand{font:700 42px Georgia,'Times New Roman',serif;fill:#211f1c;letter-spacing:-1px;}
+      .title{font:700 50px Georgia,'Times New Roman',serif;fill:#211f1c;letter-spacing:-1px;}
+      .subtitle{font:400 22px Arial,sans-serif;fill:#6d675f;}
+      .eyebrow{font:700 13px Arial,sans-serif;fill:#c77400;letter-spacing:4px;text-transform:uppercase;}
+      .section{font:700 28px Arial,sans-serif;fill:#211f1c;}
+      .label{font:700 23px Arial,sans-serif;fill:#2c2925;}
+      .small{font:700 15px Arial,sans-serif;fill:#6d675f;}
+      .tiny{font:700 12px Arial,sans-serif;fill:#9a8f82;letter-spacing:2px;}
+      .panel{fill:url(#panel);stroke:#eadfce;stroke-width:1.5;filter:url(#shadow);}
+      .tile{fill:#fff;stroke:#eadfce;stroke-width:1.4;}
+      .soft{fill:#fff3df;stroke:#f0d7b1;stroke-width:1.3;}
+      .accent{fill:#d78200;}
+      .green{fill:#54745b;}
+      .blue{fill:#526d88;}
+      .brown{fill:#9a6a36;}
+      .line{stroke:#d78200;stroke-width:4;fill:none;marker-end:url(#arrow);stroke-linecap:round;}
+      .mutedline{stroke:#dfc59f;stroke-width:2;fill:none;}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1080" fill="url(#bg)"/>
+  <circle cx="1370" cy="120" r="240" fill="#ffffff" opacity="0.34"/>
+  <circle cx="175" cy="940" r="255" fill="#ffffff" opacity="0.28"/>
+
+  <g transform="translate(70 48)">
+    <rect x="0" y="0" width="88" height="88" rx="26" fill="#fff" stroke="#eadfce" filter="url(#shadow)"/>
+    <text x="44" y="34" text-anchor="middle" font-family="Georgia" font-size="16" fill="#c77400">H</text>
+    <text x="44" y="66" text-anchor="middle" font-family="Georgia" font-size="34" fill="#d78200">2</text>
+    <text x="116" y="41" class="brand">harmonizing</text>
+    <text x="118" y="70" class="tiny">ACADEMIA MUSICAL</text>
+  </g>
+
+  <text x="70" y="184" class="eyebrow">Mapa del sistema</text>
+  <text x="70" y="245" class="title">Cómo funciona Harmonizing Academy</text>
+  <text x="72" y="286" class="subtitle">Una vista simple para explicar personas, portal seguro, datos, servicios y operación.</text>
+
+  <g transform="translate(210 314)">
+    <rect width="1180" height="54" rx="27" fill="#fffaf2" stroke="#eadfce"/>
+    <text x="70" y="35" class="small">Personas</text>
+    <path class="line" d="M178 27 H318"/>
+    <text x="360" y="35" class="small">Portal seguro</text>
+    <path class="line" d="M510 27 H650"/>
+    <text x="690" y="35" class="small">Datos y servicios</text>
+    <path class="line" d="M885 27 H1025"/>
+    <text x="1062" y="35" class="small">Operación</text>
+  </g>
+
+  <g transform="translate(70 410)">
+    <rect class="panel" width="340" height="390" rx="34"/>
+    <text x="34" y="50" class="eyebrow">Personas</text>
+    <text x="34" y="91" class="section">Quién entra</text>
+
+    <rect x="34" y="130" width="272" height="62" rx="21" class="tile"/>
+    <circle cx="62" cy="161" r="7" class="accent"/>
+    <text x="84" y="169" class="label">Estudiante / familia</text>
+
+    <rect x="34" y="215" width="272" height="62" rx="21" class="tile"/>
+    <circle cx="62" cy="246" r="7" class="green"/>
+    <text x="84" y="254" class="label">Docente</text>
+
+    <rect x="34" y="300" width="272" height="62" rx="21" class="tile"/>
+    <circle cx="62" cy="331" r="7" class="blue"/>
+    <text x="84" y="339" class="label">Administración</text>
+  </g>
+
+  <path class="line" d="M430 605 C468 605 472 605 510 605"/>
+
+  <g transform="translate(510 385)">
+    <rect class="panel" width="520" height="440" rx="38"/>
+    <text x="38" y="54" class="eyebrow">Aplicación principal</text>
+    <text x="38" y="98" class="section">Portal seguro</text>
+
+    <rect x="38" y="138" width="444" height="76" rx="24" class="soft"/>
+    <circle cx="72" cy="176" r="8" class="accent"/>
+    <text x="98" y="184" class="label">Next.js</text>
+    <text x="250" y="184" class="small">interfaz + backend</text>
+
+    <rect x="38" y="238" width="208" height="66" rx="22" class="tile"/>
+    <text x="68" y="278" class="label">Frontend</text>
+
+    <rect x="274" y="238" width="208" height="66" rx="22" class="tile"/>
+    <text x="304" y="278" class="label">APIs</text>
+
+    <rect x="38" y="328" width="208" height="66" rx="22" class="tile"/>
+    <text x="68" y="368" class="label">Auth + RBAC</text>
+
+    <rect x="274" y="328" width="208" height="66" rx="22" class="tile"/>
+    <text x="304" y="368" class="label">Prisma</text>
+  </g>
+
+  <path class="line" d="M1048 605 C1087 605 1091 605 1130 605"/>
+
+  <g transform="translate(1130 385)">
+    <rect class="panel" width="400" height="440" rx="38"/>
+    <text x="36" y="54" class="eyebrow">Datos y servicios</text>
+    <text x="36" y="98" class="section">Dónde vive todo</text>
+
+    <rect x="36" y="137" width="328" height="50" rx="18" class="tile"/>
+    <circle cx="62" cy="162" r="7" class="blue"/>
+    <text x="84" y="170" class="label">PostgreSQL / Neon</text>
+
+    <rect x="36" y="202" width="328" height="50" rx="18" class="tile"/>
+    <circle cx="62" cy="227" r="7" class="accent"/>
+    <text x="84" y="235" class="label">Blob / MinIO</text>
+
+    <rect x="36" y="267" width="328" height="50" rx="18" class="tile"/>
+    <circle cx="62" cy="292" r="7" class="green"/>
+    <text x="84" y="300" class="label">Resend</text>
+
+    <rect x="36" y="332" width="154" height="50" rx="18" class="tile"/>
+    <circle cx="62" cy="357" r="7" class="brown"/>
+    <text x="84" y="365" class="label">Alegra</text>
+
+    <rect x="210" y="332" width="154" height="50" rx="18" class="tile"/>
+    <circle cx="236" cy="357" r="7" class="brown"/>
+    <text x="258" y="365" class="label">WhatsApp</text>
+  </g>
+
+  <path class="line" d="M770 825 V870"/>
+  <path class="line" d="M1330 825 V870"/>
+
+  <g transform="translate(70 885)">
+    <rect class="panel" width="1460" height="142" rx="34"/>
+    <text x="36" y="50" class="eyebrow">Despliegue y operación</text>
+    <text x="36" y="93" class="section">Local para construir · Producción para operar</text>
+
+    <rect x="560" y="36" width="250" height="70" rx="22" class="soft"/>
+    <text x="592" y="66" class="label">Local Docker</text>
+    <text x="592" y="91" class="small">web + db + storage</text>
+
+    <rect x="850" y="36" width="250" height="70" rx="22" class="soft"/>
+    <text x="882" y="66" class="label">GitHub Actions</text>
+    <text x="882" y="91" class="small">validación + deploy</text>
+
+    <rect x="1140" y="36" width="250" height="70" rx="22" class="soft"/>
+    <text x="1172" y="66" class="label">Vercel</text>
+    <text x="1172" y="91" class="small">Neon + Blob + Resend</text>
+  </g>
+
+  <g transform="translate(70 828)">
+    <rect width="360" height="42" rx="21" fill="#d78200" opacity="0.96"/>
+    <text x="180" y="28" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#fff">Sistema operativo de la escuela</text>
+  </g>
+</svg>

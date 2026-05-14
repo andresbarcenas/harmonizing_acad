@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Owner-friendly Spanish architecture documentation with shareable SVG/PDF diagrams explaining roles, app architecture, data services, and deployment flow.
 - Student privacy and media consent gate requiring student accounts to sign the active bilingual consent before using protected app operations.
 - Signed consent PDF generation with Harmonizing branding, cursive typed signature rendering, audit metadata, private PDF download access, and Resend email receipt support.
 - Admin consent tracking page for signed/missing consent status, email delivery status, and signed PDF downloads.

@@ -116,6 +116,8 @@ Demo fallback details:
 - Vercel production should keep `NEXTAUTH_URL` as deployed URL and disable local-only hostnames/ports.
 
 ## Docs
+- Owner architecture overview: [`docs/owner-architecture.md`](./docs/owner-architecture.md)
+- Owner architecture diagram: [`SVG`](./docs/assets/harmonizing-owner-architecture.svg) · [`PDF`](./docs/assets/harmonizing-owner-architecture.pdf)
 - Architecture: `docs/architecture.md`
 - Deployment: `docs/deployment.md`
 - Phases: `docs/phases.md`
