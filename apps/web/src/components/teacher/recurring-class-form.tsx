@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { displayInstrument } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary } from "@/lib/i18n";
@@ -147,7 +148,7 @@ export function RecurringClassForm({
           <div className="space-y-1.5">
             <p className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.teacher.selectedStudent}</p>
             <div className="h-[3.1rem] rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 py-3 text-sm text-[var(--color-ink)]">
-              {selectedStudent.name} {selectedStudent.instrument ? `· ${selectedStudent.instrument}` : ""}
+              {selectedStudent.name} {selectedStudent.instrument ? `· ${displayInstrument(selectedStudent.instrument, locale)}` : ""}
             </div>
           </div>
         ) : (
@@ -165,7 +166,7 @@ export function RecurringClassForm({
             >
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
-                  {student.name} {student.instrument ? `· ${student.instrument}` : ""}
+                  {student.name} {student.instrument ? `· ${displayInstrument(student.instrument, locale)}` : ""}
                 </option>
               ))}
             </select>

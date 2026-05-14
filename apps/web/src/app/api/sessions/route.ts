@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
 import { isSlotWithinAvailability } from "@/lib/scheduling";
@@ -242,7 +243,7 @@ export async function POST(req: Request) {
         lessonFocus: data.lessonFocus,
         type: ClassSessionType.RECURRING,
         timezone: recurrenceTimezone,
-        instrument: student.preferredInstrument,
+        instrument: normalizeInstrument(student.preferredInstrument) ?? "Piano",
         status: SessionStatus.SCHEDULED,
       });
     }

@@ -5,6 +5,7 @@ import { endOfDay, startOfDay, startOfWeek, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { instrumentToSkillInstrument, normalizeInstrument } from "@/lib/instruments";
 
 export async function resolveAssignedStudentForTeacher(teacherProfileId: string, studentId?: string | null) {
   if (!studentId) return null;
@@ -456,14 +457,14 @@ function average(values: number[]) {
 }
 
 export function inferSkillInstruments(preferredInstrument?: string | null) {
-  const normalized = (preferredInstrument ?? "").toLocaleLowerCase();
+  const normalized = normalizeInstrument(preferredInstrument);
   const instruments = new Set(["GENERAL"]);
 
-  if (normalized.includes("piano") || normalized.includes("teclado") || normalized.includes("keyboard")) {
+  if (normalized === "Piano") {
     instruments.add("PIANO");
   }
 
-  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing")) {
+  if (normalized === "Voice") {
     instruments.add("VOICE");
   }
 
@@ -476,11 +477,7 @@ export function inferSkillInstruments(preferredInstrument?: string | null) {
 }
 
 export function inferLessonInstrument(value?: string | null): "PIANO" | "VOICE" {
-  const normalized = (value ?? "").toLocaleLowerCase();
-  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing")) {
-    return "VOICE";
-  }
-  return "PIANO";
+  return instrumentToSkillInstrument(value);
 }
 
 export function skillInstrumentsForLesson(value?: string | null) {

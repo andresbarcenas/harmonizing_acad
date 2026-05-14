@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -150,7 +151,7 @@ export function StudentOnboardingForm({
           >
             {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
-                {teacher.name} · {teacher.specialty}
+                {teacher.name} · {displayInstrument(teacher.specialty, locale)}
               </option>
             ))}
           </select>
@@ -168,7 +169,7 @@ export function StudentOnboardingForm({
           <label htmlFor="preferredInstrument" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             {dictionary.forms.preferredInstrumentOptional}
           </label>
-          <Input id="preferredInstrument" name="preferredInstrument" placeholder={dictionary.forms.preferredInstrumentPlaceholder} />
+          <InstrumentSelect id="preferredInstrument" name="preferredInstrument" locale={locale} required />
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentDashboardData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone, getDictionary } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 import { buildWhatsAppPlanLink } from "@/lib/whatsapp";
 
 export default async function StudentDashboardPage() {
@@ -76,7 +77,7 @@ export default async function StudentDashboardPage() {
               <Avatar src={teacher.user.image} alt={teacher.user.name} fallback={teacher.user.name.slice(0, 1)} />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{teacher.user.name}</p>
-                <p className="text-sm text-[var(--color-ink-soft)]">{teacher.specialty}</p>
+                <p className="text-sm text-[var(--color-ink-soft)]">{instrumentLabel(teacher.specialty, viewer.locale)}</p>
               </div>
             </div>
           ) : (

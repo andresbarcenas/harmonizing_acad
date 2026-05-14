@@ -10,6 +10,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherReportGenerationData } from "@/lib/data";
+import { instrumentLabel } from "@/lib/instruments";
 
 export default async function TeacherNewReportPage({ searchParams }: { searchParams?: Promise<{ studentId?: string }> }) {
   const viewer = await requireViewer([Role.TEACHER]);
@@ -32,7 +33,7 @@ export default async function TeacherNewReportPage({ searchParams }: { searchPar
             <Avatar src={data.student.user.image} alt={data.student.user.name} fallback={data.student.user.name.slice(0, 1)} />
             <div>
               <CardTitle>{data.student.user.name}</CardTitle>
-              <CardDescription>{data.student.preferredInstrument ?? (isSpanish ? "Música" : "Music")}</CardDescription>
+              <CardDescription>{instrumentLabel(data.student.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")}</CardDescription>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">

@@ -3,6 +3,7 @@ import { ClassRequestStatus, NotificationType, Role, SessionStatus } from "@pris
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeInstrument } from "@/lib/instruments";
 import { createNotifications } from "@/lib/notifications";
 import { validateClassBookingWindow } from "@/lib/scheduling";
 import { reviewClassRequestSchema } from "@/lib/validators/class-scheduling";
@@ -95,7 +96,7 @@ export async function PATCH(req: Request, { params }: Params) {
           startsAtUtc: request.preferredStartUtc,
           endsAtUtc: request.preferredEndUtc,
           timezone: request.timezone,
-          instrument: request.student.preferredInstrument,
+          instrument: normalizeInstrument(request.student.preferredInstrument) ?? "Piano",
           locationMode: "ONLINE",
           meetingUrl: request.teacher.zoomLink ?? request.teacher.meetLink ?? "https://meet.google.com/harmonizing-class",
           status: SessionStatus.SCHEDULED,

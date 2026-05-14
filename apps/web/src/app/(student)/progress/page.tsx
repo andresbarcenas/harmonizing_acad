@@ -11,6 +11,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getStudentProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { instrumentLabel, skillInstrumentToInstrument } from "@/lib/instruments";
 import { getRepertoireAttachmentPublicUrl } from "@/lib/storage";
 
 type StudentProgressData = NonNullable<Awaited<ReturnType<typeof getStudentProgressData>>["student"]>;
@@ -201,7 +202,7 @@ function RepertoireCard({ items, locale }: { items: StudentRepertoire[]; locale:
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-[var(--color-ink)]">{item.title}</p>
-                  <p className="text-xs text-[var(--color-ink-soft)]">{item.composerOrArtist ?? ""} · {item.instrument}</p>
+                  <p className="text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, instrumentLabel(item.instrument, locale)].filter(Boolean).join(" · ")}</p>
                 </div>
                 <Badge variant="gold">{repertoireStatusLabel(item.status, locale)}</Badge>
               </div>
@@ -252,7 +253,7 @@ function SkillSnapshotCard({ skills, locale }: { skills: SkillSnapshot[]; locale
               <p className="text-sm font-semibold text-[var(--color-ink)]">{skill.name}</p>
               <Badge variant={skill.latest >= 4 ? "success" : skill.latest <= 2 ? "warning" : "gold"}>{skillLabel(skill.latest, locale)}</Badge>
             </div>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{skill.instrument} · {skill.latest}/5 {skill.previous ? trendLabel(skill.latest, skill.previous, locale) : ""}</p>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{instrumentLabel(skillInstrumentToInstrument(skill.instrument), locale)} · {skill.latest}/5 {skill.previous ? trendLabel(skill.latest, skill.previous, locale) : ""}</p>
             {skill.note ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{skill.note}</p> : null}
           </div>
         ))}

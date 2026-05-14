@@ -11,6 +11,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherDashboardData } from "@/lib/data";
 import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 
 const dayNames = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -186,7 +187,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                   />
                   <p className="truncate text-sm font-medium">{assignment.student.user.name}</p>
                 </div>
-                <p className="text-xs text-[var(--color-ink-soft)]">{assignment.student.preferredInstrument ?? (viewer.locale === "es" ? "Música general" : "General music")}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">{instrumentLabel(assignment.student.preferredInstrument, viewer.locale) || (viewer.locale === "es" ? "Música general" : "General music")}</p>
               </div>
             ))}
             {!data.students.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.teacher.noAssigned}</p> : null}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -168,7 +169,7 @@ export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale })
           <label htmlFor="specialty" className="text-sm font-semibold text-[var(--color-ink-soft)]">
             {dictionary.forms.teacherSpecialty}
           </label>
-          <Input id="specialty" name="specialty" placeholder={dictionary.forms.specialtyPlaceholder} required />
+          <InstrumentSelect id="specialty" name="specialty" locale={locale} required />
         </div>
       </div>
 
@@ -296,7 +297,7 @@ export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale })
         <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           <p className="font-semibold">{dictionary.admin.teacherCreated}</p>
           <p className="mt-1">
-            {created.name} ({created.email}) · {created.specialty}
+            {created.name} ({created.email}) · {displayInstrument(created.specialty, locale)}
           </p>
           <p className="mt-1">
             {dictionary.common.timezone}: {created.timezone} · {dictionary.admin.availabilityBlocks}: {created.availabilityCount}

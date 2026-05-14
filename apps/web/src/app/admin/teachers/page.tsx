@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 
 export default async function AdminTeachersPage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -63,7 +64,7 @@ export default async function AdminTeachersPage() {
                 </div>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-xs text-[var(--color-ink-soft)]">{teacher.specialty}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">{instrumentLabel(teacher.specialty, viewer.locale)}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.common.timezone}: {teacher.user.timezone}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.admin.availabilityBlocks}: {teacher.availability.length}

@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 
 type StudentContextOption = {
   id: string;
@@ -66,7 +67,7 @@ export function TeacherStudentSelector({
           {students.map((student) => (
             <option key={student.id} value={student.id}>
               {student.name}
-              {student.instrument ? ` · ${student.instrument}` : ""}
+              {student.instrument ? ` · ${instrumentLabel(student.instrument, locale)}` : ""}
             </option>
           ))}
         </select>

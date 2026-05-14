@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 
 export default async function AdminAvailabilityPage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -37,7 +38,7 @@ export default async function AdminAvailabilityPage() {
         {teachers.map((teacher) => (
           <Card key={teacher.id}>
             <CardTitle>{teacher.user.name}</CardTitle>
-            <CardDescription>{teacher.specialty}</CardDescription>
+            <CardDescription>{instrumentLabel(teacher.specialty, viewer.locale)}</CardDescription>
             <div className="mt-3">
               <AvailabilityManager
                 teacherId={teacher.id}

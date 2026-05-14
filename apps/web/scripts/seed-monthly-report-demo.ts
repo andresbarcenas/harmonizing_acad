@@ -31,7 +31,7 @@ type BasicUser = Prisma.UserGetPayload<Record<string, never>>;
 type DemoStudent = {
   slug: "isabella" | "luis" | "tommy";
   email: string;
-  instrument: "Piano" | "Voz";
+  instrument: "Piano" | "Voice";
   timezone: string;
   profile: "strong-piano" | "voice-consistency" | "historical-piano";
   repertoire: {
@@ -102,7 +102,7 @@ const students: DemoStudent[] = [
   {
     slug: "luis",
     email: "luis@harmonizing.com",
-    instrument: "Voz",
+    instrument: "Voice",
     timezone: "America/Los_Angeles",
     profile: "voice-consistency",
     repertoire: {

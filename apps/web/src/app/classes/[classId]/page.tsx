@@ -10,6 +10,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getClassDetailData } from "@/lib/data";
 import { formatDateTimeInZone } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 import { classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 
 type PageProps = { params: Promise<{ classId: string }> };
@@ -50,7 +51,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
             <Info label={isSpanish ? "Hora estudiante" : "Student time"} value={`${formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} (${session.student.user.timezone})`} />
             <Info label={isSpanish ? "Hora docente" : "Teacher time"} value={`${formatDateTimeInZone(session.startsAtUtc, session.teacher.user.timezone, viewer.locale)} (${session.teacher.user.timezone})`} />
             <Info label={isSpanish ? "Modalidad" : "Mode"} value={modeLabel(session.locationMode, viewer.locale)} />
-            <Info label={isSpanish ? "Instrumento" : "Instrument"} value={session.instrument ?? session.student.preferredInstrument ?? "-"} />
+            <Info label={isSpanish ? "Instrumento" : "Instrument"} value={instrumentLabel(session.instrument ?? session.student.preferredInstrument, viewer.locale) || "-"} />
             <Info label={isSpanish ? "Serie recurrente" : "Recurring series"} value={session.recurrence ? (isSpanish ? "Sí" : "Yes") : (isSpanish ? "No" : "No")} />
             {session.recurrence ? <Info label={isSpanish ? "Modo de horario" : "Timezone mode"} value={recurringTimezoneModeLabel(session.recurrence.timezoneMode, viewer.locale)} /> : null}
           </div>

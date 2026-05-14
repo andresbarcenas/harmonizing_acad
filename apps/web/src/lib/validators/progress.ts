@@ -1,6 +1,8 @@
 import { PracticeAssignmentStatus, RepertoireStatus, SessionStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { normalizeInstrument } from "@/lib/instruments";
+
 const optionalString = (max = 2000) => z.preprocess((value) => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -21,6 +23,10 @@ const optionalId = z.preprocess((value) => {
 
 const ratingSchema = z.number().int().min(1).max(5);
 const lessonInstrumentSchema = z.enum(["PIANO", "VOICE"]);
+const requiredInstrumentSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  return normalizeInstrument(value) ?? value.trim();
+}, z.enum(["Piano", "Voice"], { message: "Selecciona Piano o Voz." }));
 const optionalPositiveInt = (max = 600) => z.preprocess((value) => {
   if (value === null || value === undefined || value === "") return undefined;
   const number = Number(value);
@@ -82,9 +88,11 @@ export const completeClassWorkflowSchema = z.object({
     completedDate: optionalDateString,
   })).max(12).default([]),
   newRepertoireItems: z.array(z.object({
+    clientId: optionalId,
+    catalogItemId: optionalId,
     title: z.string().trim().min(2).max(180),
     composerOrArtist: optionalString(160),
-    instrument: z.string().trim().min(1).max(80),
+    instrument: requiredInstrumentSchema,
     level: optionalString(80),
     status: z.nativeEnum(RepertoireStatus).default(RepertoireStatus.ASSIGNED),
     masteryPercent: z.number().int().min(0).max(100).default(0),
@@ -100,6 +108,7 @@ export const completeClassWorkflowSchema = z.object({
     dueDate: optionalDateString,
     expectedMinutes: optionalPositiveInt(600),
     repertoireItemId: optionalId,
+    newRepertoireClientId: optionalId,
     skillCategoryId: optionalId,
     requiresVideo: z.boolean().default(false),
   })).max(6).default([]),
@@ -135,7 +144,7 @@ export const upsertRepertoireSchema = z.object({
   studentId: z.string().min(1),
   title: z.string().min(2).max(180),
   composerOrArtist: optionalString(160),
-  instrument: z.string().min(1).max(80),
+  instrument: requiredInstrumentSchema,
   level: optionalString(80),
   status: z.nativeEnum(RepertoireStatus).default(RepertoireStatus.ASSIGNED),
   startDate: optionalDateString,

@@ -85,6 +85,13 @@ function parseArgs(argv) {
   return args;
 }
 
+function normalizeInstrument(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized.includes('piano')) return 'Piano';
+  if (normalized.includes('voice') || normalized.includes('voz') || normalized.includes('vocal') || normalized.includes('canto') || normalized.includes('sing')) return 'Voice';
+  throw new Error(`Unsupported instrument "${value}". Use Piano or Voice.`);
+}
+
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -393,6 +400,7 @@ async function extractPdfPages(pdfPath) {
 
 async function main() {
   const args = parseArgs(process.argv);
+  args.instrument = normalizeInstrument(args.instrument);
   const requestedPdfPath = path.resolve(args.pdf);
   const importedBasenamePath = path.resolve('/imports', path.basename(args.pdf));
   const shouldUseTommyFallback = args.pdf === DEFAULT_PDF_PATH;

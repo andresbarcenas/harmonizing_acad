@@ -1,6 +1,7 @@
 import { ClassRequestStatus, ClassSessionType } from "@prisma/client";
 import { z } from "zod";
 
+import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 const timezoneSchema = z
@@ -21,6 +22,13 @@ const optionalUrl = z.preprocess((value) => {
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
 }, z.string().url("URL inválida").max(500).optional());
+
+const optionalInstrument = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return normalizeInstrument(trimmed) ?? trimmed;
+}, z.enum(["Piano", "Voice"], { message: "Selecciona Piano o Voz." }).optional());
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida");
 const timeSchema = z.string().regex(/^\d{2}:\d{2}$/, "Hora inválida");
@@ -45,7 +53,7 @@ export const singleClassBookingSchema = z.object({
   studentId: z.string().min(1),
   teacherId: optionalString(100),
   type: z.enum(singleClassBookingTypes),
-  instrument: optionalString(80),
+  instrument: optionalInstrument,
   date: dateSchema,
   startTimeLocal: timeSchema,
   durationMin: durationSchema,

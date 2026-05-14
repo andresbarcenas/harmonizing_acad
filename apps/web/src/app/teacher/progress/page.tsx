@@ -12,6 +12,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
+import { instrumentLabel, instrumentToSkillInstrument } from "@/lib/instruments";
 import { getRepertoireAttachmentPublicUrl } from "@/lib/storage";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
@@ -39,7 +40,7 @@ export default async function TeacherProgressPage({ searchParams }: PageProps) {
                   <Avatar src={item.student.user.image} alt={item.student.user.name} fallback={item.student.user.name.slice(0, 1)} />
                   <div>
                     <CardTitle>{item.student.user.name}</CardTitle>
-                    <CardDescription>{item.student.preferredInstrument ?? (isSpanish ? "Música" : "Music")}</CardDescription>
+                    <CardDescription>{instrumentLabel(item.student.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")}</CardDescription>
                   </div>
                 </div>
                 <Link href={`/teacher/progress?studentId=${item.student.id}`}><Button size="sm" variant="outline">{isSpanish ? "Abrir" : "Open"}</Button></Link>
@@ -78,7 +79,7 @@ function SelectedStudentProgress({
                 <Avatar src={data.selected.user.image} alt={data.selected.user.name} fallback={data.selected.user.name.slice(0, 1)} />
                 <div className="min-w-0">
                   <CardTitle>{data.selected.user.name}</CardTitle>
-                  <CardDescription>{data.selected.preferredInstrument ?? (isSpanish ? "Música" : "Music")} · {data.selected.user.timezone}</CardDescription>
+                  <CardDescription>{instrumentLabel(data.selected.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")} · {data.selected.user.timezone}</CardDescription>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -218,9 +219,6 @@ function Metric({ label, value }: { label: string; value: number }) {
 }
 
 function skillCategoriesForInstrument<T extends { instrument: string }>(skills: T[], instrument?: string | null) {
-  const normalized = (instrument ?? "").toLocaleLowerCase();
-  const lessonInstrument = normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing") || normalized.includes("voice")
-    ? "VOICE"
-    : "PIANO";
+  const lessonInstrument = instrumentToSkillInstrument(instrument);
   return skills.filter((skill) => skill.instrument === "GENERAL" || skill.instrument === lessonInstrument);
 }

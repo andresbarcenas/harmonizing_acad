@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -126,7 +127,7 @@ export function TeacherEditForm({
             <Input name="email" type="email" defaultValue={initial.email} required />
           </div>
           <div className="grid gap-2 md:grid-cols-1">
-            <Input name="specialty" defaultValue={initial.specialty} required />
+            <InstrumentSelect name="specialty" defaultValue={initial.specialty} locale={locale} compact required aria-label={dictionary.forms.teacherSpecialty} />
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <Input name="zoomLink" type="url" defaultValue={initial.zoomLink ?? ""} placeholder="Zoom URL" />

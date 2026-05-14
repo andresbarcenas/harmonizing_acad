@@ -3,6 +3,7 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { normalizeInstrument } from "@/lib/instruments";
 import { createNotifications } from "@/lib/notifications";
 import { buildUtcClassWindow, validateClassBookingWindow } from "@/lib/scheduling";
 import { singleClassBookingSchema } from "@/lib/validators/class-scheduling";
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
       startsAtUtc: window.startsAtUtc,
       endsAtUtc: window.endsAtUtc,
       timezone: window.timezone,
-      instrument: payload.instrument ?? student.preferredInstrument,
+      instrument: payload.instrument ?? normalizeInstrument(student.preferredInstrument) ?? "Piano",
       locationMode: payload.locationMode,
       meetingUrl,
       status: SessionStatus.SCHEDULED,

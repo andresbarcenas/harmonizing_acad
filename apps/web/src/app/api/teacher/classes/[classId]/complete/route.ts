@@ -4,6 +4,8 @@ import { NotificationType, RepertoireStatus, Role, SessionStatus } from "@prisma
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { assertRepertoireForTeacherStudent, getProgressErrorResponse, inferLessonInstrument, skillInstrumentsForLesson } from "@/lib/data/progress";
+import { assignCatalogItemToStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
+import { skillInstrumentToInstrument } from "@/lib/instruments";
 import { createNotification } from "@/lib/notifications";
 import { completeClassWorkflowSchema } from "@/lib/validators/progress";
 
@@ -106,6 +108,8 @@ export async function POST(req: Request, { params }: Params) {
       await assertRepertoireForTeacherStudent(teacherProfileId, session.studentId, repertoireItemId);
     }
   } catch (error) {
+    const catalogError = getRepertoireCatalogErrorMessage(error, auth.user.locale);
+    if (catalogError) return NextResponse.json({ error: catalogError.message }, { status: catalogError.status });
     const progressError = getProgressErrorResponse(error, auth.user.locale);
     if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
     throw error;
@@ -115,18 +119,23 @@ export async function POST(req: Request, { params }: Params) {
   const completed = input.status === SessionStatus.COMPLETED;
   const lessonNote = completed ? input.lessonNote : null;
 
-  const result = await db.$transaction(async (tx) => {
-    const updatedSession = await tx.classSession.update({
-      where: { id: session.id },
-      data: {
-        status: input.status,
-        completedAt: completed ? now : null,
-        instrument: completed ? (input.lessonInstrument ?? inferLessonInstrument(session.instrument ?? session.student.preferredInstrument)) : session.instrument,
-        lastClassNotes: completed ? (lessonNote?.studentVisibleNote || lessonNote?.summary || session.lastClassNotes) : session.lastClassNotes,
-      },
-    });
+  let result;
+  try {
+    result = await db.$transaction(async (tx) => {
+      const lessonInstrument = input.lessonInstrument ?? inferLessonInstrument(session.instrument ?? session.student.preferredInstrument);
+      const updatedSession = await tx.classSession.update({
+        where: { id: session.id },
+        data: {
+          status: input.status,
+          completedAt: completed ? now : null,
+          instrument: completed ? skillInstrumentToInstrument(lessonInstrument) : session.instrument,
+          lastClassNotes: completed ? (lessonNote?.studentVisibleNote || lessonNote?.summary || session.lastClassNotes) : session.lastClassNotes,
+        },
+      });
 
     let savedLessonNote = session.lessonNote;
+    const createdRepertoire = [];
+    const createdAssignments = [];
     if (completed && lessonNote) {
       savedLessonNote = await tx.lessonNote.upsert({
         where: { sessionId: session.id },
@@ -191,29 +200,64 @@ export async function POST(req: Request, { params }: Params) {
         });
       }
 
-      const createdRepertoire = [];
+      const newRepertoireByClientId = new Map<string, string>();
       for (const item of input.newRepertoireItems) {
-        createdRepertoire.push(await tx.repertoireItem.create({
-          data: {
-            studentId: session.studentId,
-            teacherId: teacherProfileId,
-            title: item.title,
-            composerOrArtist: item.composerOrArtist,
-            instrument: item.instrument,
-            level: item.level,
-            status: item.status,
-            startDate: now,
-            masteryPercent: item.masteryPercent,
-            currentFocusSection: item.currentFocusSection,
-            currentTempo: item.currentTempo,
-            targetTempo: item.targetTempo,
-            teacherNotes: item.teacherNotes,
-            studentVisibleNotes: item.studentVisibleNotes,
-          },
-        }));
+        let savedItem = item.catalogItemId
+          ? await assignCatalogItemToStudent({
+              catalogItemId: item.catalogItemId,
+              studentId: session.studentId,
+              teacherId: teacherProfileId,
+              values: {
+                status: item.status,
+                masteryPercent: item.masteryPercent,
+                currentFocusSection: item.currentFocusSection,
+                currentTempo: item.currentTempo,
+                targetTempo: item.targetTempo,
+                teacherNotes: item.teacherNotes,
+                studentVisibleNotes: item.studentVisibleNotes,
+              },
+              tx,
+            })
+          : await tx.repertoireItem.create({
+              data: {
+                studentId: session.studentId,
+                teacherId: teacherProfileId,
+                title: item.title,
+                composerOrArtist: item.composerOrArtist,
+                instrument: item.instrument,
+                level: item.level,
+                status: item.status,
+                startDate: now,
+                masteryPercent: item.masteryPercent,
+                currentFocusSection: item.currentFocusSection,
+                currentTempo: item.currentTempo,
+                targetTempo: item.targetTempo,
+                teacherNotes: item.teacherNotes,
+                studentVisibleNotes: item.studentVisibleNotes,
+              },
+            });
+        if (item.catalogItemId) {
+          savedItem = await tx.repertoireItem.update({
+            where: { id: savedItem.id },
+            data: {
+              title: item.title,
+              composerOrArtist: item.composerOrArtist,
+              instrument: item.instrument,
+              level: item.level,
+              status: item.status,
+              masteryPercent: item.masteryPercent,
+              currentFocusSection: item.currentFocusSection,
+              currentTempo: item.currentTempo,
+              targetTempo: item.targetTempo,
+              teacherNotes: item.teacherNotes,
+              studentVisibleNotes: item.studentVisibleNotes,
+            },
+          });
+        }
+        createdRepertoire.push(savedItem);
+        if (item.clientId) newRepertoireByClientId.set(item.clientId, savedItem.id);
       }
 
-      const createdAssignments = [];
       if (completed && savedLessonNote) {
         for (const assignment of input.assignments) {
           createdAssignments.push(await tx.practiceAssignment.create({
@@ -222,7 +266,7 @@ export async function POST(req: Request, { params }: Params) {
               teacherId: teacherProfileId,
               lessonNoteId: savedLessonNote.id,
               classSessionId: session.id,
-              repertoireItemId: assignment.repertoireItemId,
+              repertoireItemId: assignment.repertoireItemId ?? (assignment.newRepertoireClientId ? newRepertoireByClientId.get(assignment.newRepertoireClientId) : undefined),
               skillCategoryId: assignment.skillCategoryId,
               title: assignment.title,
               instructions: assignment.instructions,
@@ -233,10 +277,15 @@ export async function POST(req: Request, { params }: Params) {
           }));
         }
       }
+    }
 
       return { session: updatedSession, lessonNote: savedLessonNote, createdAssignments, createdRepertoire };
-    }
-  });
+    });
+  } catch (error) {
+    const catalogError = getRepertoireCatalogErrorMessage(error, auth.user.locale);
+    if (catalogError) return NextResponse.json({ error: catalogError.message }, { status: catalogError.status });
+    throw error;
+  }
 
   if (input.notifyStudent) {
     const notificationCopy = notificationForStatus(input.status, c);

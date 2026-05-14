@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 
 function roleLabel(role: Role, locale: string) {
   if (locale === "es") {
@@ -71,7 +72,7 @@ export default async function AdminAccessPage() {
                   </div>
                   <p className="mt-1 truncate text-xs text-[var(--color-ink-soft)]">{user.email}</p>
                   <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
-                    {user.teacherProfile?.specialty ?? user.studentProfile?.preferredInstrument ?? dictionary.admin.passwordAccountReady}
+                    {instrumentLabel(user.teacherProfile?.specialty ?? user.studentProfile?.preferredInstrument, viewer.locale) || dictionary.admin.passwordAccountReady}
                   </p>
                 </div>
               </div>

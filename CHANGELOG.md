@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- Shared repertoire/song catalog management for admin and teacher workspaces, including catalog search, create/edit flows, and student assignment outside the after-class workflow.
+- Searchable catalog song selection inside the after-class repertoire step while preserving custom song entry.
 - Owner-friendly Spanish architecture documentation with shareable SVG/PDF diagrams explaining roles, app architecture, data services, and deployment flow.
 - Student privacy and media consent gate requiring student accounts to sign the active bilingual consent before using protected app operations.
 - Signed consent PDF generation with Harmonizing branding, cursive typed signature rendering, audit metadata, private PDF download access, and Resend email receipt support.
@@ -15,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Student/teacher-only magic-link sign-in via Resend while admin accounts remain password-only.
 
 ### Changed
+- Instrument entry is now standardized to Piano/Voice dropdowns across student, teacher, class, repertoire, import, and after-class workflows, with legacy values like `Voz` normalized safely.
 - Teacher and student profile identity controls now link directly to `/settings` from the top bar and mobile drawer.
 - Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
 

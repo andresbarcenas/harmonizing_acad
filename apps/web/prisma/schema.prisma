@@ -230,6 +230,7 @@ model User {
   uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
   classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
   consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
+  createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
 
   @@index([role])
 }
@@ -576,6 +577,7 @@ model RepertoireItem {
   id                  String           @id @default(cuid())
   studentId           String
   teacherId           String?
+  catalogItemId        String?
   title               String
   composerOrArtist    String?
   instrument          String
@@ -595,6 +597,7 @@ model RepertoireItem {
 
   student             StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher             TeacherProfile?      @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  catalogItem         RepertoireCatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
   practiceAssignments PracticeAssignment[]
   practiceLogs        PracticeLog[]
   practiceVideos      PracticeVideo[]
@@ -602,6 +605,31 @@ model RepertoireItem {
 
   @@index([studentId, status])
   @@index([teacherId, status])
+  @@index([studentId, catalogItemId])
+}
+
+model RepertoireCatalogItem {
+  id                         String   @id @default(cuid())
+  title                      String
+  composerOrArtist           String?
+  instrument                  String
+  level                      String?
+  defaultFocusSection        String?
+  defaultCurrentTempo        Int?
+  defaultTargetTempo         Int?
+  defaultTeacherNotes        String?
+  defaultStudentVisibleNotes String?
+  tags                       String?
+  active                     Boolean  @default(true)
+  createdByUserId            String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  createdBy       User?            @relation("RepertoireCatalogCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  repertoireItems RepertoireItem[]
+
+  @@index([instrument, active, title])
+  @@index([createdByUserId, createdAt])
 }
 
 model RepertoireAttachment {

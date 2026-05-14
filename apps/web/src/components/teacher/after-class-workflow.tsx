@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { instrumentToSkillInstrument, normalizeInstrument } from "@/lib/instruments";
 import { cn } from "@/lib/utils";
 
 type CompletionStatus = "COMPLETED" | "NO_SHOW" | "CANCELLED" | "RESCHEDULE_PENDING";
@@ -28,6 +30,19 @@ type RepertoireOption = {
   targetTempo?: number | null;
   teacherNotes?: string | null;
   studentVisibleNotes?: string | null;
+};
+type RepertoireCatalogOption = {
+  id: string;
+  title: string;
+  composerOrArtist?: string | null;
+  instrument: string;
+  level?: string | null;
+  defaultFocusSection?: string | null;
+  defaultCurrentTempo?: number | null;
+  defaultTargetTempo?: number | null;
+  defaultTeacherNotes?: string | null;
+  defaultStudentVisibleNotes?: string | null;
+  tags?: string | null;
 };
 
 type LessonNoteState = {
@@ -59,7 +74,9 @@ type RepertoireUpdateState = {
   studentVisibleNotes: string;
 };
 type NewRepertoireState = {
+  clientId: string;
   enabled: boolean;
+  catalogItemId?: string;
   title: string;
   composerOrArtist: string;
   instrument: string;
@@ -79,6 +96,7 @@ type AssignmentState = {
   dueDate: string;
   expectedMinutes: string;
   repertoireItemId: string;
+  newRepertoireClientId: string;
   skillCategoryId: string;
   requiresVideo: boolean;
 };
@@ -149,6 +167,13 @@ function copy(locale: AppLocale) {
     noSkills: "No hay habilidades activas para este instrumento.",
     selectToUpdate: "Selecciona las piezas que quieres actualizar hoy.",
     addSong: "Agregar nueva pieza o canción",
+    fromCatalog: "Buscar en catálogo",
+    customSong: "Canción personalizada",
+    catalogSearch: "Buscar por título, artista o etiqueta",
+    search: "Buscar",
+    useSong: "Usar esta canción",
+    catalogSelected: "Seleccionada desde el catálogo",
+    noCatalogResults: "No encontramos canciones con esa búsqueda.",
     titleField: "Título",
     artist: "Compositor o artista",
     instrument: "Instrumento",
@@ -213,6 +238,13 @@ function copy(locale: AppLocale) {
     noSkills: "No active skills for this instrument.",
     selectToUpdate: "Select the pieces you want to update today.",
     addSong: "Add new piece or song",
+    fromCatalog: "Search catalog",
+    customSong: "Custom song",
+    catalogSearch: "Search by title, artist, or tag",
+    search: "Search",
+    useSong: "Use this song",
+    catalogSelected: "Selected from catalog",
+    noCatalogResults: "No songs found with that search.",
     titleField: "Title",
     artist: "Composer or artist",
     instrument: "Instrument",
@@ -276,10 +308,12 @@ export function AfterClassWorkflow(props: WorkflowProps) {
   const [skillRatings, setSkillRatings] = useState<SkillRatingState[]>(() => buildInitialSkillRatings(props.skillCategories, props.lessonNote?.skillRatings ?? []));
   const [repertoireUpdates, setRepertoireUpdates] = useState<RepertoireUpdateState[]>(() => props.repertoireItems.map(toRepertoireUpdate));
   const [newRepertoire, setNewRepertoire] = useState<NewRepertoireState>(() => ({
+    clientId: crypto.randomUUID(),
     enabled: false,
+    catalogItemId: undefined,
     title: "",
     composerOrArtist: "",
-    instrument: props.student.preferredInstrument ?? "Piano",
+    instrument: normalizeInstrument(props.student.preferredInstrument) ?? "Piano",
     level: "",
     status: "ASSIGNED",
     masteryPercent: 0,
@@ -325,7 +359,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
       if (draft.lessonNote) setLessonNote(draft.lessonNote);
       if (draft.skillRatings) setSkillRatings(draft.skillRatings);
       if (draft.repertoireUpdates) setRepertoireUpdates(draft.repertoireUpdates);
-      if (draft.newRepertoire) setNewRepertoire(draft.newRepertoire);
+      if (draft.newRepertoire) setNewRepertoire({ ...draft.newRepertoire, clientId: draft.newRepertoire.clientId ?? crypto.randomUUID() });
       if (draft.assignments) setAssignments(draft.assignments);
       setMessage({ kind: "info", text: c.draftRestored });
     } catch {
@@ -370,6 +404,8 @@ export function AfterClassWorkflow(props: WorkflowProps) {
         targetTempo: numberOrUndefined(item.targetTempo),
       })) : [],
       newRepertoireItems: status === "COMPLETED" && newRepertoire.enabled && newRepertoire.title.trim() ? [{
+        clientId: newRepertoire.clientId,
+        catalogItemId: newRepertoire.catalogItemId,
         title: newRepertoire.title,
         composerOrArtist: newRepertoire.composerOrArtist,
         instrument: newRepertoire.instrument,
@@ -388,6 +424,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
         dueDate: assignment.dueDate ? new Date(`${assignment.dueDate}T12:00:00.000Z`).toISOString() : undefined,
         expectedMinutes: numberOrUndefined(assignment.expectedMinutes),
         repertoireItemId: assignment.repertoireItemId || undefined,
+        newRepertoireClientId: assignment.newRepertoireClientId || undefined,
         skillCategoryId: assignment.skillCategoryId || undefined,
         requiresVideo: assignment.requiresVideo,
       })) : [],
@@ -451,8 +488,8 @@ export function AfterClassWorkflow(props: WorkflowProps) {
           {activeStepLabel === c.status ? <StatusStep locale={props.locale} status={status} onChange={setStatus} /> : null}
           {activeStepLabel === c.note && status === "COMPLETED" ? <LessonNoteStep c={c} note={lessonNote} onChange={setLessonNote} /> : null}
           {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} skills={filteredSkills} ratings={skillRatings} onChange={setSkillRatings} /> : null}
-          {activeStepLabel === c.repertoire && status === "COMPLETED" ? <RepertoireStep c={c} items={repertoireUpdates} setItems={setRepertoireUpdates} newItem={newRepertoire} setNewItem={setNewRepertoire} /> : null}
-          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
+          {activeStepLabel === c.repertoire && status === "COMPLETED" ? <RepertoireStep c={c} locale={props.locale} items={repertoireUpdates} setItems={setRepertoireUpdates} newItem={newRepertoire} setNewItem={setNewRepertoire} /> : null}
+          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} newRepertoire={newRepertoire} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
           {activeStepLabel === c.review ? (
             <ReviewStep
               c={c}
@@ -462,6 +499,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
               ratings={selectedRatings}
               skills={filteredSkills}
               repertoire={selectedRepertoire}
+              newRepertoire={newRepertoire}
               assignments={validAssignments}
               videoRequested={videoRequested}
               notifyStudent={notifyStudent}
@@ -615,10 +653,64 @@ function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy
   );
 }
 
-function RepertoireStep({ c, items, setItems, newItem, setNewItem }: { c: ReturnType<typeof copy>; items: RepertoireUpdateState[]; setItems: (items: RepertoireUpdateState[]) => void; newItem: NewRepertoireState; setNewItem: (item: NewRepertoireState) => void }) {
+function RepertoireStep({
+  c,
+  locale,
+  items,
+  setItems,
+  newItem,
+  setNewItem,
+}: {
+  c: ReturnType<typeof copy>;
+  locale: AppLocale;
+  items: RepertoireUpdateState[];
+  setItems: (items: RepertoireUpdateState[]) => void;
+  newItem: NewRepertoireState;
+  setNewItem: (item: NewRepertoireState) => void;
+}) {
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [catalogResults, setCatalogResults] = useState<RepertoireCatalogOption[]>([]);
+  const [catalogMessage, setCatalogMessage] = useState("");
+  const [searching, setSearching] = useState(false);
+
   function update(id: string, patch: Partial<RepertoireUpdateState>) {
     setItems(items.map((item) => item.repertoireItemId === id ? { ...item, ...patch } : item));
   }
+
+  async function searchCatalog() {
+    setSearching(true);
+    setCatalogMessage("");
+    const params = new URLSearchParams();
+    if (catalogQuery.trim()) params.set("query", catalogQuery.trim());
+    params.set("limit", "20");
+    const response = await fetch(`/api/repertoire/catalog?${params.toString()}`);
+    const payload = await response.json().catch(() => null) as { items?: RepertoireCatalogOption[]; error?: string } | null;
+    setSearching(false);
+    if (!response.ok || !payload?.items) {
+      setCatalogMessage(payload?.error ?? c.noCatalogResults);
+      return;
+    }
+    setCatalogResults(payload.items);
+    if (!payload.items.length) setCatalogMessage(c.noCatalogResults);
+  }
+
+  function selectCatalogItem(item: RepertoireCatalogOption) {
+    setNewItem({
+      ...newItem,
+      enabled: true,
+      catalogItemId: item.id,
+      title: item.title,
+      composerOrArtist: item.composerOrArtist ?? "",
+      instrument: normalizeInstrument(item.instrument) ?? "Piano",
+      level: item.level ?? "",
+      currentFocusSection: item.defaultFocusSection ?? "",
+      currentTempo: item.defaultCurrentTempo ? String(item.defaultCurrentTempo) : "",
+      targetTempo: item.defaultTargetTempo ? String(item.defaultTargetTempo) : "",
+      teacherNotes: item.defaultTeacherNotes ?? "",
+      studentVisibleNotes: item.defaultStudentVisibleNotes ?? "",
+    });
+  }
+
   return (
     <div className="space-y-4">
       <CardDescription>{c.selectToUpdate}</CardDescription>
@@ -641,10 +733,36 @@ function RepertoireStep({ c, items, setItems, newItem, setNewItem }: { c: Return
       <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-3">
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={newItem.enabled} onChange={(event) => setNewItem({ ...newItem, enabled: event.target.checked })} /> {c.addSong}</label>
         {newItem.enabled ? (
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
+          <div className="mt-3 space-y-3">
+            <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/64 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{c.fromCatalog}</p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <Input value={catalogQuery} onChange={(event) => setCatalogQuery(event.target.value)} placeholder={c.catalogSearch} />
+                <Button type="button" variant="outline" disabled={searching} onClick={searchCatalog}>{searching ? "..." : c.search}</Button>
+              </div>
+              {catalogMessage ? <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{catalogMessage}</p> : null}
+              {catalogResults.length ? (
+                <div className="mt-3 grid gap-2">
+                  {catalogResults.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectCatalogItem(item)}
+                      className="rounded-xl border border-[var(--color-border)] bg-white/76 p-3 text-left transition hover:border-[var(--color-gold)]"
+                    >
+                      <span className="block text-sm font-semibold text-[var(--color-ink)]">{item.title}</span>
+                      <span className="block text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, displayInstrument(item.instrument, locale), item.level, item.tags].filter(Boolean).join(" · ")}</span>
+                      <span className="mt-2 inline-block text-xs font-semibold text-[var(--color-gold-deep)]">{c.useSong}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {newItem.catalogItemId ? <Badge variant="gold">{c.catalogSelected}</Badge> : <Badge>{c.customSong}</Badge>}
+            <div className="grid gap-2 md:grid-cols-2">
             <Input value={newItem.title} onChange={(event) => setNewItem({ ...newItem, title: event.target.value })} placeholder={c.titleField} />
             <Input value={newItem.composerOrArtist} onChange={(event) => setNewItem({ ...newItem, composerOrArtist: event.target.value })} placeholder={c.artist} />
-            <Input value={newItem.instrument} onChange={(event) => setNewItem({ ...newItem, instrument: event.target.value })} placeholder={c.instrument} />
+            <InstrumentSelect value={newItem.instrument} onChange={(event) => setNewItem({ ...newItem, instrument: event.target.value })} locale={locale} aria-label={c.instrument} />
             <Input value={newItem.level} onChange={(event) => setNewItem({ ...newItem, level: event.target.value })} placeholder={c.level} />
             <select className={selectClass} value={newItem.status} onChange={(event) => setNewItem({ ...newItem, status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
             <Input type="number" min={0} max={100} value={newItem.masteryPercent} onChange={(event) => setNewItem({ ...newItem, masteryPercent: Number(event.target.value) })} placeholder={c.mastery} />
@@ -653,6 +771,7 @@ function RepertoireStep({ c, items, setItems, newItem, setNewItem }: { c: Return
             <Input type="number" value={newItem.targetTempo} onChange={(event) => setNewItem({ ...newItem, targetTempo: event.target.value })} placeholder={c.targetTempo} />
             <Input value={newItem.teacherNotes} onChange={(event) => setNewItem({ ...newItem, teacherNotes: event.target.value })} placeholder={c.teacherNotes} />
             <Input value={newItem.studentVisibleNotes} onChange={(event) => setNewItem({ ...newItem, studentVisibleNotes: event.target.value })} placeholder={c.studentNotes} />
+            </div>
           </div>
         ) : null}
       </div>
@@ -660,9 +779,16 @@ function RepertoireStep({ c, items, setItems, newItem, setNewItem }: { c: Return
   );
 }
 
-function PracticeStep({ c, assignments, setAssignments, skills, repertoire, existingAssignments }: { c: ReturnType<typeof copy>; assignments: AssignmentState[]; setAssignments: (assignments: AssignmentState[]) => void; skills: SkillOption[]; repertoire: RepertoireOption[]; existingAssignments: Array<{ id: string; title: string; requiresVideo: boolean }> }) {
+function PracticeStep({ c, assignments, setAssignments, skills, repertoire, newRepertoire, existingAssignments }: { c: ReturnType<typeof copy>; assignments: AssignmentState[]; setAssignments: (assignments: AssignmentState[]) => void; skills: SkillOption[]; repertoire: RepertoireOption[]; newRepertoire: NewRepertoireState; existingAssignments: Array<{ id: string; title: string; requiresVideo: boolean }> }) {
   function update(id: string, patch: Partial<AssignmentState>) {
     setAssignments(assignments.map((assignment) => assignment.id === id ? { ...assignment, ...patch } : assignment));
+  }
+  function selectRepertoire(assignmentId: string, value: string) {
+    if (value.startsWith("new:")) {
+      update(assignmentId, { repertoireItemId: "", newRepertoireClientId: value.replace("new:", "") });
+      return;
+    }
+    update(assignmentId, { repertoireItemId: value, newRepertoireClientId: "" });
   }
   return (
     <div className="space-y-4">
@@ -682,7 +808,11 @@ function PracticeStep({ c, assignments, setAssignments, skills, repertoire, exis
             <Input value={assignment.title} onChange={(event) => update(assignment.id, { title: event.target.value })} placeholder={c.assignmentTitle} />
             <Input type="date" value={assignment.dueDate} onChange={(event) => update(assignment.id, { dueDate: event.target.value })} aria-label={c.dueDate} />
             <Input type="number" min={1} max={600} value={assignment.expectedMinutes} onChange={(event) => update(assignment.id, { expectedMinutes: event.target.value })} placeholder={c.expectedMinutes} />
-            <select className={selectClass} value={assignment.repertoireItemId} onChange={(event) => update(assignment.id, { repertoireItemId: event.target.value })}><option value="">{c.relatedSong}</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
+            <select className={selectClass} value={assignment.newRepertoireClientId ? `new:${assignment.newRepertoireClientId}` : assignment.repertoireItemId} onChange={(event) => selectRepertoire(assignment.id, event.target.value)}>
+              <option value="">{c.relatedSong}</option>
+              {repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+              {newRepertoire.enabled && newRepertoire.title.trim() ? <option value={`new:${newRepertoire.clientId}`}>{newRepertoire.title}</option> : null}
+            </select>
             <select className={selectClass} value={assignment.skillCategoryId} onChange={(event) => update(assignment.id, { skillCategoryId: event.target.value })}><option value="">{c.relatedSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
             <label className="flex h-[3.35rem] items-center gap-2 rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm"><input type="checkbox" checked={assignment.requiresVideo} onChange={(event) => update(assignment.id, { requiresVideo: event.target.checked })} /> {c.requiresVideo}</label>
             <Textarea className="md:col-span-2" value={assignment.instructions} onChange={(event) => update(assignment.id, { instructions: event.target.value })} placeholder={c.assignmentInstructions} />
@@ -694,7 +824,8 @@ function PracticeStep({ c, assignments, setAssignments, skills, repertoire, exis
   );
 }
 
-function ReviewStep({ c, locale, status, summary, ratings, skills, repertoire, assignments, videoRequested, notifyStudent, setNotifyStudent }: { c: ReturnType<typeof copy>; locale: AppLocale; status: CompletionStatus; summary: string; ratings: SkillRatingState[]; skills: SkillOption[]; repertoire: RepertoireUpdateState[]; assignments: AssignmentState[]; videoRequested: boolean; notifyStudent: boolean; setNotifyStudent: (value: boolean) => void }) {
+function ReviewStep({ c, locale, status, summary, ratings, skills, repertoire, newRepertoire, assignments, videoRequested, notifyStudent, setNotifyStudent }: { c: ReturnType<typeof copy>; locale: AppLocale; status: CompletionStatus; summary: string; ratings: SkillRatingState[]; skills: SkillOption[]; repertoire: RepertoireUpdateState[]; newRepertoire: NewRepertoireState; assignments: AssignmentState[]; videoRequested: boolean; notifyStudent: boolean; setNotifyStudent: (value: boolean) => void }) {
+  const repertoireCount = repertoire.length + (newRepertoire.enabled && newRepertoire.title.trim() ? 1 : 0);
   return (
     <div className="space-y-4">
       <CardDescription>{c.doneIntro}</CardDescription>
@@ -702,7 +833,7 @@ function ReviewStep({ c, locale, status, summary, ratings, skills, repertoire, a
         <SummaryBlock label={c.status} value={statusLabel(status, locale)} />
         <SummaryBlock label={c.summary} value={summary || "-"} />
         <SummaryBlock label={c.skills} value={ratings.length ? ratings.map((rating) => `${skills.find((skill) => skill.id === rating.skillCategoryId)?.name ?? "Skill"}: ${rating.rating}/5`).join(" · ") : "-"} />
-        <SummaryBlock label={c.repertoire} value={repertoire.length ? `${repertoire.length}` : "-"} />
+        <SummaryBlock label={c.repertoire} value={repertoireCount ? `${repertoireCount}` : "-"} />
         <SummaryBlock label={c.practice} value={assignments.length ? assignments.map((assignment) => assignment.title).join(" · ") : c.noAssignment} />
         <SummaryBlock label={c.requiresVideo} value={videoRequested ? (locale === "es" ? "Sí" : "Yes") : "No"} />
       </div>
@@ -744,7 +875,7 @@ function toRepertoireUpdate(item: RepertoireOption): RepertoireUpdateState {
 function newAssignment(): AssignmentState {
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 7);
-  return { id: crypto.randomUUID(), title: "", instructions: "", dueDate: dueDate.toISOString().slice(0, 10), expectedMinutes: "15", repertoireItemId: "", skillCategoryId: "", requiresVideo: false };
+  return { id: crypto.randomUUID(), title: "", instructions: "", dueDate: dueDate.toISOString().slice(0, 10), expectedMinutes: "15", repertoireItemId: "", newRepertoireClientId: "", skillCategoryId: "", requiresVideo: false };
 }
 
 function numberOrUndefined(value: unknown) {
@@ -758,11 +889,7 @@ function statusLabel(status: CompletionStatus, locale: AppLocale) {
 }
 
 function inferLessonInstrument(value?: string | null): LessonInstrument {
-  const normalized = (value ?? "").toLocaleLowerCase();
-  if (normalized.includes("voz") || normalized.includes("vocal") || normalized.includes("canto") || normalized.includes("sing") || normalized.includes("voice")) {
-    return "VOICE";
-  }
-  return "PIANO";
+  return instrumentToSkillInstrument(value);
 }
 
 function filterSkillsForLesson(skills: SkillOption[], lessonInstrument: LessonInstrument) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -154,7 +155,7 @@ export function StudentEditForm({
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
-            <Input name="preferredInstrument" defaultValue={initial.preferredInstrument ?? ""} placeholder={dictionary.forms.preferredInstrumentOptional} />
+            <InstrumentSelect name="preferredInstrument" defaultValue={initial.preferredInstrument} locale={locale} compact required aria-label={dictionary.forms.preferredInstrumentOptional} />
           </div>
           <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
             <div className="mb-2">

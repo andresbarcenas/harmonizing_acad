@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 const passwordStrengthMessage =
@@ -48,6 +49,18 @@ const optionalProfileImageString = z.preprocess((value) => {
   message: "URL de foto inválida",
 }).optional());
 
+const requiredInstrumentSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  return normalizeInstrument(value) ?? value.trim();
+}, z.enum(["Piano", "Voice"], { message: "Selecciona Piano o Voz." }));
+
+const optionalInstrumentSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return normalizeInstrument(trimmed) ?? trimmed;
+}, z.enum(["Piano", "Voice"], { message: "Selecciona Piano o Voz." }).optional());
+
 const requiredDollarAmountSchema = z.preprocess((value) => {
   if (value === null || value === undefined) return undefined;
   if (typeof value === "string" && !value.trim()) return undefined;
@@ -94,7 +107,7 @@ export const createStudentSchema = z.object({
   priceUsd: requiredDollarAmountSchema,
   timezone: optionalTimezoneSchema,
   phone: z.string().max(40).optional(),
-  preferredInstrument: z.string().max(100).optional(),
+  preferredInstrument: optionalInstrumentSchema,
   bio: z.string().max(500).optional(),
   profileImage: optionalProfileImageString,
 });
@@ -107,7 +120,7 @@ export const createTeacherSchema = z.object({
     .min(8, passwordStrengthMessage)
     .max(72)
     .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, passwordStrengthMessage),
-  specialty: z.string().min(2).max(120),
+  specialty: requiredInstrumentSchema,
   timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
   zoomLink: optionalUrlString,
@@ -125,7 +138,7 @@ export const updateStudentSchema = z
     monthlyClassCount: optionalMonthlyClassCountSchema,
     priceUsd: optionalDollarAmountSchema,
     phone: optionalTrimmedString(40),
-    preferredInstrument: optionalTrimmedString(100),
+    preferredInstrument: optionalInstrumentSchema,
     bio: optionalTrimmedString(500),
     profileImage: optionalProfileImageString,
   })
@@ -144,7 +157,7 @@ export const updateStudentSchema = z
 export const updateTeacherSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email().max(180).transform((value) => value.toLowerCase().trim()),
-  specialty: z.string().min(2).max(120),
+  specialty: requiredInstrumentSchema,
   timezone: optionalTimezoneSchema,
   bio: optionalTrimmedString(500),
   zoomLink: optionalUrlString,

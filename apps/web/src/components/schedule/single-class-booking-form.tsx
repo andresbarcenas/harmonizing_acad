@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { classTypeLabel } from "@/lib/class-session-labels";
@@ -121,13 +122,13 @@ export function SingleClassBookingForm({
     <form action={onSubmit} className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         {selectedStudent ? (
-          <ReadOnlyField label={isSpanish ? "Estudiante" : "Student"} value={`${selectedStudent.name}${selectedStudent.instrument ? ` · ${selectedStudent.instrument}` : ""}`} />
+          <ReadOnlyField label={isSpanish ? "Estudiante" : "Student"} value={`${selectedStudent.name}${selectedStudent.instrument ? ` · ${displayInstrument(selectedStudent.instrument, locale)}` : ""}`} />
         ) : (
           <Field label={isSpanish ? "Estudiante" : "Student"} htmlFor="studentId">
             <select id="studentId" name="studentId" defaultValue={defaultStudent} required className={selectClassName}>
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
-                  {student.name} {student.instrument ? `· ${student.instrument}` : ""}
+                  {student.name} {student.instrument ? `· ${displayInstrument(student.instrument, locale)}` : ""}
                 </option>
               ))}
             </select>
@@ -167,7 +168,9 @@ export function SingleClassBookingForm({
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <Field label={isSpanish ? "Instrumento / tipo" : "Instrument / type"} htmlFor="instrument"><Input id="instrument" name="instrument" placeholder={isSpanish ? "Piano, voz..." : "Piano, voice..."} /></Field>
+        <Field label={isSpanish ? "Instrumento" : "Instrument"} htmlFor="instrument">
+          <InstrumentSelect id="instrument" name="instrument" locale={locale} defaultValue={selectedStudent?.instrument} required />
+        </Field>
         <Field label={isSpanish ? "Link de clase" : "Class link"} htmlFor="meetingUrl"><Input id="meetingUrl" name="meetingUrl" type="url" defaultValue={selectedTeacher?.meetingUrl ?? defaultMeetingUrl ?? ""} placeholder="https://zoom.us/j/..." /></Field>
       </div>
 

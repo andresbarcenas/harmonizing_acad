@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { PracticeAssignmentStatus } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
+import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
@@ -239,7 +240,7 @@ export function RepertoireForm({ studentId, locale }: { studentId: string; local
     <form action={submit} className="grid gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4 md:grid-cols-2">
       <Input name="title" required placeholder={c.title} />
       <Input name="composerOrArtist" placeholder={c.composer} />
-      <Input name="instrument" required defaultValue="Piano" placeholder={c.instrument} />
+      <InstrumentSelect name="instrument" locale={locale} required aria-label={c.instrument} />
       <Input name="level" placeholder={c.level} />
       <select name="status" defaultValue="ASSIGNED" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
       <Input name="masteryPercent" type="number" min={0} max={100} defaultValue={0} placeholder={c.mastery} />
