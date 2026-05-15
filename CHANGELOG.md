@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
 
 ### Fixed
+- Protected media storage now requires `PRIVATE_BLOB_READ_WRITE_TOKEN` instead of falling back to the public avatar/media Blob token, preventing practice videos and repertoire sheets from being written to the old public `harmonizing-media` store when the private token is missing.
 - Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.
 
 ## [0.7.4] - 2026-05-15
