@@ -34,8 +34,14 @@ function sanitizeFilename(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-function privateBlobToken() {
-  return process.env.PRIVATE_BLOB_READ_WRITE_TOKEN?.trim() || process.env.BLOB_READ_WRITE_TOKEN?.trim();
+function requirePrivateBlobToken() {
+  const token = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN?.trim();
+  if (!token) {
+    throw new Error(
+      "Private Vercel Blob storage is not configured. Set PRIVATE_BLOB_READ_WRITE_TOKEN to the private Blob store read/write token.",
+    );
+  }
+  return token;
 }
 
 export function isPrivateMediaStorageKey(storageKey: string) {
@@ -97,7 +103,7 @@ export async function storePracticeVideo(file: File, studentProfileId: string) {
     const blob = await put(`private-media/practice-videos/${key}`, file, {
       access: "private",
       contentType: file.type || "video/mp4",
-      token: privateBlobToken(),
+      token: requirePrivateBlobToken(),
     });
 
     return { storageKey: blob.pathname };
@@ -135,7 +141,7 @@ export async function storeRepertoireAttachment(file: File, repertoireItemId: st
     const blob = await put(`private-media/repertoire-attachments/${repertoireItemId}/${Date.now()}-${randomUUID()}-${safeName}`, file, {
       access: "private",
       contentType: file.type || "application/pdf",
-      token: privateBlobToken(),
+      token: requirePrivateBlobToken(),
     });
 
     return { storageKey: blob.pathname };
@@ -168,7 +174,7 @@ export async function storePrivatePracticeVideoBuffer(input: {
     const blob = await put(`private-media/practice-videos/${key}`, input.buffer, {
       access: "private",
       contentType: input.contentType || "video/mp4",
-      token: privateBlobToken(),
+      token: requirePrivateBlobToken(),
     });
     return { storageKey: blob.pathname };
   }
@@ -198,7 +204,7 @@ export async function storePrivateRepertoireAttachmentBuffer(input: {
     const blob = await put(`private-media/repertoire-attachments/${input.repertoireItemId}/${Date.now()}-${randomUUID()}-${safeName}`, input.buffer, {
       access: "private",
       contentType: input.contentType || "application/pdf",
-      token: privateBlobToken(),
+      token: requirePrivateBlobToken(),
     });
     return { storageKey: blob.pathname };
   }
@@ -228,7 +234,7 @@ export async function readProtectedMedia(input: {
   if (provider === "vercel-blob" && isPrivateMediaStorageKey(storageKey)) {
     const result = await get(storageKey, {
       access: "private",
-      token: privateBlobToken(),
+      token: requirePrivateBlobToken(),
       headers: input.range ? { Range: input.range } : undefined,
     });
     if (!result || !result.stream) return null;
@@ -317,7 +323,7 @@ export async function deleteProtectedMedia(storageKey: string, mediaType: "video
   if (!storageKey || storageKey.startsWith("http://") || storageKey.startsWith("https://")) return;
   const provider = getStorageProvider();
   if (provider === "vercel-blob" && isPrivateMediaStorageKey(storageKey)) {
-    await del(storageKey, { token: privateBlobToken() }).catch(() => undefined);
+    await del(storageKey, { token: requirePrivateBlobToken() }).catch(() => undefined);
     return;
   }
   if (provider === "local") {
