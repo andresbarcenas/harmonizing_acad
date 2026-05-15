@@ -44,6 +44,14 @@ Profile images, practice videos, and repertoire/sheet attachments are uploaded t
 - `/api/media/videos/[videoId]`
 - `/api/media/repertoire-attachments/[attachmentId]`
 
+Current upload surfaces that must remain private-store compatible:
+
+- Profile photos through `/api/uploads/profile-image`.
+- Student practice videos through `/api/videos`.
+- Repertoire and sheet music files through `/api/progress/repertoire/[repertoireItemId]/attachments`.
+
+Do not add `access: "public"` for production uploads while `BLOB_READ_WRITE_TOKEN` points to the private `harmonizing` store. New file-upload features should write private blobs and expose files through authenticated app routes with role checks.
+
 `NEXT_PUBLIC_MEDIA_BASE_URL` is only needed for local MinIO/S3-style storage and should not be required for the Vercel Blob production path.
 
 After confirming `BLOB_READ_WRITE_TOKEN` points to the private production Blob store, migrate existing public practice videos and sheet attachments into private storage:
