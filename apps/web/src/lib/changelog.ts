@@ -11,6 +11,20 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.5",
+    date: "2026-05-15",
+    sections: [
+      {
+        title: "Fixed",
+        items: [
+          "Profile photos, practice videos, and repertoire/sheet attachments now all use private-store compatible Blob writes.",
+          "Profile image uploads now use private Vercel Blob access and authenticated avatar routes when production is connected to a private Blob store.",
+          "Vercel Blob storage now standardizes on the native BLOB_READ_WRITE_TOKEN pointing to the private harmonizing Blob store.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.4",
     date: "2026-05-15",
     sections: [
