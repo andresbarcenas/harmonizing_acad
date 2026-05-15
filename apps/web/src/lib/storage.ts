@@ -34,21 +34,11 @@ function sanitizeFilename(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-function requirePrivateBlobToken() {
-  const token = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN?.trim();
+function requireBlobToken(context: "protected media" | "profile image") {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
   if (!token) {
     throw new Error(
-      "Private Vercel Blob storage is not configured. Set PRIVATE_BLOB_READ_WRITE_TOKEN to the private Blob store read/write token.",
-    );
-  }
-  return token;
-}
-
-function requireProfileBlobToken() {
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim() || process.env.PRIVATE_BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) {
-    throw new Error(
-      "Profile image storage is not configured. Set BLOB_READ_WRITE_TOKEN for public avatars or PRIVATE_BLOB_READ_WRITE_TOKEN for the configured Vercel Blob store.",
+      `Vercel Blob ${context} storage is not configured. Connect the intended Blob store to this Vercel project and ensure BLOB_READ_WRITE_TOKEN is set for the deployment environment.`,
     );
   }
   return token;
@@ -113,7 +103,7 @@ export async function storePracticeVideo(file: File, studentProfileId: string) {
     const blob = await put(`private-media/practice-videos/${key}`, file, {
       access: "private",
       contentType: file.type || "video/mp4",
-      token: requirePrivateBlobToken(),
+      token: requireBlobToken("protected media"),
     });
 
     return { storageKey: blob.pathname };
@@ -151,7 +141,7 @@ export async function storeRepertoireAttachment(file: File, repertoireItemId: st
     const blob = await put(`private-media/repertoire-attachments/${repertoireItemId}/${Date.now()}-${randomUUID()}-${safeName}`, file, {
       access: "private",
       contentType: file.type || "application/pdf",
-      token: requirePrivateBlobToken(),
+      token: requireBlobToken("protected media"),
     });
 
     return { storageKey: blob.pathname };
@@ -184,7 +174,7 @@ export async function storePrivatePracticeVideoBuffer(input: {
     const blob = await put(`private-media/practice-videos/${key}`, input.buffer, {
       access: "private",
       contentType: input.contentType || "video/mp4",
-      token: requirePrivateBlobToken(),
+      token: requireBlobToken("protected media"),
     });
     return { storageKey: blob.pathname };
   }
@@ -214,7 +204,7 @@ export async function storePrivateRepertoireAttachmentBuffer(input: {
     const blob = await put(`private-media/repertoire-attachments/${input.repertoireItemId}/${Date.now()}-${randomUUID()}-${safeName}`, input.buffer, {
       access: "private",
       contentType: input.contentType || "application/pdf",
-      token: requirePrivateBlobToken(),
+      token: requireBlobToken("protected media"),
     });
     return { storageKey: blob.pathname };
   }
@@ -244,7 +234,7 @@ export async function readProtectedMedia(input: {
   if (provider === "vercel-blob" && isPrivateMediaStorageKey(storageKey)) {
     const result = await get(storageKey, {
       access: "private",
-      token: requirePrivateBlobToken(),
+      token: requireBlobToken("protected media"),
       headers: input.range ? { Range: input.range } : undefined,
     });
     if (!result || !result.stream) return null;
@@ -333,7 +323,7 @@ export async function deleteProtectedMedia(storageKey: string, mediaType: "video
   if (!storageKey || storageKey.startsWith("http://") || storageKey.startsWith("https://")) return;
   const provider = getStorageProvider();
   if (provider === "vercel-blob" && isPrivateMediaStorageKey(storageKey)) {
-    await del(storageKey, { token: requirePrivateBlobToken() }).catch(() => undefined);
+    await del(storageKey, { token: requireBlobToken("protected media") }).catch(() => undefined);
     return;
   }
   if (provider === "local") {
@@ -373,7 +363,7 @@ export async function storeProfileImage(file: File, userId: string) {
   if (getStorageProvider() === "vercel-blob") {
     const blob = await put(`profile-images/${key}`, file, {
       access: "public",
-      token: requireProfileBlobToken(),
+      token: requireBlobToken("profile image"),
     });
 
     return { imageUrl: blob.url };

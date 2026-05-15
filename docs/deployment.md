@@ -16,8 +16,7 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `CLASS_REMINDER_OFFSETS_MINUTES=1440,60`
 - `CLASS_REMINDER_WINDOW_MINUTES=20`
 - `STORAGE_PROVIDER=vercel-blob`
-- `BLOB_READ_WRITE_TOKEN`
-- `PRIVATE_BLOB_READ_WRITE_TOKEN`
+- `BLOB_READ_WRITE_TOKEN` from the intended Vercel Blob store. For production, this should be the private `harmonizing` store (`store_6qK2sEo1avMUTZrl`), not the old public `harmonizing-media` store.
 - `ALEGRA_API_BASE_URL`
 - `ALEGRA_API_EMAIL`
 - `ALEGRA_API_TOKEN`
@@ -34,20 +33,19 @@ Create the managed resources from `apps/web`:
 ```bash
 npx vercel@latest integration add neon --environment production
 npx vercel@latest integration add resend --environment production
-npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
-npx vercel@latest blob create-store harmonizing-private-media --access private --yes --environment production
+npx vercel@latest blob create-store harmonizing --access private --yes --environment production
 ```
 
-Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
+Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Vercel Blob injects `BLOB_READ_WRITE_TOKEN`; production must point that variable at the private `harmonizing` Blob store.
 
-Profile images use the public Vercel Blob store because avatars are low-risk and need to render directly in the UI. Practice videos and repertoire/sheet attachments use the private Vercel Blob store and are served only through authenticated app routes:
+Profile images are uploaded as public blobs for direct avatar rendering. Practice videos and repertoire/sheet attachments are uploaded as private blobs and served only through authenticated app routes:
 
 - `/api/media/videos/[videoId]`
 - `/api/media/repertoire-attachments/[attachmentId]`
 
 `NEXT_PUBLIC_MEDIA_BASE_URL` is only needed for local MinIO/S3-style storage and should not be required for the Vercel Blob production path.
 
-After configuring `PRIVATE_BLOB_READ_WRITE_TOKEN`, migrate existing public practice videos and sheet attachments into private storage:
+After confirming `BLOB_READ_WRITE_TOKEN` points to the private production Blob store, migrate existing public practice videos and sheet attachments into private storage:
 
 ```bash
 cd apps/web

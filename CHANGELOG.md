@@ -33,7 +33,7 @@ All notable changes to this project will be documented in this file.
 - Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
 
 ### Fixed
-- Protected media storage now requires `PRIVATE_BLOB_READ_WRITE_TOKEN` instead of falling back to the public avatar/media Blob token, preventing practice videos and repertoire sheets from being written to the old public `harmonizing-media` store when the private token is missing.
+- Vercel Blob storage now standardizes on the native `BLOB_READ_WRITE_TOKEN` for profile images, practice videos, and repertoire sheets so production can be switched to the private `harmonizing` Blob store without relying on a custom empty token variable.
 - Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.
 
 ## [0.7.4] - 2026-05-15
@@ -42,7 +42,7 @@ All notable changes to this project will be documented in this file.
 - Authenticated protected media routes for practice videos and repertoire/sheet attachments.
 - Private Vercel Blob support for new practice video and repertoire attachment uploads.
 - Protected media migration script (`npm run migrate:protected-media`) with dry-run, apply, and production safety flags.
-- Private media deployment documentation and environment examples for `PRIVATE_BLOB_READ_WRITE_TOKEN`.
+- Private media deployment documentation and environment examples for using `BLOB_READ_WRITE_TOKEN` with the private production Blob store.
 - Shared scheduling timezone selector used by both one-time and recurring class forms.
 
 ### Changed
