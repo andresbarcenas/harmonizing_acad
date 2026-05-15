@@ -37,7 +37,7 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
         <div className="mt-4">
           <SingleClassBookingForm
             role="teacher"
-            students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument }))}
+            students={data.students.map((assignment) => ({ id: assignment.student.id, name: assignment.student.user.name, instrument: assignment.student.preferredInstrument, timezone: assignment.student.user.timezone }))}
             defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
             defaultTeacherId={data.teacher?.id}
             selectedStudentId={data.selectedStudentId}

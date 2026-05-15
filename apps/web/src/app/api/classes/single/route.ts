@@ -4,6 +4,7 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { normalizeInstrument } from "@/lib/instruments";
+import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotifications } from "@/lib/notifications";
 import { buildUtcClassWindow, validateClassBookingWindow } from "@/lib/scheduling";
 import { singleClassBookingSchema } from "@/lib/validators/class-scheduling";
@@ -46,10 +47,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante o docente no encontrada." : "Student or teacher not found." }, { status: 404 });
   }
 
+  if (auth.user.role !== Role.ADMIN && payload.timezoneMode === "CUSTOM_TIMEZONE") {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Solo administración puede usar una zona horaria personalizada." : "Only admins can use a custom timezone." }, { status: 403 });
+  }
+
+  const studentTimezone = normalizeIanaTimezone(student.user.timezone);
+  const teacherTimezone = normalizeIanaTimezone(teacher.user.timezone);
+  const bookingTimezone =
+    payload.timezoneMode === "TEACHER_TIME"
+      ? teacherTimezone
+      : payload.timezoneMode === "CUSTOM_TIMEZONE"
+        ? normalizeIanaTimezone(payload.timezone)
+        : studentTimezone;
+
   const window = buildUtcClassWindow({
     date: payload.date,
     startTimeLocal: payload.startTimeLocal,
-    timezone: payload.timezone,
+    timezone: bookingTimezone,
     durationMin: payload.durationMin,
   });
 

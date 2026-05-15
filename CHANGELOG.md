@@ -35,6 +35,23 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.
 
+## [0.7.4] - 2026-05-15
+
+### Added
+- Authenticated protected media routes for practice videos and repertoire/sheet attachments.
+- Private Vercel Blob support for new practice video and repertoire attachment uploads.
+- Protected media migration script (`npm run migrate:protected-media`) with dry-run, apply, and production safety flags.
+- Private media deployment documentation and environment examples for `PRIVATE_BLOB_READ_WRITE_TOKEN`.
+- Shared scheduling timezone selector used by both one-time and recurring class forms.
+
+### Changed
+- Student and teacher video players now load media through permission-checked app routes instead of direct public storage URLs.
+- Repertoire sheet links now resolve through authenticated media routes for admin, teacher, and student access control.
+- One-time and recurring class timezone selectors now use the same display, labels, and student/teacher timezone definition.
+
+### Fixed
+- Repertoire attachment deletion now also attempts to remove the protected stored media object.
+
 ## [0.7.3] - 2026-05-14
 
 ### Added

@@ -12,7 +12,6 @@ import { getStudentProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { instrumentLabel, skillInstrumentToInstrument } from "@/lib/instruments";
-import { getRepertoireAttachmentPublicUrl } from "@/lib/storage";
 
 type StudentProgressData = NonNullable<Awaited<ReturnType<typeof getStudentProgressData>>["student"]>;
 type StudentAssignment = StudentProgressData["practiceAssignments"][number];
@@ -217,7 +216,7 @@ function RepertoireCard({ items, locale }: { items: StudentRepertoire[]; locale:
                   {item.attachments.map((attachment) => (
                     <a
                       key={attachment.id}
-                      href={getRepertoireAttachmentPublicUrl(attachment.storageKey)}
+                      href={`/api/media/repertoire-attachments/${attachment.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="rounded-full border border-[var(--color-border)] bg-white/84 px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]"

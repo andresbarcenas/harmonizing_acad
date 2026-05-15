@@ -18,16 +18,16 @@
 - [x] v0.7.1 timezone stabilization: student-anchored recurring classes, teacher-time preservation for existing series, and safer Colombia/U.S. daylight-saving handling
 - [x] v0.7.2 deployment hotfix: removed high-frequency class reminder Vercel Cron from Hobby production deploys while keeping the endpoint available
 - [x] v0.7.3 manual billing controls: selectable 4/8-class plans, editable active student plans with subscription history, and dev monthly report demo fixtures
+- [x] v0.7.4 production privacy hardening: protected practice videos and repertoire sheets, private Blob migration support, and unified scheduling timezone selectors
 
 ## Current MVP Status
 
-- MVP-complete locally: authenticated role workspaces, scheduling/rescheduling, recurring plus single-class visibility, practice upload/review, repertoire attachments, messaging, notifications, admin operations, historical imports, and read-only invoicing.
+- MVP-complete locally: authenticated role workspaces, scheduling/rescheduling, recurring plus single-class visibility, protected practice upload/review, protected repertoire attachments, messaging, notifications, admin operations, historical imports, and read-only invoicing.
 - Release baseline: English is the default language; Spanish is selectable publicly and per account.
 - Validation baseline: `npm run typecheck`, `npm run lint`, `npm run build`, route smoke after `docker compose up --build`, and the responsive QA checklist in `docs/responsive-qa.md`.
 
 ## Remaining Production Hardening
 
-- Signed media URLs/CDN for practice videos.
 - Realtime messaging or SSE if live chat becomes required.
 - Background jobs for heavy async work beyond current Vercel cron/manual triggers.
 - Rate limiting, audit logs, production observability, and alerting.

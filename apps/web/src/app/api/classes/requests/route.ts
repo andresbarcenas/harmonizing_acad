@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const window = buildUtcClassWindow({
     date: payload.date,
     startTimeLocal: payload.startTimeLocal,
-    timezone: payload.timezone,
+    timezone: assignment.student.user.timezone,
     durationMin: payload.durationMin,
   });
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { ClassSessionType } from "@prisma/client";
+import { ClassSessionType, RecurringTimezoneMode } from "@prisma/client";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
+import { TimezoneAnchorSelector } from "@/components/schedule/timezone-anchor-selector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { classTypeLabel } from "@/lib/class-session-labels";
@@ -18,6 +19,7 @@ type StudentOption = {
   name: string;
   instrument?: string | null;
   teacherId?: string | null;
+  timezone?: string | null;
 };
 
 type TeacherOption = {
@@ -63,9 +65,20 @@ export function SingleClassBookingForm({
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState(defaultTeacherId ?? teachers[0]?.id ?? "");
+  const [selectedStudentValue, setSelectedStudentValue] = useState(selectedStudentId ?? students[0]?.id ?? "");
+  const [timezoneMode, setTimezoneMode] = useState<RecurringTimezoneMode>(RecurringTimezoneMode.STUDENT_TIME);
+  const [customTimezone, setCustomTimezone] = useState(defaultTimezone);
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId) ?? null;
-  const selectedStudent = students.find((student) => student.id === selectedStudentId) ?? null;
-  const normalizedTimezone = normalizeIanaTimezone(selectedTeacher?.timezone ?? defaultTimezone);
+  const selectedStudent = students.find((student) => student.id === (selectedStudentId ?? selectedStudentValue)) ?? null;
+  const teacherTimezone = normalizeIanaTimezone(selectedTeacher?.timezone ?? defaultTimezone);
+  const studentTimezone = normalizeIanaTimezone(selectedStudent?.timezone ?? defaultTimezone);
+  const normalizedCustomTimezone = normalizeIanaTimezone(customTimezone);
+  const anchorTimezone =
+    timezoneMode === RecurringTimezoneMode.TEACHER_TIME
+      ? teacherTimezone
+      : timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE
+        ? normalizedCustomTimezone
+        : studentTimezone;
   const isSpanish = locale === "es";
 
   const initialDate = useMemo(() => {
@@ -86,7 +99,8 @@ export function SingleClassBookingForm({
       date: String(formData.get("date") ?? ""),
       startTimeLocal: String(formData.get("startTimeLocal") ?? ""),
       durationMin: Number(formData.get("durationMin") ?? 60),
-      timezone: normalizeIanaTimezone(String(formData.get("timezone") ?? normalizedTimezone)),
+      timezoneMode,
+      timezone: anchorTimezone,
       locationMode: String(formData.get("locationMode") ?? "ONLINE"),
       meetingUrl: String(formData.get("meetingUrl") ?? "").trim() || undefined,
       lessonFocus: String(formData.get("lessonFocus") ?? "").trim() || undefined,
@@ -113,7 +127,6 @@ export function SingleClassBookingForm({
   }
 
   const availableTypes = role === "teacher" ? teacherClassTypeOptions : classTypeOptions;
-  const defaultStudent = selectedStudent?.id ?? students[0]?.id;
 
   return (
     <form action={onSubmit} className="space-y-3">
@@ -122,7 +135,7 @@ export function SingleClassBookingForm({
           <ReadOnlyField label={isSpanish ? "Estudiante" : "Student"} value={`${selectedStudent.name}${selectedStudent.instrument ? ` · ${displayInstrument(selectedStudent.instrument, locale)}` : ""}`} />
         ) : (
           <Field label={isSpanish ? "Estudiante" : "Student"} htmlFor="studentId">
-            <select id="studentId" name="studentId" defaultValue={defaultStudent} required className={selectClassName}>
+            <select id="studentId" name="studentId" value={selectedStudentValue} onChange={(event) => setSelectedStudentValue(event.target.value)} required className={selectClassName}>
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
                   {student.name} {student.instrument ? `· ${displayInstrument(student.instrument, locale)}` : ""}
@@ -154,7 +167,6 @@ export function SingleClassBookingForm({
 
       <div className="grid gap-3 md:grid-cols-3">
         <Field label={isSpanish ? "Duración" : "Duration"} htmlFor="durationMin"><Input id="durationMin" name="durationMin" type="number" min={15} max={180} defaultValue={60} required /></Field>
-        <Field label={isSpanish ? "Zona horaria" : "Timezone"} htmlFor="timezone"><Input id="timezone" name="timezone" defaultValue={normalizedTimezone} required /></Field>
         <Field label={isSpanish ? "Modalidad" : "Mode"} htmlFor="locationMode">
           <select id="locationMode" name="locationMode" defaultValue="ONLINE" className={selectClassName}>
             <option value="ONLINE">{isSpanish ? "Online" : "Online"}</option>
@@ -163,6 +175,19 @@ export function SingleClassBookingForm({
           </select>
         </Field>
       </div>
+
+      <TimezoneAnchorSelector
+        anchorTimezone={anchorTimezone}
+        customTimezone={customTimezone}
+        idPrefix="single-class"
+        locale={locale}
+        mode={timezoneMode}
+        onCustomTimezoneChange={setCustomTimezone}
+        onModeChange={setTimezoneMode}
+        role={role}
+        studentTimezone={studentTimezone}
+        teacherTimezone={teacherTimezone}
+      />
 
       <div className="grid gap-3 md:grid-cols-2">
         <Field label={isSpanish ? "Instrumento" : "Instrument"} htmlFor="instrument">

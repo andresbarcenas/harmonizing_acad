@@ -10,7 +10,6 @@ import { requireViewer } from "@/features/auth/server";
 import { getTeacherVideosData } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { getVideoPublicUrl } from "@/lib/storage";
 
 type TeacherVideosPageProps = {
   searchParams?: Promise<{
@@ -89,7 +88,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
                 controls
                 preload="metadata"
                 className="w-full rounded-xl border border-[var(--color-border)] bg-black/90"
-                src={getVideoPublicUrl(video.storageKey)}
+                src={`/api/media/videos/${video.id}`}
               >
                 <track kind="captions" />
               </video>

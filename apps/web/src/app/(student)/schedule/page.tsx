@@ -114,7 +114,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
             : "For makeup lessons, extra practice, or a quick evaluation. Your teacher or academy will approve before confirmation."}
         </CardDescription>
         <div className="mt-4">
-          <ClassRequestForm timezone={viewer.timezone} locale={viewer.locale} />
+          <ClassRequestForm timezone={viewer.timezone} teacherTimezone={data.assignedTeacher?.user.timezone} locale={viewer.locale} />
         </div>
       </Card>
 

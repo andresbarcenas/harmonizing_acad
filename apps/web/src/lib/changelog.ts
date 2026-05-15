@@ -11,6 +11,29 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.4",
+    date: "2026-05-15",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Authenticated protected media routes for practice videos and repertoire/sheet attachments.",
+          "Private Vercel Blob support for new practice video and repertoire attachment uploads.",
+          "Protected media migration script with dry-run, apply, and production safety flags.",
+          "Shared scheduling timezone selector used by both one-time and recurring class forms.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Student and teacher video players now load media through permission-checked app routes instead of direct public storage URLs.",
+          "Repertoire sheet links now resolve through authenticated media routes with admin, teacher, and student access control.",
+          "One-time and recurring class timezone selectors now use the same display, labels, and student/teacher timezone definition.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.3",
     date: "2026-05-14",
     sections: [

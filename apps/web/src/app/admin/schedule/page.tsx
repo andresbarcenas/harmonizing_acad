@@ -33,7 +33,7 @@ export default async function AdminSchedulePage() {
         <div className="mt-4">
           <SingleClassBookingForm
             role="admin"
-            students={data.students.map((student) => ({ id: student.id, name: student.user.name, instrument: student.preferredInstrument, teacherId: student.assignment?.teacherId }))}
+            students={data.students.map((student) => ({ id: student.id, name: student.user.name, instrument: student.preferredInstrument, teacherId: student.assignment?.teacherId, timezone: student.user.timezone }))}
             teachers={data.teachers.map((teacher) => ({ id: teacher.id, name: teacher.user.name, timezone: teacher.user.timezone }))}
             defaultTimezone={viewer.timezone}
             locale={viewer.locale}

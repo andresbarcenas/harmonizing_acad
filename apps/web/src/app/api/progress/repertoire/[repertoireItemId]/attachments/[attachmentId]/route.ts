@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { deleteProtectedMedia } from "@/lib/storage";
 
 type Params = { params: Promise<{ repertoireItemId: string; attachmentId: string }> };
 
@@ -29,5 +30,6 @@ export async function DELETE(_req: Request, { params }: Params) {
   }
 
   await db.repertoireAttachment.delete({ where: { id: attachment.id } });
+  await deleteProtectedMedia(attachment.storageKey, "repertoire");
   return NextResponse.json({ ok: true });
 }

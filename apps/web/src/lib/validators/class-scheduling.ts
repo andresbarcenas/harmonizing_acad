@@ -33,6 +33,9 @@ const optionalInstrument = z.preprocess((value) => {
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida");
 const timeSchema = z.string().regex(/^\d{2}:\d{2}$/, "Hora inválida");
 const durationSchema = z.coerce.number().int().min(15).max(180);
+const classTimezoneModeSchema = z
+  .enum(["STUDENT_TIME", "TEACHER_TIME", "CUSTOM_TIMEZONE"])
+  .default("STUDENT_TIME");
 
 export const singleClassBookingTypes = [
   ClassSessionType.SINGLE,
@@ -57,6 +60,7 @@ export const singleClassBookingSchema = z.object({
   date: dateSchema,
   startTimeLocal: timeSchema,
   durationMin: durationSchema,
+  timezoneMode: classTimezoneModeSchema,
   timezone: timezoneSchema,
   locationMode: z.preprocess((value) => {
     if (typeof value !== "string") return "ONLINE";

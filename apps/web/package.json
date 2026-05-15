@@ -1,6 +1,6 @@
 {
   "name": "harmonizing-web",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -23,7 +23,8 @@
     "bootstrap:prod": "npm run prisma:deploy && npm run bootstrap:admin",
     "import:tommy-history": "node scripts/import-tommy-history.cjs",
     "import:student-history": "node scripts/import-tommy-history.cjs",
-    "seed:report-demo": "tsx scripts/seed-monthly-report-demo.ts"
+    "seed:report-demo": "tsx scripts/seed-monthly-report-demo.ts",
+    "migrate:protected-media": "tsx scripts/migrate-protected-media.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

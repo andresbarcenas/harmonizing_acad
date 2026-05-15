@@ -17,6 +17,7 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `CLASS_REMINDER_WINDOW_MINUTES=20`
 - `STORAGE_PROVIDER=vercel-blob`
 - `BLOB_READ_WRITE_TOKEN`
+- `PRIVATE_BLOB_READ_WRITE_TOKEN`
 - `ALEGRA_API_BASE_URL`
 - `ALEGRA_API_EMAIL`
 - `ALEGRA_API_TOKEN`
@@ -34,11 +35,33 @@ Create the managed resources from `apps/web`:
 npx vercel@latest integration add neon --environment production
 npx vercel@latest integration add resend --environment production
 npx vercel@latest blob create-store harmonizing-media --access public --yes --environment production
+npx vercel@latest blob create-store harmonizing-private-media --access private --yes --environment production
 ```
 
 Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Blob injects `BLOB_READ_WRITE_TOKEN`.
 
-Profile images, practice videos, and repertoire attachments use Vercel Blob in production when `STORAGE_PROVIDER=vercel-blob`. `NEXT_PUBLIC_MEDIA_BASE_URL` is only needed for local MinIO/S3-style storage and should not be required for the Vercel Blob production path.
+Profile images use the public Vercel Blob store because avatars are low-risk and need to render directly in the UI. Practice videos and repertoire/sheet attachments use the private Vercel Blob store and are served only through authenticated app routes:
+
+- `/api/media/videos/[videoId]`
+- `/api/media/repertoire-attachments/[attachmentId]`
+
+`NEXT_PUBLIC_MEDIA_BASE_URL` is only needed for local MinIO/S3-style storage and should not be required for the Vercel Blob production path.
+
+After configuring `PRIVATE_BLOB_READ_WRITE_TOKEN`, migrate existing public practice videos and sheet attachments into private storage:
+
+```bash
+cd apps/web
+npm run migrate:protected-media
+npm run migrate:protected-media -- --apply
+```
+
+For production, use the same direct production environment and add the explicit safety flag:
+
+```bash
+npm run migrate:protected-media -- --apply --force-production
+```
+
+The migration is idempotent and skips records whose `storageKey` already starts with `private-media/`. It copies existing files and updates database records, but it does not delete old public blobs automatically. After verifying protected playback/downloads, remove old public media manually from the public Blob store if needed.
 
 ## First-Time Link
 
@@ -104,5 +127,6 @@ It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual bec
 - Vercel cron is configured in `apps/web/vercel.json` because `apps/web` is the deployed project root.
 - If `NEXTAUTH_URL` changes, redeploy so the new environment value applies.
 - Student consent signing stores the generated PDF privately in Postgres and sends a copy by Resend. If Resend is unavailable, the signature remains valid and `/admin/consents` shows the skipped/failed email state.
+- Student practice videos and repertoire/sheet attachments are protected media. Admins can access all, teachers can access assigned students only, and students can access only their own media. Manual QA should verify that a student cannot open another student's `/api/media/videos/...` or `/api/media/repertoire-attachments/...` URL.
 - The daily invoice cron is Hobby-safe. Class reminder email code remains available at `/api/cron/class-reminders`, but it is not scheduled on Vercel yet because Hobby accounts reject more-than-daily cron schedules.
 - Disable Vercel's native Git auto-deploy if this GitHub Actions workflow is the production deploy source, otherwise `main` pushes can create duplicate deployments.

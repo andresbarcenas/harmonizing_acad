@@ -8,7 +8,6 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentVideosData } from "@/lib/data";
 import { formatDate, getDictionary } from "@/lib/i18n";
-import { getVideoPublicUrl } from "@/lib/storage";
 
 type StudentVideosPageProps = {
   searchParams?: Promise<{
@@ -64,7 +63,7 @@ export default async function StudentVideosPage({ searchParams }: StudentVideosP
                     controls
                     preload="metadata"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-black/90"
-                    src={getVideoPublicUrl(video.storageKey)}
+                    src={`/api/media/videos/${video.id}`}
                   >
                     <track kind="captions" />
                   </video>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { displayInstrument } from "@/components/instrument-select";
+import { TimezoneAnchorSelector } from "@/components/schedule/timezone-anchor-selector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary } from "@/lib/i18n";
@@ -74,13 +75,6 @@ export function RecurringClassForm({
       : timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE
         ? normalizedCustomTimezone
         : studentTimezone;
-  const anchorNotice =
-    timezoneMode === RecurringTimezoneMode.TEACHER_TIME
-      ? dictionary.teacher.recurringTeacherAnchoredNotice
-      : timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE
-        ? dictionary.teacher.recurringCustomAnchoredNotice
-        : dictionary.teacher.recurringStudentAnchoredNotice;
-
   const initialDate = useMemo(() => {
     const value = new Date();
     value.setDate(value.getDate() + 1);
@@ -218,51 +212,18 @@ export function RecurringClassForm({
           <Input id="startTimeLocal" name="startTimeLocal" type="time" defaultValue="18:00" required />
         </div>
       </div>
-      <p className="text-xs text-[var(--color-ink-soft)]">
-        {dictionary.teacher.teacherTime}: <span className="font-semibold text-[var(--color-ink)]">{teacherTimezone}</span> · {dictionary.teacher.studentTime}:{" "}
-        <span className="font-semibold text-[var(--color-ink)]">{studentTimezone}</span>
-      </p>
-
-      <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/68 p-3">
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
-          <div className="space-y-1.5">
-            <label htmlFor="timezoneMode" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-              {dictionary.teacher.recurringTimezoneModeLabel}
-            </label>
-            <select
-              id="timezoneMode"
-              name="timezoneMode"
-              value={timezoneMode}
-              onChange={(event) => setTimezoneMode(event.target.value as RecurringTimezoneMode)}
-              className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
-            >
-              <option value={RecurringTimezoneMode.STUDENT_TIME}>{dictionary.teacher.recurringStudentTime}</option>
-              <option value={RecurringTimezoneMode.TEACHER_TIME}>{dictionary.teacher.recurringTeacherTime}</option>
-              {role === "admin" ? <option value={RecurringTimezoneMode.CUSTOM_TIMEZONE}>{dictionary.teacher.recurringCustomTime}</option> : null}
-            </select>
-          </div>
-          {timezoneMode === RecurringTimezoneMode.CUSTOM_TIMEZONE ? (
-            <div className="space-y-1.5">
-              <label htmlFor="customTimezone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-                {dictionary.teacher.recurringCustomTimezone}
-              </label>
-              <Input
-                id="customTimezone"
-                name="customTimezone"
-                value={customTimezone}
-                onChange={(event) => setCustomTimezone(event.target.value)}
-                placeholder="America/New_York"
-                required
-              />
-            </div>
-          ) : (
-            <div className="rounded-[1.1rem] border border-[var(--color-border)] bg-[var(--color-cream)] px-4 py-3 text-sm text-[var(--color-ink-soft)]">
-              {dictionary.common.timezone}: <span className="font-semibold text-[var(--color-ink)]">{anchorTimezone}</span>
-            </div>
-          )}
-        </div>
-        <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{anchorNotice}</p>
-      </div>
+      <TimezoneAnchorSelector
+        anchorTimezone={anchorTimezone}
+        customTimezone={customTimezone}
+        idPrefix="recurring-class"
+        locale={locale}
+        mode={timezoneMode}
+        onCustomTimezoneChange={setCustomTimezone}
+        onModeChange={setTimezoneMode}
+        role={role}
+        studentTimezone={studentTimezone}
+        teacherTimezone={teacherTimezone}
+      />
 
       <div className="space-y-1.5">
         <p className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.teacher.weekdays}</p>

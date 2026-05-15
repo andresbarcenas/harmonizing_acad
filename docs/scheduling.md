@@ -78,9 +78,18 @@ The app stores scheduled class times in UTC:
 - `startsAtUtc`
 - `endsAtUtc`
 
-Forms collect a local date/time plus an IANA timezone. The server converts that local time into UTC before saving.
+Forms collect a local date/time plus an anchor timezone. The server converts that local time into UTC before saving.
 
 The saved `ClassSession.timezone` keeps the booking/anchor timezone visible for audit/debugging. Display should always use the viewer/student/teacher timezone through the existing i18n formatting helpers.
+
+One-time class booking follows the same intent as recurring scheduling:
+
+- new one-time classes default to `Student time`, so the time entered by admin/teacher is interpreted in the student's local timezone
+- `Teacher time` is available when the teacher's local schedule should be the source of truth
+- `Custom timezone` is admin-only
+- the form shows both student and teacher local previews before saving
+
+Student one-time class requests are always interpreted in the student's own timezone and then converted to UTC.
 
 Recurring class series use `RecurringTimezoneMode`:
 

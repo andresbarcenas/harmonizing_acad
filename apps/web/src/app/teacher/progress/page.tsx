@@ -13,7 +13,6 @@ import { requireViewer } from "@/features/auth/server";
 import { getTeacherProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import { instrumentLabel, instrumentToSkillInstrument } from "@/lib/instruments";
-import { getRepertoireAttachmentPublicUrl } from "@/lib/storage";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
 
@@ -152,7 +151,7 @@ function SelectedStudentProgress({
                           id: attachment.id,
                           originalName: attachment.originalName,
                           sizeBytes: attachment.sizeBytes,
-                          url: getRepertoireAttachmentPublicUrl(attachment.storageKey),
+                          url: `/api/media/repertoire-attachments/${attachment.id}`,
                         }))}
                       />
                     </div>
