@@ -38,8 +38,9 @@ npx vercel@latest blob create-store harmonizing --access private --yes --environ
 
 Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Vercel Blob injects `BLOB_READ_WRITE_TOKEN`; production must point that variable at the private `harmonizing` Blob store.
 
-Profile images are uploaded as public blobs for direct avatar rendering. Practice videos and repertoire/sheet attachments are uploaded as private blobs and served only through authenticated app routes:
+Profile images, practice videos, and repertoire/sheet attachments are uploaded to the private production Blob store. Avatars are served through authenticated app routes so profile uploads work with a private-only store while existing public avatar URLs continue to render.
 
+- `/api/media/profile-images/[userId]`
 - `/api/media/videos/[videoId]`
 - `/api/media/repertoire-attachments/[attachmentId]`
 

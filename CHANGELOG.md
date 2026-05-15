@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Deployment notes now clarify that Resend powers magic links, consent receipts, and class reminder emails.
 
 ### Fixed
+- Profile image uploads now use private Vercel Blob access when production is connected to a private Blob store, with avatars served through an authenticated app route instead of requesting unsupported public writes.
 - Vercel Blob storage now standardizes on the native `BLOB_READ_WRITE_TOKEN` for profile images, practice videos, and repertoire sheets so production can be switched to the private `harmonizing` Blob store without relying on a custom empty token variable.
 - Consent PDF generation now uses the standalone PDFKit bundle and buffer-based signature font registration so signing works in bundled Docker/Next.js runtime chunks.
 

@@ -48,6 +48,10 @@ export function isPrivateMediaStorageKey(storageKey: string) {
   return storageKey.startsWith("private-media/");
 }
 
+export function isPrivateProfileImageStorageKey(storageKey: string) {
+  return storageKey.startsWith("profile-images/profiles/");
+}
+
 export function isAllowedVideoType(mimeType: string) {
   return ALLOWED_VIDEO_MIME_TYPES.includes(mimeType as (typeof ALLOWED_VIDEO_MIME_TYPES)[number]);
 }
@@ -319,6 +323,44 @@ export async function protectedMediaToBuffer(input: {
   };
 }
 
+export async function readPrivateProfileImage(input: {
+  storageKey: string;
+  fallbackContentType?: string;
+}) {
+  const provider = getStorageProvider();
+
+  if (provider === "vercel-blob" && isPrivateProfileImageStorageKey(input.storageKey)) {
+    const result = await get(input.storageKey, {
+      access: "private",
+      token: requireBlobToken("profile image"),
+    });
+    if (!result?.stream) return null;
+    const contentLength = result.headers.get("content-length") ?? String(result.blob.size ?? "");
+    return {
+      stream: result.stream,
+      contentType: result.blob.contentType || input.fallbackContentType || "image/jpeg",
+      contentLength,
+      status: 200,
+    };
+  }
+
+  if (provider === "local") {
+    const localRoot = process.env.LOCAL_PROFILE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "profiles");
+    const targetPath = path.join(localRoot, input.storageKey);
+    const fileStat = await stat(targetPath).catch(() => null);
+    if (!fileStat) return null;
+    const nodeStream = createReadStream(targetPath);
+    return {
+      stream: Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>,
+      contentType: input.fallbackContentType || "image/jpeg",
+      contentLength: String(fileStat.size),
+      status: 200,
+    };
+  }
+
+  return null;
+}
+
 export async function deleteProtectedMedia(storageKey: string, mediaType: "video" | "repertoire") {
   if (!storageKey || storageKey.startsWith("http://") || storageKey.startsWith("https://")) return;
   const provider = getStorageProvider();
@@ -362,11 +404,12 @@ export async function storeProfileImage(file: File, userId: string) {
 
   if (getStorageProvider() === "vercel-blob") {
     const blob = await put(`profile-images/${key}`, file, {
-      access: "public",
+      access: "private",
+      contentType: file.type || "image/jpeg",
       token: requireBlobToken("profile image"),
     });
 
-    return { imageUrl: blob.url };
+    return { imageUrl: `/api/media/profile-images/${encodeURIComponent(userId)}?key=${encodeURIComponent(blob.pathname)}` };
   }
 
   const mediaBase = getPublicMediaBaseUrl();
