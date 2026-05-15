@@ -44,6 +44,16 @@ function requirePrivateBlobToken() {
   return token;
 }
 
+function requireProfileBlobToken() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim() || process.env.PRIVATE_BLOB_READ_WRITE_TOKEN?.trim();
+  if (!token) {
+    throw new Error(
+      "Profile image storage is not configured. Set BLOB_READ_WRITE_TOKEN for public avatars or PRIVATE_BLOB_READ_WRITE_TOKEN for the configured Vercel Blob store.",
+    );
+  }
+  return token;
+}
+
 export function isPrivateMediaStorageKey(storageKey: string) {
   return storageKey.startsWith("private-media/");
 }
@@ -363,6 +373,7 @@ export async function storeProfileImage(file: File, userId: string) {
   if (getStorageProvider() === "vercel-blob") {
     const blob = await put(`profile-images/${key}`, file, {
       access: "public",
+      token: requireProfileBlobToken(),
     });
 
     return { imageUrl: blob.url };
