@@ -1,19 +1,17 @@
-import Link from "next/link";
-import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
+import { ClassRequestStatus, Role } from "@prisma/client";
 
 import { ClassRequestActions } from "@/components/schedule/class-request-actions";
+import { ClassSessionDayList } from "@/components/schedule/class-session-day-list";
 import { SingleClassBookingForm } from "@/components/schedule/single-class-booking-form";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherScheduleData } from "@/lib/data";
 import { formatDateTimeInZone } from "@/lib/i18n";
-import { classRequestStatusLabel, classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
+import { classRequestStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
 
@@ -63,38 +61,26 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
         <Card>
           <CardTitle>{isSpanish ? "Clases próximas y recientes" : "Upcoming and recent classes"}</CardTitle>
           <CardDescription>{isSpanish ? "Incluye clases recurrentes e individuales." : "Includes recurring and one-off classes."}</CardDescription>
-          <div className="mt-4 space-y-3">
-            {data.sessions.map((session) => (
-              <div key={session.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Avatar src={session.student.user.image} alt={session.student.user.name} fallback={session.student.user.name.slice(0, 1)} className="h-8 w-8 text-[10px]" />
-                      <p className="truncate text-sm font-semibold">{session.student.user.name}</p>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant={session.type === "RECURRING" ? "default" : "gold"}>{classTypeLabel(session.type, viewer.locale)}</Badge>
-                      <Badge variant={session.status === SessionStatus.CANCELLED ? "danger" : session.status === SessionStatus.COMPLETED ? "success" : "default"}>{classStatusLabel(session.status, viewer.locale)}</Badge>
-                    </div>
-                    <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {Math.round((session.endsAtUtc.getTime() - session.startsAtUtc.getTime()) / 60000)} min</p>
-                    <p className="text-xs text-[var(--color-ink-soft)]">
-                      {isSpanish ? "Estudiante" : "Student"}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} ({session.student.user.timezone})
-                    </p>
-                    {session._count.attachments ? (
-                      <p className="text-xs font-semibold text-[var(--color-gold-deep)]">
-                        {isSpanish ? "Materiales" : "Files"}: {session._count.attachments}
-                      </p>
-                    ) : null}
-                    {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={`/classes/${session.id}`}><Button size="sm" variant="outline">{isSpanish ? "Detalle" : "Detail"}</Button></Link>
-                    <Link href={`/teacher/classes/${session.id}/complete`}><Button size="sm" variant="gold">{isSpanish ? "Completar" : "Complete"}</Button></Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {!data.sessions.length ? <CardDescription>{isSpanish ? "No hay clases en esta ventana." : "No classes in this window."}</CardDescription> : null}
+          <div className="mt-4">
+            <ClassSessionDayList
+              locale={viewer.locale}
+              emptyText={isSpanish ? "No hay clases en esta ventana." : "No classes in this window."}
+              sessions={data.sessions.map((session) => ({
+                id: session.id,
+                startsAtUtc: session.startsAtUtc,
+                endsAtUtc: session.endsAtUtc,
+                type: session.type,
+                status: session.status,
+                primaryName: session.student.user.name,
+                primaryImage: session.student.user.image,
+                viewerTimezone: viewer.timezone,
+                studentTimezone: session.student.user.timezone,
+                lessonFocus: session.lessonFocus,
+                attachmentCount: session._count.attachments,
+                detailHref: `/classes/${session.id}`,
+                completeHref: `/teacher/classes/${session.id}/complete`,
+              }))}
+            />
           </div>
         </Card>
 

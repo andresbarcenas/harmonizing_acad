@@ -2,6 +2,7 @@ import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
 import Link from "next/link";
 
 import { ClassRequestForm } from "@/components/schedule/class-request-form";
+import { ClassSessionDayList } from "@/components/schedule/class-session-day-list";
 import { RescheduleWidget } from "@/components/schedule/reschedule-widget";
 import { WeeklyCalendar } from "@/components/schedule/weekly-calendar";
 import { AppShell } from "@/components/ui/app-shell";
@@ -14,7 +15,7 @@ import { getStudentScheduleData } from "@/lib/data";
 import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 
 type StudentSchedulePageProps = {
-  searchParams?: Promise<{ week?: string }> | { week?: string };
+  searchParams?: Promise<{ week?: string }>;
 };
 
 export default async function StudentSchedulePage({ searchParams }: StudentSchedulePageProps) {
@@ -90,6 +91,37 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           ) : null}
         </Card>
       ) : null}
+
+      <Card>
+        <CardTitle>{viewer.locale === "es" ? "Clases próximas y recientes" : "Upcoming and recent classes"}</CardTitle>
+        <CardDescription>
+          {viewer.locale === "es"
+            ? "Consulta tus clases pasadas y próximas, con materiales y detalle de cada clase."
+            : "Review past and upcoming classes, with materials and class details."}
+        </CardDescription>
+        <div className="mt-4">
+          <ClassSessionDayList
+            locale={viewer.locale}
+            emptyText={viewer.locale === "es" ? "No hay clases recientes o próximas." : "No recent or upcoming classes."}
+            showTeacherTime={Boolean(data.assignedTeacher?.user.timezone)}
+            sessions={data.classListSessions.map((session) => ({
+              id: session.id,
+              startsAtUtc: session.startsAtUtc,
+              endsAtUtc: session.endsAtUtc,
+              type: session.type,
+              status: session.status,
+              primaryName: session.teacher.user.name,
+              primaryImage: session.teacher.user.image,
+              viewerTimezone: viewer.timezone,
+              studentTimezone: viewer.timezone,
+              teacherTimezone: session.teacher.user.timezone,
+              lessonFocus: session.lessonFocus,
+              attachmentCount: session._count.attachments,
+              detailHref: `/classes/${session.id}`,
+            }))}
+          />
+        </div>
+      </Card>
 
       {reschedulableSession ? (
         <RescheduleWidget

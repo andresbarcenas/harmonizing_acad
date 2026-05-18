@@ -103,7 +103,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
   const studentTimezone = normalizeIanaTimezone(viewer.timezone);
   const week = resolveScheduleWeek(studentTimezone, options.week);
 
-  const [student, sessions, nextUpcomingSession, pendingRequests, classRequests] = await Promise.all([
+  const [student, sessions, classListSessions, nextUpcomingSession, pendingRequests, classRequests] = await Promise.all([
     db.studentProfile.findUnique({
       where: { id: studentProfileId },
       include: {
@@ -130,6 +130,17 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
         status: { not: SessionStatus.CANCELLED },
       },
       include: { _count: { select: { attachments: true } } },
+      orderBy: { startsAtUtc: "asc" },
+    }),
+    db.classSession.findMany({
+      where: {
+        studentId: studentProfileId,
+        startsAtUtc: { gte: addDays(now, -30), lte: addDays(now, 60) },
+      },
+      include: {
+        teacher: { include: { user: true } },
+        _count: { select: { attachments: true } },
+      },
       orderBy: { startsAtUtc: "asc" },
     }),
     db.classSession.findFirst({
@@ -190,6 +201,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
   return {
     assignedTeacher: teacher ?? null,
     sessions,
+    classListSessions,
     nextUpcomingSession,
     slots,
     pendingRequests,

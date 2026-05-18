@@ -1,18 +1,17 @@
-import Link from "next/link";
-import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
+import { ClassRequestStatus, Role } from "@prisma/client";
 
 import { ClassRequestActions } from "@/components/schedule/class-request-actions";
+import { ClassSessionDayList } from "@/components/schedule/class-session-day-list";
 import { SingleClassBookingForm } from "@/components/schedule/single-class-booking-form";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getAdminScheduleData } from "@/lib/data";
 import { formatDateTimeInZone } from "@/lib/i18n";
-import { classRequestStatusLabel, classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
+import { classRequestStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 
 export default async function AdminSchedulePage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -59,11 +58,27 @@ export default async function AdminSchedulePage() {
         <Card>
           <CardTitle>{isSpanish ? "Clases programadas" : "Scheduled classes"}</CardTitle>
           <CardDescription>{isSpanish ? "Recurrentes e individuales en una sola vista operacional." : "Recurring and one-off classes in one operational view."}</CardDescription>
-          <div className="mt-4 space-y-3">
-            {data.sessions.map((session) => (
-              <ClassRow key={session.id} session={session} timezone={viewer.timezone} locale={viewer.locale} />
-            ))}
-            {!data.sessions.length ? <CardDescription>{isSpanish ? "No hay clases próximas." : "No upcoming classes."}</CardDescription> : null}
+          <div className="mt-4">
+            <ClassSessionDayList
+              locale={viewer.locale}
+              emptyText={isSpanish ? "No hay clases próximas." : "No upcoming classes."}
+              showTeacherTime
+              sessions={data.sessions.map((session) => ({
+                id: session.id,
+                startsAtUtc: session.startsAtUtc,
+                endsAtUtc: session.endsAtUtc,
+                type: session.type,
+                status: session.status,
+                primaryName: session.student.user.name,
+                secondaryName: session.teacher.user.name,
+                viewerTimezone: viewer.timezone,
+                studentTimezone: session.student.user.timezone,
+                teacherTimezone: session.teacher.user.timezone,
+                lessonFocus: session.lessonFocus,
+                attachmentCount: session._count.attachments,
+                detailHref: `/classes/${session.id}`,
+              }))}
+            />
           </div>
         </Card>
 
@@ -100,35 +115,5 @@ export default async function AdminSchedulePage() {
         </Card>
       </div>
     </AppShell>
-  );
-}
-
-function ClassRow({ session, timezone, locale }: { session: Awaited<ReturnType<typeof getAdminScheduleData>>["sessions"][number]; timezone: string; locale: "en" | "es" }) {
-  return (
-    <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={session.type === "RECURRING" ? "default" : "gold"}>{classTypeLabel(session.type, locale)}</Badge>
-            <Badge variant={session.status === SessionStatus.CANCELLED ? "danger" : session.status === SessionStatus.COMPLETED ? "success" : "default"}>{classStatusLabel(session.status, locale)}</Badge>
-          </div>
-          <p className="mt-2 text-sm font-semibold">{session.student.user.name} · {session.teacher.user.name}</p>
-          <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(session.startsAtUtc, timezone, locale)} · {Math.round((session.endsAtUtc.getTime() - session.startsAtUtc.getTime()) / 60000)} min</p>
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            {locale === "es" ? "Estudiante" : "Student"}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, locale)} ({session.student.user.timezone})
-          </p>
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            {locale === "es" ? "Docente" : "Teacher"}: {formatDateTimeInZone(session.startsAtUtc, session.teacher.user.timezone, locale)} ({session.teacher.user.timezone})
-          </p>
-          {session._count.attachments ? (
-            <p className="text-xs font-semibold text-[var(--color-gold-deep)]">
-              {locale === "es" ? "Materiales" : "Files"}: {session._count.attachments}
-            </p>
-          ) : null}
-          {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
-        </div>
-        <Link href={`/classes/${session.id}`}><Button size="sm" variant="outline">{locale === "es" ? "Ver detalle" : "View detail"}</Button></Link>
-      </div>
-    </div>
   );
 }

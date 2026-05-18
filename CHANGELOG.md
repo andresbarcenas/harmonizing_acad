@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.7] - 2026-05-18
+
+### Added
+- Student `/schedule` now includes a grouped “Upcoming and recent classes” list so families can review past and upcoming classes outside the weekly calendar.
+- Shared grouped class list component with day headers, color accents, prominent time chips, status/type badges, materials counts, and class detail links.
+
+### Changed
+- Teacher and admin schedule class lists now group classes by day and make class times easier to scan on iPad/mobile widths.
+
 ## [0.7.6] - 2026-05-18
 
 ### Added

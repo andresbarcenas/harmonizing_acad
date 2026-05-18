@@ -11,6 +11,25 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.7",
+    date: "2026-05-18",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Student schedule now includes a grouped Upcoming and recent classes list for past and upcoming lessons.",
+          "Shared grouped class list component with day headers, color accents, prominent time chips, status/type badges, materials counts, and detail links.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Teacher and admin schedule class lists now group classes by day and make class times easier to scan on iPad/mobile widths.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.6",
     date: "2026-05-18",
     sections: [
