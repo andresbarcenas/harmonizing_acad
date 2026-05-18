@@ -113,6 +113,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
               include: {
                 user: true,
                 availability: true,
+                blackoutDates: true,
               },
             },
           },
@@ -128,6 +129,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
         },
         status: { not: SessionStatus.CANCELLED },
       },
+      include: { _count: { select: { attachments: true } } },
       orderBy: { startsAtUtc: "asc" },
     }),
     db.classSession.findFirst({
@@ -163,7 +165,7 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
 
   const teacher = student?.assignment?.teacher;
   let slots = teacher
-    ? buildWeekSlots(teacher.availability, teacher.user.timezone ?? "America/New_York", week.startUtc, week.endUtc)
+    ? buildWeekSlots(teacher.availability, teacher.blackoutDates, teacher.user.timezone ?? "America/New_York", week.startUtc, week.endUtc)
     : [];
 
   if (teacher && slots.length) {
@@ -230,10 +232,13 @@ type Availability = {
   timezone: string;
 };
 
-function buildWeekSlots(availability: Availability[], fallbackTimezone: string, selectedWeekStartUtc: Date, selectedWeekEndUtc: Date) {
+type Blackout = { localDate: string };
+
+function buildWeekSlots(availability: Availability[], blackouts: Blackout[], fallbackTimezone: string, selectedWeekStartUtc: Date, selectedWeekEndUtc: Date) {
   const now = new Date();
   const slots: { startUtc: Date; endUtc: Date }[] = [];
   const seen = new Set<string>();
+  const blackoutDates = new Set(blackouts.map((blackout) => blackout.localDate));
   const normalizedDefaultTimezone = normalizeIanaTimezone(fallbackTimezone);
 
   for (const window of availability) {
@@ -244,6 +249,7 @@ function buildWeekSlots(availability: Availability[], fallbackTimezone: string, 
     for (let i = 0; i < 9; i += 1) {
       const localDate = addDays(zoneStart, i);
       if (localDate.getDay() !== window.weekday) continue;
+      if (blackoutDates.has(format(localDate, "yyyy-MM-dd"))) continue;
 
       for (let minute = window.startMinuteLocal; minute + 60 <= window.endMinuteLocal; minute += 60) {
         const localSlot = new Date(localDate);

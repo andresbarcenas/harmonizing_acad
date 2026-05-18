@@ -13,7 +13,6 @@ type TxClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transa
 export type RepertoireCatalogSearchOptions = {
   query?: string | null;
   instrument?: string | null;
-  includeInactive?: boolean;
   limit?: number;
 };
 
@@ -41,7 +40,6 @@ function catalogWhere(options: RepertoireCatalogSearchOptions = {}): Prisma.Repe
   const where: Prisma.RepertoireCatalogItemWhereInput = {};
   const and: Prisma.RepertoireCatalogItemWhereInput[] = [];
 
-  if (!options.includeInactive) and.push({ active: true });
   if (instrument) and.push({ instrument: { equals: instrument, mode: "insensitive" } });
   if (query) {
     and.push({
@@ -63,7 +61,7 @@ export async function searchRepertoireCatalog(options: RepertoireCatalogSearchOp
   const requestedLimit = Number.isFinite(options.limit) ? options.limit ?? 50 : 50;
   return db.repertoireCatalogItem.findMany({
     where: catalogWhere(options),
-    orderBy: [{ active: "desc" }, { instrument: "asc" }, { title: "asc" }],
+    orderBy: [{ instrument: "asc" }, { title: "asc" }],
     take: Math.min(Math.max(requestedLimit, 1), 100),
   });
 }
@@ -74,7 +72,7 @@ export async function getRepertoireCatalogManagerData(viewer: AppViewer, options
   }
 
   const [catalogItems, students] = await Promise.all([
-    searchRepertoireCatalog({ ...options, includeInactive: true, limit: options.limit ?? 60 }),
+    searchRepertoireCatalog({ ...options, limit: options.limit ?? 60 }),
     viewer.role === Role.ADMIN
       ? db.studentProfile.findMany({ include: { user: true, assignment: { include: { teacher: { include: { user: true } } } } }, orderBy: { user: { name: "asc" } } })
       : db.studentProfile.findMany({ where: { assignment: { teacherId: viewer.teacherProfileId } }, include: { user: true, assignment: { include: { teacher: { include: { user: true } } } } }, orderBy: { user: { name: "asc" } } }),
@@ -114,7 +112,7 @@ export async function assignCatalogItemToStudent(input: {
   tx?: TxClient;
 }) {
   const client = input.tx ?? db;
-  const catalogItem = await client.repertoireCatalogItem.findFirst({ where: { id: input.catalogItemId, active: true } });
+  const catalogItem = await client.repertoireCatalogItem.findUnique({ where: { id: input.catalogItemId } });
   if (!catalogItem) throw new RepertoireCatalogError("NOT_FOUND", 404);
 
   const existing = await client.repertoireItem.findFirst({

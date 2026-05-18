@@ -37,7 +37,6 @@ export const repertoireCatalogItemSchema = z.object({
   defaultTeacherNotes: optionalString(2000),
   defaultStudentVisibleNotes: optionalString(2000),
   tags: optionalString(500),
-  active: z.boolean().default(true),
 });
 
 export const repertoireCatalogAssignSchema = z.object({

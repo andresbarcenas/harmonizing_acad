@@ -100,7 +100,7 @@ function LastLessonCard({ session, studentTimezone, locale }: { session: Student
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <InfoBlock label={isSpanish ? "Resumen de la clase" : "Lesson summary"} value={note.summary} />
           <InfoBlock label={isSpanish ? "Qué practicamos" : "What we practiced"} value={note.taughtToday} />
-          <InfoBlock label={isSpanish ? "Lo que hizo bien" : "What went well"} value={note.studentDidWell} />
+          <InfoBlock label={isSpanish ? "Comentarios generales" : "General Comments"} value={note.studentDidWell} />
           <InfoBlock label={isSpanish ? "Áreas que necesitan práctica" : "Areas that need practice"} value={note.needsImprovement} />
           <InfoBlock label={isSpanish ? "Enfoque para la próxima clase" : "Next lesson focus"} value={note.nextLessonFocus} />
           <InfoBlock label={isSpanish ? "Nota visible del profesor" : "Teacher visible note"} value={note.studentVisibleNote} />

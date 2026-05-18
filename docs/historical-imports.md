@@ -113,7 +113,7 @@ Each applied row stores provenance in metadata or the import row itself:
 
 ## Manual test plan
 
-1. Run `docker compose up --build`.
+1. Run `docker compose up -d web` after the first local Docker build.
 2. Run `docker compose exec web npm run import:tommy-history`.
 3. Sign in as `admin@harmonizing.com / demo123`.
 4. Open `/admin/imports` and select the Tommy batch.

@@ -120,6 +120,11 @@ function ClassRow({ session, timezone, locale }: { session: Awaited<ReturnType<t
           <p className="text-xs text-[var(--color-ink-soft)]">
             {locale === "es" ? "Docente" : "Teacher"}: {formatDateTimeInZone(session.startsAtUtc, session.teacher.user.timezone, locale)} ({session.teacher.user.timezone})
           </p>
+          {session._count.attachments ? (
+            <p className="text-xs font-semibold text-[var(--color-gold-deep)]">
+              {locale === "es" ? "Materiales" : "Files"}: {session._count.attachments}
+            </p>
+          ) : null}
           {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
         </div>
         <Link href={`/classes/${session.id}`}><Button size="sm" variant="outline">{locale === "es" ? "Ver detalle" : "View detail"}</Button></Link>

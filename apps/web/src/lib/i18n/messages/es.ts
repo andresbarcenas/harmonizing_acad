@@ -388,6 +388,8 @@ export const es: typeof en = {
     recentRequests: "Solicitudes recientes de reagendación",
     openInbox: "Abrir bandeja",
     noRequests: "Sin solicitudes pendientes por ahora.",
+    availabilityTitle: "Gestiona los horarios que las familias pueden solicitar.",
+    availabilityDescription: "Agrega, edita o elimina tus propias franjas docentes. La agenda usa estos bloques en tu zona horaria.",
     allStudents: "Todos los estudiantes",
     selectedStudent: "Estudiante seleccionado",
     switchStudent: "Cambiar estudiante",

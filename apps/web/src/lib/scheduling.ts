@@ -1,5 +1,5 @@
 import { addMinutes } from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { SessionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
@@ -10,6 +10,10 @@ type AvailabilityWindow = {
   startMinuteLocal: number;
   endMinuteLocal: number;
   timezone: string;
+};
+
+type BlackoutDate = {
+  localDate: string;
 };
 
 function minuteOfDay(date: Date) {
@@ -40,6 +44,19 @@ export function isSlotWithinAvailability(
     const endMinute = minuteOfDay(localEnd);
     return startMinute >= window.startMinuteLocal && endMinute <= window.endMinuteLocal;
   });
+}
+
+export function localDateKeyInTimezone(dateUtc: Date, timezone: string) {
+  return formatInTimeZone(dateUtc, normalizeIanaTimezone(timezone), "yyyy-MM-dd");
+}
+
+export function isTeacherBlackoutDate(
+  startUtc: Date,
+  teacherTimezone: string,
+  blackoutDates: BlackoutDate[],
+) {
+  const localDate = localDateKeyInTimezone(startUtc, teacherTimezone);
+  return blackoutDates.some((blackout) => blackout.localDate === localDate);
 }
 
 export function overlapsRange(
@@ -74,7 +91,7 @@ type ScheduleValidationResult =
   | {
       ok: false;
       status: 400 | 409;
-      code: "INVALID_TIME" | "INVALID_DURATION" | "TEACHER_CONFLICT" | "STUDENT_CONFLICT" | "OUTSIDE_AVAILABILITY";
+      code: "INVALID_TIME" | "INVALID_DURATION" | "TEACHER_CONFLICT" | "STUDENT_CONFLICT" | "OUTSIDE_AVAILABILITY" | "TEACHER_BLACKOUT";
       message: string;
     };
 
@@ -145,7 +162,7 @@ export async function validateClassBookingWindow(input: {
     }),
     db.teacherProfile.findUnique({
       where: { id: input.teacherId },
-      include: { user: true, availability: true },
+      include: { user: true, availability: true, blackoutDates: true },
     }),
   ]);
 
@@ -165,6 +182,18 @@ export async function validateClassBookingWindow(input: {
       code: "STUDENT_CONFLICT",
       message: isSpanish ? "El estudiante ya tiene otra clase en ese horario." : "The student already has another class at that time.",
     };
+  }
+
+  if (teacher) {
+    const fallbackTimezone = normalizeIanaTimezone(teacher.user.timezone || input.timezone);
+    if (isTeacherBlackoutDate(input.startsAtUtc, fallbackTimezone, teacher.blackoutDates)) {
+      return {
+        ok: false,
+        status: 409,
+        code: "TEACHER_BLACKOUT",
+        message: isSpanish ? "La docente marcó ese día como no disponible." : "The teacher marked that day as unavailable.",
+      };
+    }
   }
 
   if (teacher?.availability.length) {

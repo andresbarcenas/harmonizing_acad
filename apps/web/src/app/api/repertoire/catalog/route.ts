@@ -20,7 +20,6 @@ export async function GET(request: Request) {
   const items = await searchRepertoireCatalog({
     query: url.searchParams.get("query"),
     instrument: url.searchParams.get("instrument"),
-    includeInactive: url.searchParams.get("includeInactive") === "true",
     limit: Number(url.searchParams.get("limit") ?? 50),
   });
 

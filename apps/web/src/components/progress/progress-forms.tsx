@@ -58,7 +58,6 @@ function copy(locale: AppLocale) {
         composer: "Compositor o artista",
         instrument: "Instrumento",
         level: "Nivel",
-        focus: "Sección actual",
         mastery: "Dominio %",
         teacherNotes: "Notas docentes",
         studentNotes: "Notas visibles",
@@ -112,7 +111,6 @@ function copy(locale: AppLocale) {
         composer: "Composer or artist",
         instrument: "Instrument",
         level: "Level",
-        focus: "Current section",
         mastery: "Mastery %",
         teacherNotes: "Teacher notes",
         studentNotes: "Visible notes",
@@ -232,7 +230,7 @@ export function RepertoireForm({ studentId, locale }: { studentId: string; local
   const [message, setMessage] = useState("");
   async function submit(formData: FormData) {
     const payload = Object.fromEntries(formData.entries());
-    const response = await fetch("/api/progress/repertoire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, studentId, masteryPercent: Number(payload.masteryPercent ?? 0), currentTempo: numberOrUndefined(payload.currentTempo), targetTempo: numberOrUndefined(payload.targetTempo), startDate: toIsoDate(payload.startDate), targetDate: toIsoDate(payload.targetDate), completedDate: toIsoDate(payload.completedDate) }) });
+    const response = await fetch("/api/progress/repertoire", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, studentId, masteryPercent: Number(payload.masteryPercent ?? 0), startDate: toIsoDate(payload.startDate), targetDate: toIsoDate(payload.targetDate), completedDate: toIsoDate(payload.completedDate) }) });
     setMessage(response.ok ? c.saved : c.error);
     if (response.ok) router.refresh();
   }
@@ -244,9 +242,6 @@ export function RepertoireForm({ studentId, locale }: { studentId: string; local
       <Input name="level" placeholder={c.level} />
       <select name="status" defaultValue="ASSIGNED" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
       <Input name="masteryPercent" type="number" min={0} max={100} defaultValue={0} placeholder={c.mastery} />
-      <Input name="currentFocusSection" placeholder={c.focus} />
-      <Input name="currentTempo" type="number" placeholder="Tempo actual" />
-      <Input name="targetTempo" type="number" placeholder="Tempo meta" />
       <Input name="targetDate" type="date" />
       <Textarea name="teacherNotes" placeholder={c.teacherNotes} className="md:col-span-2" />
       <Textarea name="studentVisibleNotes" placeholder={c.studentNotes} className="md:col-span-2" />

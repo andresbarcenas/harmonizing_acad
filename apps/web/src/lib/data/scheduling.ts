@@ -43,6 +43,7 @@ export async function getAdminScheduleData(viewer: AppViewer) {
         recurrence: true,
         classRequest: true,
         lessonNote: { select: { id: true } },
+        _count: { select: { attachments: true } },
       },
       orderBy: { startsAtUtc: "asc" },
     }),
@@ -98,6 +99,7 @@ export async function getTeacherScheduleData(viewer: AppViewer, options: { stude
         recurrence: true,
         classRequest: true,
         lessonNote: { select: { id: true } },
+        _count: { select: { attachments: true } },
       },
       orderBy: { startsAtUtc: "asc" },
     }),
@@ -134,6 +136,7 @@ export async function getClassDetailData(viewer: AppViewer, classId: string) {
       classRequest: { include: { requestedBy: true, reviewedBy: true } },
       lessonNote: { include: { skillRatings: { include: { skillCategory: true } } } },
       practiceAssignments: { include: { skillCategory: true, repertoireItem: true } },
+      attachments: { include: { uploadedBy: true }, orderBy: { createdAt: "desc" } },
     },
   });
 

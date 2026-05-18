@@ -24,7 +24,7 @@
 
 - MVP-complete locally: authenticated role workspaces, scheduling/rescheduling, recurring plus single-class visibility, protected practice upload/review, protected repertoire attachments, messaging, notifications, admin operations, historical imports, and read-only invoicing.
 - Release baseline: English is the default language; Spanish is selectable publicly and per account.
-- Validation baseline: `npm run typecheck`, `npm run lint`, `npm run build`, route smoke after `docker compose up --build`, and the responsive QA checklist in `docs/responsive-qa.md`.
+- Validation baseline: `npm run typecheck`, `npm run lint`, `npm run build`, route smoke after `docker compose up -d web`, and the responsive QA checklist in `docs/responsive-qa.md`.
 
 ## Remaining Production Hardening
 

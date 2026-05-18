@@ -15,6 +15,9 @@ services:
       S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
       NODE_OPTIONS: --max-old-space-size=768
       SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
+      APP_RUNTIME: ${APP_RUNTIME:-dev}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
     depends_on:
       - postgres
       - minio

@@ -80,6 +80,11 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                     <p className="text-xs text-[var(--color-ink-soft)]">
                       {isSpanish ? "Estudiante" : "Student"}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} ({session.student.user.timezone})
                     </p>
+                    {session._count.attachments ? (
+                      <p className="text-xs font-semibold text-[var(--color-gold-deep)]">
+                        {isSpanish ? "Materiales" : "Files"}: {session._count.attachments}
+                      </p>
+                    ) : null}
                     {session.lessonFocus ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">

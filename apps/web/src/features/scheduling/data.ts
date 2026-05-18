@@ -1,4 +1,4 @@
-import { addDays, startOfDay } from "date-fns";
+import { addDays, format, startOfDay } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { RescheduleStatus, SessionStatus } from "@prisma/client";
 
@@ -15,6 +15,7 @@ export async function getStudentSchedule(studentProfileId: string) {
             include: {
               user: true,
               availability: true,
+              blackoutDates: true,
             },
           },
         },
@@ -54,6 +55,7 @@ export async function getStudentSchedule(studentProfileId: string) {
 
   const slots = buildWeekSlots(
     student.assignment.teacher.availability,
+    student.assignment.teacher.blackoutDates,
     student.assignment.teacher.user.timezone ?? "America/New_York",
   );
 
@@ -72,10 +74,13 @@ type Availability = {
   timezone: string;
 };
 
-function buildWeekSlots(availability: Availability[], defaultTz: string) {
+type Blackout = { localDate: string };
+
+function buildWeekSlots(availability: Availability[], blackouts: Blackout[], defaultTz: string) {
   const now = new Date();
   const slots: { startUtc: Date; endUtc: Date }[] = [];
   const seen = new Set<string>();
+  const blackoutDates = new Set(blackouts.map((blackout) => blackout.localDate));
   const normalizedDefaultTimezone = normalizeIanaTimezone(defaultTz);
 
   for (const window of availability) {
@@ -85,6 +90,7 @@ function buildWeekSlots(availability: Availability[], defaultTz: string) {
     for (let i = 0; i < 7; i += 1) {
       const localDate = addDays(zoneStart, i);
       if (localDate.getDay() !== window.weekday) continue;
+      if (blackoutDates.has(format(localDate, "yyyy-MM-dd"))) continue;
 
       for (let minute = window.startMinuteLocal; minute + 60 <= window.endMinuteLocal; minute += 60) {
         const localSlot = new Date(localDate);

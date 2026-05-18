@@ -238,6 +238,7 @@ export async function getTeacherClassCompletionData(viewer: AppViewer, classId: 
     include: {
       teacher: { include: { user: true } },
       student: { include: { user: true } },
+      attachments: { include: { uploadedBy: true }, orderBy: { createdAt: "desc" } },
       lessonNote: {
         include: {
           skillRatings: { include: { skillCategory: true }, orderBy: { skillCategory: { sortOrder: "asc" } } },

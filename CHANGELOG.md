@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.6] - 2026-05-18
+
+### Added
+- Protected class-level materials for completed classes, including multi-file teacher uploads, authenticated download routes, class detail lists, and schedule attachment counts.
+- Teacher self-service availability management with a dedicated teacher availability page.
+- Teacher blackout dates for admin and teacher availability workflows, with scheduling validation that blocks new bookings, recurring occurrences, requests, and reschedules on unavailable days.
+
+### Changed
+- After-class lesson notes now use clearer labeled fields, replace “What went well” and “Improvement areas” with “General Comments,” and use sliders for the quick 1-5 lesson ratings.
+- Local Docker development now runs the Next.js dev server by default for hot reload without rebuilding the web image for normal code changes.
+- Repertoire/song forms were simplified by removing unnecessary active/focus/tempo fields from catalog-style song management.
+
+### Fixed
+- Student progress lesson summaries now label the teacher-entered general comments consistently.
+- Schedule views now surface class material counts so students, teachers, and admins can find attached class files from the relevant class detail.
+
 ### Added
 - Admin email delivery log at `/admin/emails` with status/type/recipient/subject/provider/time tracking for magic links, welcome emails, consent copies, and class reminders.
 - Central `EmailDeliveryLog` audit model and migration for Resend send attempts, skipped sends, provider message ids, and failure reasons.

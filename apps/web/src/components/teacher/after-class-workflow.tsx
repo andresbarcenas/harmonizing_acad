@@ -44,6 +44,12 @@ type RepertoireCatalogOption = {
   defaultStudentVisibleNotes?: string | null;
   tags?: string | null;
 };
+type ClassAttachmentOption = {
+  id: string;
+  originalName: string;
+  sizeBytes: number;
+  url: string;
+};
 
 type LessonNoteState = {
   summary: string;
@@ -67,9 +73,6 @@ type RepertoireUpdateState = {
   selected: boolean;
   status: RepertoireStatus;
   masteryPercent: number;
-  currentFocusSection: string;
-  currentTempo: string;
-  targetTempo: string;
   teacherNotes: string;
   studentVisibleNotes: string;
 };
@@ -83,9 +86,6 @@ type NewRepertoireState = {
   level: string;
   status: RepertoireStatus;
   masteryPercent: number;
-  currentFocusSection: string;
-  currentTempo: string;
-  targetTempo: string;
   teacherNotes: string;
   studentVisibleNotes: string;
 };
@@ -120,6 +120,7 @@ type WorkflowProps = {
   }) | null;
   skillCategories: SkillOption[];
   repertoireItems: RepertoireOption[];
+  attachments: ClassAttachmentOption[];
 };
 
 const selectClass = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
@@ -150,12 +151,20 @@ function copy(locale: AppLocale) {
     skillScope: "Mostrando habilidades de",
     summary: "Resumen de la clase",
     taught: "Temas trabajados",
-    didWell: "Lo que hizo bien",
+    generalComments: "Comentarios generales",
     improve: "Áreas a mejorar",
     homework: "Tarea / instrucciones de práctica",
     nextFocus: "Enfoque para la próxima clase",
     privateNote: "Nota privada del profesor",
     visibleNote: "Nota visible para estudiante/padre",
+    classMaterials: "Materiales de la clase",
+    attachFiles: "Adjuntar archivos",
+    uploadFiles: "Subir archivos",
+    filesForClass: "Archivos de esta clase",
+    noClassMaterials: "Sin materiales adjuntos todavía.",
+    deleteFile: "Eliminar",
+    quickRatingTitle: "Evaluación rápida de la clase (1-5)",
+    quickRatingHelp: "Usa 1 si necesita mucho apoyo y 5 si fue excelente.",
     quickExcellent: "Excelente",
     quickImproving: "Mejorando",
     quickPractice: "Necesita práctica",
@@ -179,9 +188,6 @@ function copy(locale: AppLocale) {
     instrument: "Instrumento",
     level: "Nivel",
     mastery: "Dominio %",
-    section: "Sección actual, por ejemplo compases 1-8",
-    currentTempo: "Tempo actual",
-    targetTempo: "Tempo meta",
     teacherNotes: "Notas docentes",
     studentNotes: "Notas visibles",
     assignmentTitle: "Título de la tarea",
@@ -221,12 +227,20 @@ function copy(locale: AppLocale) {
     skillScope: "Showing skills for",
     summary: "Lesson summary",
     taught: "Topics worked on",
-    didWell: "What went well",
+    generalComments: "General Comments",
     improve: "Improvement areas",
     homework: "Homework / practice instructions",
     nextFocus: "Next lesson focus",
     privateNote: "Private teacher note",
     visibleNote: "Student/parent visible note",
+    classMaterials: "Class materials",
+    attachFiles: "Attach files",
+    uploadFiles: "Upload files",
+    filesForClass: "Files for this class",
+    noClassMaterials: "No materials attached yet.",
+    deleteFile: "Delete",
+    quickRatingTitle: "Quick lesson rating (1-5)",
+    quickRatingHelp: "Use 1 when it needs support and 5 when it was excellent.",
     quickExcellent: "Excellent",
     quickImproving: "Improving",
     quickPractice: "Needs practice",
@@ -250,9 +264,6 @@ function copy(locale: AppLocale) {
     instrument: "Instrument",
     level: "Level",
     mastery: "Mastery %",
-    section: "Current section, for example measures 1-8",
-    currentTempo: "Current tempo",
-    targetTempo: "Target tempo",
     teacherNotes: "Teacher notes",
     studentNotes: "Visible notes",
     assignmentTitle: "Assignment title",
@@ -317,13 +328,11 @@ export function AfterClassWorkflow(props: WorkflowProps) {
     level: "",
     status: "ASSIGNED",
     masteryPercent: 0,
-    currentFocusSection: "",
-    currentTempo: "",
-    targetTempo: "",
     teacherNotes: "",
     studentVisibleNotes: "",
   }));
   const [assignments, setAssignments] = useState<AssignmentState[]>(() => [newAssignment()]);
+  const [attachments, setAttachments] = useState<ClassAttachmentOption[]>(props.attachments);
 
   const steps = status === "COMPLETED"
     ? [c.status, c.note, c.skills, c.repertoire, c.practice, c.review]
@@ -391,17 +400,14 @@ export function AfterClassWorkflow(props: WorkflowProps) {
       status,
       lessonInstrument,
       notifyStudent,
-      lessonNote,
+      lessonNote: sanitizeLessonNoteForSubmit(lessonNote),
       skillRatings: status === "COMPLETED" ? selectedRatings.map(({ skillCategoryId, rating, note }) => ({ skillCategoryId, rating, note })) : [],
       repertoireUpdates: status === "COMPLETED" ? selectedRepertoire.map((item) => ({
         repertoireItemId: item.repertoireItemId,
         status: item.status,
         masteryPercent: item.masteryPercent,
-        currentFocusSection: item.currentFocusSection,
         teacherNotes: item.teacherNotes,
         studentVisibleNotes: item.studentVisibleNotes,
-        currentTempo: numberOrUndefined(item.currentTempo),
-        targetTempo: numberOrUndefined(item.targetTempo),
       })) : [],
       newRepertoireItems: status === "COMPLETED" && newRepertoire.enabled && newRepertoire.title.trim() ? [{
         clientId: newRepertoire.clientId,
@@ -412,9 +418,6 @@ export function AfterClassWorkflow(props: WorkflowProps) {
         level: newRepertoire.level,
         status: newRepertoire.status,
         masteryPercent: newRepertoire.masteryPercent,
-        currentFocusSection: newRepertoire.currentFocusSection,
-        currentTempo: numberOrUndefined(newRepertoire.currentTempo),
-        targetTempo: numberOrUndefined(newRepertoire.targetTempo),
         teacherNotes: newRepertoire.teacherNotes,
         studentVisibleNotes: newRepertoire.studentVisibleNotes,
       }] : [],
@@ -486,7 +489,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
             <LessonInstrumentSelector c={c} locale={props.locale} value={lessonInstrument} onChange={setLessonInstrument} skillCount={filteredSkills.length} />
           ) : null}
           {activeStepLabel === c.status ? <StatusStep locale={props.locale} status={status} onChange={setStatus} /> : null}
-          {activeStepLabel === c.note && status === "COMPLETED" ? <LessonNoteStep c={c} note={lessonNote} onChange={setLessonNote} /> : null}
+          {activeStepLabel === c.note && status === "COMPLETED" ? <LessonNoteStep c={c} classId={props.classId} attachments={attachments} setAttachments={setAttachments} note={lessonNote} onChange={setLessonNote} /> : null}
           {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} skills={filteredSkills} ratings={skillRatings} onChange={setSkillRatings} /> : null}
           {activeStepLabel === c.repertoire && status === "COMPLETED" ? <RepertoireStep c={c} locale={props.locale} items={repertoireUpdates} setItems={setRepertoireUpdates} newItem={newRepertoire} setNewItem={setNewRepertoire} /> : null}
           {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} newRepertoire={newRepertoire} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
@@ -598,24 +601,158 @@ function LessonInstrumentSelector({
   );
 }
 
-function LessonNoteStep({ c, note, onChange }: { c: ReturnType<typeof copy>; note: LessonNoteState; onChange: (note: LessonNoteState) => void }) {
+function LessonNoteStep({
+  c,
+  classId,
+  attachments,
+  setAttachments,
+  note,
+  onChange,
+}: {
+  c: ReturnType<typeof copy>;
+  classId: string;
+  attachments: ClassAttachmentOption[];
+  setAttachments: (attachments: ClassAttachmentOption[]) => void;
+  note: LessonNoteState;
+  onChange: (note: LessonNoteState) => void;
+}) {
   return (
-    <div className="space-y-3">
-      <Textarea required value={note.summary} onChange={(event) => onChange({ ...note, summary: event.target.value })} placeholder={c.summary} />
-      <Textarea value={note.taughtToday} onChange={(event) => onChange({ ...note, taughtToday: event.target.value })} placeholder={c.taught} />
-      <div className="grid gap-3 md:grid-cols-2">
-        <Textarea value={note.studentDidWell} onChange={(event) => onChange({ ...note, studentDidWell: event.target.value })} placeholder={c.didWell} />
-        <Textarea value={note.needsImprovement} onChange={(event) => onChange({ ...note, needsImprovement: event.target.value })} placeholder={c.improve} />
-        <Textarea value={note.homework} onChange={(event) => onChange({ ...note, homework: event.target.value })} placeholder={c.homework} />
-        <Textarea value={note.nextLessonFocus} onChange={(event) => onChange({ ...note, nextLessonFocus: event.target.value })} placeholder={c.nextFocus} />
-        <Textarea value={note.studentVisibleNote} onChange={(event) => onChange({ ...note, studentVisibleNote: event.target.value })} placeholder={c.visibleNote} />
-        <Textarea value={note.teacherPrivateNote} onChange={(event) => onChange({ ...note, teacherPrivateNote: event.target.value })} placeholder={c.privateNote} className="md:col-span-2" />
+    <div className="space-y-5">
+      <div className="grid gap-3">
+        <LabeledTextarea required label={c.summary} value={note.summary} onChange={(value) => onChange({ ...note, summary: value })} />
+        <LabeledTextarea label={c.taught} value={note.taughtToday} onChange={(value) => onChange({ ...note, taughtToday: value })} />
       </div>
-      <div className="grid gap-2 sm:grid-cols-4">
-        <RatingInput label={c.prep} value={note.preparednessRating} onChange={(value) => onChange({ ...note, preparednessRating: value })} />
-        <RatingInput label={c.focus} value={note.focusRating} onChange={(value) => onChange({ ...note, focusRating: value })} />
-        <RatingInput label={c.effort} value={note.effortRating} onChange={(value) => onChange({ ...note, effortRating: value })} />
-        <RatingInput label={c.overall} value={note.overallLessonRating} onChange={(value) => onChange({ ...note, overallLessonRating: value })} />
+      <div className="grid gap-3 md:grid-cols-2">
+        <LabeledTextarea label={c.generalComments} value={note.studentDidWell} onChange={(value) => onChange({ ...note, studentDidWell: value })} />
+        <LabeledTextarea label={c.nextFocus} value={note.nextLessonFocus} onChange={(value) => onChange({ ...note, nextLessonFocus: value })} />
+        <LabeledTextarea label={c.privateNote} value={note.teacherPrivateNote} onChange={(value) => onChange({ ...note, teacherPrivateNote: value })} className="md:col-span-2" />
+      </div>
+      <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.quickRatingTitle}</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{c.quickRatingHelp}</p>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <RatingInput label={c.prep} value={note.preparednessRating} onChange={(value) => onChange({ ...note, preparednessRating: value })} />
+          <RatingInput label={c.focus} value={note.focusRating} onChange={(value) => onChange({ ...note, focusRating: value })} />
+          <RatingInput label={c.effort} value={note.effortRating} onChange={(value) => onChange({ ...note, effortRating: value })} />
+          <RatingInput label={c.overall} value={note.overallLessonRating} onChange={(value) => onChange({ ...note, overallLessonRating: value })} />
+        </div>
+      </div>
+      <ClassAttachmentsBlock c={c} classId={classId} attachments={attachments} setAttachments={setAttachments} />
+    </div>
+  );
+}
+
+function LabeledTextarea({
+  label,
+  value,
+  onChange,
+  required,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  className?: string;
+}) {
+  return (
+    <label className={cn("grid gap-1.5", className)}>
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">
+        {label}{required ? " *" : ""}
+      </span>
+      <Textarea required={required} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function ClassAttachmentsBlock({
+  c,
+  classId,
+  attachments,
+  setAttachments,
+}: {
+  c: ReturnType<typeof copy>;
+  classId: string;
+  attachments: ClassAttachmentOption[];
+  setAttachments: (attachments: ClassAttachmentOption[]) => void;
+}) {
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function uploadFiles() {
+    if (!selectedFiles?.length) return;
+    setUploading(true);
+    setMessage("");
+    const formData = new FormData();
+    Array.from(selectedFiles).forEach((file) => formData.append("files", file));
+    const response = await fetch(`/api/teacher/classes/${classId}/attachments`, { method: "POST", body: formData });
+    const payload = await response.json().catch(() => null) as { attachments?: Array<{ id: string; originalName: string; sizeBytes: number }>; error?: string } | null;
+    setUploading(false);
+    if (!response.ok || !payload?.attachments) {
+      setMessage(payload?.error ?? c.error);
+      return;
+    }
+    setSelectedFiles(null);
+    setAttachments([
+      ...payload.attachments.map((attachment) => ({
+        id: attachment.id,
+        originalName: attachment.originalName,
+        sizeBytes: attachment.sizeBytes,
+        url: `/api/media/class-attachments/${attachment.id}`,
+      })),
+      ...attachments,
+    ]);
+  }
+
+  async function deleteAttachment(attachmentId: string) {
+    setMessage("");
+    const response = await fetch(`/api/teacher/classes/${classId}/attachments/${attachmentId}`, { method: "DELETE" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      setMessage(payload?.error ?? c.error);
+      return;
+    }
+    setAttachments(attachments.filter((attachment) => attachment.id !== attachmentId));
+  }
+
+  return (
+    <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.classMaterials}</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{c.filesForClass}</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            aria-label={c.attachFiles}
+            className="max-w-full rounded-full border border-[var(--color-border)] bg-white/80 px-3 py-2 text-xs text-[var(--color-ink-soft)]"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            multiple
+            onChange={(event) => setSelectedFiles(event.target.files)}
+          />
+          <Button type="button" size="sm" variant="outline" disabled={!selectedFiles?.length || uploading} onClick={uploadFiles}>
+            {uploading ? "..." : c.uploadFiles}
+          </Button>
+        </div>
+      </div>
+      {message ? <p className="mt-3 text-sm text-rose-700">{message}</p> : null}
+      <div className="mt-4 space-y-2">
+        {attachments.map((attachment) => (
+          <div key={attachment.id} className="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-white/70 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <a className="min-w-0 truncate text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-gold)] underline-offset-4" href={attachment.url} target="_blank" rel="noreferrer">
+              {attachment.originalName}
+            </a>
+            <div className="flex items-center gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span>{formatBytes(attachment.sizeBytes)}</span>
+              <Button type="button" size="sm" variant="outline" onClick={() => deleteAttachment(attachment.id)}>{c.deleteFile}</Button>
+            </div>
+          </div>
+        ))}
+        {!attachments.length ? <p className="text-sm text-[var(--color-ink-soft)]">{c.noClassMaterials}</p> : null}
       </div>
     </div>
   );
@@ -703,9 +840,6 @@ function RepertoireStep({
       composerOrArtist: item.composerOrArtist ?? "",
       instrument: normalizeInstrument(item.instrument) ?? "Piano",
       level: item.level ?? "",
-      currentFocusSection: item.defaultFocusSection ?? "",
-      currentTempo: item.defaultCurrentTempo ? String(item.defaultCurrentTempo) : "",
-      targetTempo: item.defaultTargetTempo ? String(item.defaultTargetTempo) : "",
       teacherNotes: item.defaultTeacherNotes ?? "",
       studentVisibleNotes: item.defaultStudentVisibleNotes ?? "",
     });
@@ -718,12 +852,9 @@ function RepertoireStep({
         {items.map((item) => (
           <div key={item.repertoireItemId} className={cn("rounded-[1.2rem] border p-3", item.selected ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)]/70" : "border-[var(--color-border)] bg-white/72")}>
             <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={item.selected} onChange={(event) => update(item.repertoireItemId, { selected: event.target.checked })} /> {item.title}</label>
-            <div className="mt-3 grid gap-2 md:grid-cols-3">
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
               <select className={selectClass} value={item.status} onChange={(event) => update(item.repertoireItemId, { status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
               <Input type="number" min={0} max={100} value={item.masteryPercent} onChange={(event) => update(item.repertoireItemId, { masteryPercent: Number(event.target.value) })} placeholder={c.mastery} />
-              <Input value={item.currentFocusSection} onChange={(event) => update(item.repertoireItemId, { currentFocusSection: event.target.value })} placeholder={c.section} />
-              <Input type="number" value={item.currentTempo} onChange={(event) => update(item.repertoireItemId, { currentTempo: event.target.value })} placeholder={c.currentTempo} />
-              <Input type="number" value={item.targetTempo} onChange={(event) => update(item.repertoireItemId, { targetTempo: event.target.value })} placeholder={c.targetTempo} />
               <Input value={item.teacherNotes} onChange={(event) => update(item.repertoireItemId, { teacherNotes: event.target.value })} placeholder={c.teacherNotes} />
               <Input value={item.studentVisibleNotes} onChange={(event) => update(item.repertoireItemId, { studentVisibleNotes: event.target.value })} placeholder={c.studentNotes} />
             </div>
@@ -766,9 +897,6 @@ function RepertoireStep({
             <Input value={newItem.level} onChange={(event) => setNewItem({ ...newItem, level: event.target.value })} placeholder={c.level} />
             <select className={selectClass} value={newItem.status} onChange={(event) => setNewItem({ ...newItem, status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
             <Input type="number" min={0} max={100} value={newItem.masteryPercent} onChange={(event) => setNewItem({ ...newItem, masteryPercent: Number(event.target.value) })} placeholder={c.mastery} />
-            <Input value={newItem.currentFocusSection} onChange={(event) => setNewItem({ ...newItem, currentFocusSection: event.target.value })} placeholder={c.section} />
-            <Input type="number" value={newItem.currentTempo} onChange={(event) => setNewItem({ ...newItem, currentTempo: event.target.value })} placeholder={c.currentTempo} />
-            <Input type="number" value={newItem.targetTempo} onChange={(event) => setNewItem({ ...newItem, targetTempo: event.target.value })} placeholder={c.targetTempo} />
             <Input value={newItem.teacherNotes} onChange={(event) => setNewItem({ ...newItem, teacherNotes: event.target.value })} placeholder={c.teacherNotes} />
             <Input value={newItem.studentVisibleNotes} onChange={(event) => setNewItem({ ...newItem, studentVisibleNotes: event.target.value })} placeholder={c.studentNotes} />
             </div>
@@ -847,7 +975,42 @@ function SummaryBlock({ label, value }: { label: string; value: string }) {
 }
 
 function RatingInput({ label, value, onChange }: { label: string; value?: number; onChange: (value?: number) => void }) {
-  return <Input type="number" min={1} max={5} value={value ?? ""} onChange={(event) => onChange(numberOrUndefined(event.target.value))} placeholder={`${label} 1-5`} />;
+  const currentValue = value ?? 3;
+  return (
+    <label className="rounded-[1rem] border border-[var(--color-border)] bg-white/76 p-3">
+      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--color-ink)]">
+        <span>{label}</span>
+        <Badge variant="gold">{currentValue}/5</Badge>
+      </span>
+      <input
+        className="mt-3 w-full accent-[var(--color-gold)]"
+        type="range"
+        min={1}
+        max={5}
+        step={1}
+        value={currentValue}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+        <span>1</span>
+        <span>5</span>
+      </span>
+    </label>
+  );
+}
+
+function sanitizeLessonNoteForSubmit(note: LessonNoteState): LessonNoteState {
+  return {
+    ...note,
+    needsImprovement: "",
+    homework: "",
+    studentVisibleNote: "",
+  };
+}
+
+function formatBytes(value: number) {
+  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function buildInitialSkillRatings(skills: SkillOption[], existing: Array<{ skillCategoryId: string; rating: number; note?: string | null }>) {
@@ -864,9 +1027,6 @@ function toRepertoireUpdate(item: RepertoireOption): RepertoireUpdateState {
     selected: false,
     status: item.status,
     masteryPercent: item.masteryPercent,
-    currentFocusSection: item.currentFocusSection ?? "",
-    currentTempo: item.currentTempo ? String(item.currentTempo) : "",
-    targetTempo: item.targetTempo ? String(item.targetTempo) : "",
     teacherNotes: item.teacherNotes ?? "",
     studentVisibleNotes: item.studentVisibleNotes ?? "",
   };

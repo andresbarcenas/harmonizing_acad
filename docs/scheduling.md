@@ -68,6 +68,7 @@ The app checks:
 - invalid date/time
 - invalid duration
 - teacher availability, when availability windows exist
+- teacher blackout dates, when a teacher/admin has marked a full day unavailable
 
 Cancelled classes do not block future scheduling.
 
@@ -100,6 +101,8 @@ Recurring class series use `RecurringTimezoneMode`:
 Teachers in Colombia typically use `America/Bogota`, while U.S. students use their own IANA timezone such as `America/New_York`, `America/Chicago`, or `America/Los_Angeles`. The app never relies on fixed offsets like `-05:00`, because the U.S. observes daylight saving time and Colombia does not.
 
 Teacher availability is still evaluated in the teacher's local timezone for every generated occurrence. A student-time anchored class can therefore be skipped/reported if that occurrence falls outside the teacher's Bogotá availability after a daylight-saving shift.
+
+Teacher blackout dates are full local days in the teacher's timezone. Admins manage them from `/admin/availability`; teachers manage their own from `/teacher/availability`. Blackouts prevent new bookings, generated recurring sessions, class requests, and reschedule approvals on that teacher-local day. Existing scheduled classes are not automatically cancelled; the availability screen warns when a blackout date already has scheduled classes.
 
 ## Permissions
 
@@ -180,6 +183,7 @@ Admin:
 5. Confirm the class appears in the admin schedule list with a type badge.
 6. Approve and reject a pending student request.
 7. Confirm rejected requests keep a student-visible rejection reason and optional internal note.
+8. Add a blackout date for María in `/admin/availability` and confirm a one-time class on that teacher-local day is blocked.
 
 Teacher:
 
@@ -190,6 +194,7 @@ Teacher:
 5. Confirm unassigned students are not available in the teacher form.
 6. Open the class detail.
 7. Use `Completar` to enter the after-class workflow.
+8. Open `/teacher/availability`, add a blackout date, and confirm it appears without affecting existing classes.
 
 Student:
 
@@ -200,6 +205,7 @@ Student:
 5. Confirm the pending request appears.
 6. After teacher/admin approval, confirm the approved class appears in schedule and class detail.
 7. Confirm rejected request copy is shown through notifications when rejected.
+8. Confirm available slots do not appear on a teacher blackout date.
 
 Quality checks:
 

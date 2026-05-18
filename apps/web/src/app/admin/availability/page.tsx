@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { Role } from "@prisma/client";
+import { Role, SessionStatus } from "@prisma/client";
 
-import { AvailabilityManager } from "@/components/admin/availability-manager";
+import { AvailabilityManager, BlackoutDateManager } from "@/components/admin/availability-manager";
 import { AppShell } from "@/components/ui/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
-import { getDictionary } from "@/lib/i18n";
+import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 import { instrumentLabel } from "@/lib/instruments";
+import { localDateKeyInTimezone } from "@/lib/scheduling";
 
 export default async function AdminAvailabilityPage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -19,6 +20,15 @@ export default async function AdminAvailabilityPage() {
     include: {
       user: true,
       availability: { orderBy: [{ weekday: "asc" }, { startMinuteLocal: "asc" }] },
+      blackoutDates: { orderBy: { localDate: "asc" } },
+      sessions: {
+        where: {
+          status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+          startsAtUtc: { gte: new Date() },
+        },
+        include: { student: { include: { user: true } } },
+        orderBy: { startsAtUtc: "asc" },
+      },
     },
   });
 
@@ -51,6 +61,22 @@ export default async function AdminAvailabilityPage() {
                   timezone: slot.timezone,
                 }))}
                 locale={viewer.locale}
+              />
+              <BlackoutDateManager
+                teacherId={teacher.id}
+                items={teacher.blackoutDates.map((blackout) => ({
+                  id: blackout.id,
+                  localDate: blackout.localDate,
+                  note: blackout.note,
+                  affectedSessions: teacher.sessions
+                    .filter((session) => localDateKeyInTimezone(session.startsAtUtc, teacher.user.timezone) === blackout.localDate)
+                    .map((session) => ({
+                      id: session.id,
+                      label: `${session.student.user.name} · ${formatDateTimeInZone(session.startsAtUtc, teacher.user.timezone, viewer.locale)}`,
+                    })),
+                }))}
+                locale={viewer.locale}
+                endpoint="/api/admin/availability/blackouts"
               />
             </div>
           </Card>

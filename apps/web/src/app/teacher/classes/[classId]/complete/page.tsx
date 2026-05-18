@@ -65,6 +65,12 @@ export default async function TeacherClassCompletionPage({ params }: PageProps) 
           })),
         } : null}
         skillCategories={data.skillCategories.map((skill) => ({ id: skill.id, name: skill.name, instrument: skill.instrument }))}
+        attachments={session.attachments.map((attachment) => ({
+          id: attachment.id,
+          originalName: attachment.originalName,
+          sizeBytes: attachment.sizeBytes,
+          url: `/api/media/class-attachments/${attachment.id}`,
+        }))}
         repertoireItems={data.repertoireItems.map((item) => ({
           id: item.id,
           title: item.title,

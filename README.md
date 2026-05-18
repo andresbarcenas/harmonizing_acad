@@ -17,12 +17,20 @@ Premium, mobile-first web app for an online music school serving Spanish-speakin
 - Alegra API integration for read-only invoicing sync
 - Docker + Docker Compose local-first runtime
 
-## One-Command Local Startup
+## Local Docker Development
 1. Copy environment file:
    - `cp .env.example .env`
-2. Run everything:
-   - `docker compose up --build`
-3. Run route smoke after boot:
+2. First run, or after Docker/dependency changes:
+   - `docker compose up -d --build web`
+3. Daily development after the first build:
+   - `docker compose up -d web`
+4. Watch the app logs:
+   - `docker compose logs -f web`
+5. Restart without rebuilding:
+   - `docker compose restart web`
+
+The web container runs `next dev` by default, so source changes under `apps/web` hot reload without rebuilding the image. To test production-like startup locally, run `docker compose exec web npm run build`, then restart with `APP_RUNTIME=start docker compose up -d web`.
+6. Run route smoke after boot:
    - `cd apps/web && npm run smoke:routes`
 
 App endpoints:

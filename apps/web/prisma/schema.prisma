@@ -246,6 +246,7 @@ model User {
   historicalImportBatches  HistoricalImportBatch[] @relation("HistoricalImportCreatedBy")
   reviewedImportRows       HistoricalImportRow[]   @relation("HistoricalImportRowReviewedBy")
   uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
+  uploadedClassSessionAttachments ClassSessionAttachment[] @relation("ClassSessionAttachmentUploadedBy")
   classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
   consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
   createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
@@ -301,6 +302,7 @@ model TeacherProfile {
   students            TeacherAssignment[]
   sessions            ClassSession[]         @relation("SessionTeacher")
   availability        TeacherAvailability[]
+  blackoutDates       TeacherBlackoutDate[]
   rescheduleRequests  RescheduleRequest[]    @relation("RequestHandledBy")
   videosToReview      PracticeVideo[]        @relation("VideoTeacher")
   videoFeedback       VideoFeedback[]
@@ -385,6 +387,7 @@ model ClassSession {
   practiceAssignments PracticeAssignment[]
   reminderDeliveries  ClassReminderDelivery[]
   emailDeliveryLogs    EmailDeliveryLog[]
+  attachments         ClassSessionAttachment[]
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
@@ -432,6 +435,21 @@ model TeacherAvailability {
   teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId, weekday])
+}
+
+model TeacherBlackoutDate {
+  id        String   @id @default(cuid())
+  teacherId String
+  localDate String
+  timezone  String
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, localDate])
+  @@index([teacherId, localDate])
 }
 
 model RescheduleRequest {
@@ -668,6 +686,25 @@ model RepertoireAttachment {
   uploadedBy     User           @relation("RepertoireAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
 
   @@index([repertoireItemId, createdAt])
+  @@index([uploadedByUserId, createdAt])
+}
+
+model ClassSessionAttachment {
+  id               String   @id @default(cuid())
+  classSessionId   String
+  uploadedByUserId String
+  storageKey       String
+  originalName     String
+  mimeType         String
+  sizeBytes        Int
+  description      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  uploadedBy   User         @relation("ClassSessionAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([classSessionId, createdAt])
   @@index([uploadedByUserId, createdAt])
 }
 

@@ -87,6 +87,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       items: [
         { href: "/teacher/dashboard", label: nav.today, icon: "calendar" },
         { href: "/teacher/schedule", label: nav.schedule, icon: "calendar" },
+        { href: "/teacher/availability", label: nav.availability, icon: "clock" },
         { href: "/teacher/requests", label: nav.reschedules, icon: "refresh" },
       ],
     },

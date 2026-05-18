@@ -83,7 +83,7 @@ Admin-specific checks:
 
 ## Manual Browser Steps
 
-1. Start the app with `docker compose up --build`.
+1. Start the app with `docker compose up -d web` after the first local Docker build.
 2. Open `http://localhost:3010/sign-in`.
 3. Verify logged-out `/` redirects to `/sign-in`.
 4. Sign in as each seeded role and run the route smoke matrix.
@@ -109,4 +109,3 @@ After local boot, optionally run:
 ```bash
 npm run smoke:routes
 ```
-

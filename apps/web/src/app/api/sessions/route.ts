@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotification } from "@/lib/notifications";
-import { isSlotWithinAvailability } from "@/lib/scheduling";
+import { isSlotWithinAvailability, isTeacherBlackoutDate } from "@/lib/scheduling";
 import { createRecurringSessionsSchema } from "@/lib/validators/sessions";
 
 export async function PATCH(req: Request) {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
         },
         include: {
           teacher: {
-            include: { user: { select: { timezone: true } }, availability: true },
+            include: { user: { select: { timezone: true } }, availability: true, blackoutDates: true },
           },
           student: {
             include: { user: true },
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
   const [adminTeacher, adminStudent] = auth.user.role === Role.ADMIN
     ? await Promise.all([
-        db.teacherProfile.findUnique({ where: { id: teacherProfileId }, include: { user: { select: { timezone: true } }, availability: true } }).catch(() => null),
+        db.teacherProfile.findUnique({ where: { id: teacherProfileId }, include: { user: { select: { timezone: true } }, availability: true, blackoutDates: true } }).catch(() => null),
         db.studentProfile.findUnique({ where: { id: data.studentId }, include: { user: true } }),
       ])
     : [null, null];
@@ -153,6 +153,7 @@ export async function POST(req: Request) {
         ? normalizeIanaTimezone(data.timezone)
         : studentTimezone;
   const teacherAvailability = assignment?.teacher.availability ?? adminTeacher?.availability ?? [];
+  const teacherBlackoutDates = assignment?.teacher.blackoutDates ?? adminTeacher?.blackoutDates ?? [];
 
   const { year, month, day } = parseDateParts(data.startsOnDate);
   const baseDate = new Date(Date.UTC(year, month - 1, day));
@@ -194,6 +195,15 @@ export async function POST(req: Request) {
       const startsAtUtc = fromZonedTime(localDateTime, recurrenceTimezone);
       const endsAtUtc = addMinutes(startsAtUtc, data.durationMin);
       if (endsAtUtc <= now) continue;
+
+      if (isTeacherBlackoutDate(startsAtUtc, teacherTimezone, teacherBlackoutDates)) {
+        conflictWindows.push(
+          auth.user.locale === "es"
+            ? `${localDateTime} día no disponible para la docente`
+            : `${localDateTime} teacher blackout date`,
+        );
+        continue;
+      }
 
       if (
         teacherAvailability.length &&

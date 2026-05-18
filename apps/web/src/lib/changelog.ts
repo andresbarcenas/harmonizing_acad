@@ -11,6 +11,28 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.6",
+    date: "2026-05-18",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Protected class-level materials for completed classes with multi-file teacher uploads and authenticated download routes.",
+          "Teacher self-service availability management and teacher/admin blackout dates for full unavailable days.",
+          "Class material counts in schedule views and class detail lists for students, teachers, and admins.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "After-class lesson notes now use General Comments, clearer field labels, and 1-5 sliders for quick lesson ratings.",
+          "Local Docker development now defaults to the Next.js dev server for hot reload without rebuilding the web image.",
+          "Repertoire/song management forms were simplified by removing unnecessary active, focus, and tempo defaults.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.5",
     date: "2026-05-15",
     sections: [

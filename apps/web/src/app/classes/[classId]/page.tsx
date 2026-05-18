@@ -72,6 +72,23 @@ export default async function ClassDetailPage({ params }: PageProps) {
           <div className="mt-4 space-y-3">
             <Info label={isSpanish ? "Nota estructurada" : "Structured note"} value={session.lessonNote ? (isSpanish ? "Creada" : "Created") : (isSpanish ? "Pendiente" : "Pending")} />
             {session.lessonNote?.studentVisibleNote ? <NoteBlock label={isSpanish ? "Resumen visible" : "Visible summary"} value={session.lessonNote.studentVisibleNote} /> : null}
+            <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{isSpanish ? "Archivos de esta clase" : "Files for this class"}</p>
+              <div className="mt-2 space-y-2">
+                {session.attachments.map((attachment) => (
+                  <a
+                    key={attachment.id}
+                    className="block truncate rounded-lg border border-[var(--color-border)] bg-white/70 px-3 py-2 text-sm font-semibold text-[var(--color-ink)] underline decoration-[var(--color-gold)] underline-offset-4"
+                    href={`/api/media/class-attachments/${attachment.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {attachment.originalName} · {formatBytes(attachment.sizeBytes)}
+                  </a>
+                ))}
+                {!session.attachments.length ? <p className="text-sm text-[var(--color-ink-soft)]">{isSpanish ? "Sin materiales adjuntos todavía." : "No materials attached yet."}</p> : null}
+              </div>
+            </div>
             {session.practiceAssignments.map((assignment) => (
               <div key={assignment.id} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
                 <p className="text-sm font-semibold">{assignment.title}</p>
@@ -92,6 +109,11 @@ function Info({ label, value }: { label: string; value: string }) {
 
 function NoteBlock({ label, value }: { label: string; value: string }) {
   return <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white/70 p-4"><p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{label}</p><p className="mt-2 text-sm leading-6 text-[var(--color-ink-soft)]">{value}</p></div>;
+}
+
+function formatBytes(value: number) {
+  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function modeLabel(value: string, locale: "en" | "es") {

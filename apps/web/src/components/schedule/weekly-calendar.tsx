@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { buildWeekInTimezone, dayKeyInTimezone, labelDay, labelTime } from "@/components/schedule/calendar-utils";
 import { classTypeLabel } from "@/lib/class-session-labels";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -9,6 +11,7 @@ type SessionItem = {
   startsAtUtc: Date;
   lessonFocus: string | null;
   type?: string;
+  attachmentCount?: number;
 };
 
 type SlotItem = {
@@ -72,12 +75,17 @@ export function WeeklyCalendar({
           </div>
           {daySessions[0] ? (
             <div className="text-right">
-              <div className="rounded-full bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)]">
+              <Link href={`/classes/${daySessions[0].id}`} className="rounded-full bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)] transition hover:bg-[var(--color-gold)] hover:text-white">
                 {labelTime(daySessions[0].startsAtUtc, timezone, locale)}
-              </div>
+              </Link>
               {daySessions[0].type ? (
                 <p className="mt-1 max-w-[5.8rem] truncate text-[10px] font-semibold text-[var(--color-ink-soft)]">
                   {classTypeLabel(daySessions[0].type, locale)}
+                </p>
+              ) : null}
+              {daySessions[0].attachmentCount ? (
+                <p className="mt-1 max-w-[5.8rem] truncate text-[10px] font-semibold text-[var(--color-gold-deep)]">
+                  {locale === "es" ? "Materiales" : "Files"}: {daySessions[0].attachmentCount}
                 </p>
               ) : null}
             </div>

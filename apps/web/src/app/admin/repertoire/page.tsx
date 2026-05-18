@@ -8,7 +8,7 @@ import { getRepertoireCatalogManagerData } from "@/lib/data";
 
 export default async function AdminRepertoirePage() {
   const viewer = await requireViewer([Role.ADMIN]);
-  const data = await getRepertoireCatalogManagerData(viewer, { includeInactive: true, limit: 80 });
+  const data = await getRepertoireCatalogManagerData(viewer, { limit: 80 });
   const isSpanish = viewer.locale === "es";
 
   return (
@@ -45,6 +45,5 @@ function toCatalogItem(item: Awaited<ReturnType<typeof getRepertoireCatalogManag
     defaultTeacherNotes: item.defaultTeacherNotes,
     defaultStudentVisibleNotes: item.defaultStudentVisibleNotes,
     tags: item.tags,
-    active: item.active,
   };
 }

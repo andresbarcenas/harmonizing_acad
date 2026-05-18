@@ -4,7 +4,7 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { createNotifications } from "@/lib/notifications";
-import { buildUtcClassWindow } from "@/lib/scheduling";
+import { buildUtcClassWindow, isTeacherBlackoutDate } from "@/lib/scheduling";
 import { createClassRequestSchema } from "@/lib/validators/class-scheduling";
 
 export async function POST(req: Request) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const payload = parsed.data;
   const assignment = await db.teacherAssignment.findUnique({
     where: { studentId: auth.user.studentProfile.id },
-    include: { teacher: { include: { user: true } }, student: { include: { user: true } } },
+    include: { teacher: { include: { user: true, blackoutDates: true } }, student: { include: { user: true } } },
   });
 
   if (!assignment) {
@@ -50,6 +50,10 @@ export async function POST(req: Request) {
     payload.durationMin > 180
   ) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Horario solicitado inválido." : "Invalid requested time." }, { status: 400 });
+  }
+
+  if (isTeacherBlackoutDate(window.startsAtUtc, assignment.teacher.user.timezone, assignment.teacher.blackoutDates)) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La docente marcó ese día como no disponible." : "The teacher marked that day as unavailable." }, { status: 409 });
   }
 
   const studentOverlap = await db.classSession.findFirst({

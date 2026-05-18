@@ -386,6 +386,8 @@ export const en = {
     recentRequests: "Recent reschedule requests",
     openInbox: "Open inbox",
     noRequests: "No pending requests for now.",
+    availabilityTitle: "Manage the hours families can request.",
+    availabilityDescription: "Add, edit, or remove your own teaching windows. Scheduling uses these blocks in your timezone.",
     allStudents: "All students",
     selectedStudent: "Selected student",
     switchStudent: "Switch student",

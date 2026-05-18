@@ -26,7 +26,6 @@ type CatalogItem = {
   defaultTeacherNotes?: string | null;
   defaultStudentVisibleNotes?: string | null;
   tags?: string | null;
-  active: boolean;
 };
 
 type StudentOption = {
@@ -43,18 +42,13 @@ function copy(locale: AppLocale) {
     search: "Buscar canción, artista o etiqueta",
     instrument: "Instrumento",
     allInstruments: "Todos los instrumentos",
-    includeInactive: "Incluir inactivas",
     searchButton: "Buscar",
     title: "Título",
     composer: "Compositor o artista",
     level: "Nivel",
     tags: "Etiquetas (separadas por coma)",
-    focus: "Enfoque inicial",
-    currentTempo: "Tempo actual sugerido",
-    targetTempo: "Tempo meta sugerido",
     teacherNotes: "Notas docentes sugeridas",
     studentNotes: "Notas visibles sugeridas",
-    active: "Activa",
     create: "Guardar en catálogo",
     save: "Guardar cambios",
     assign: "Asignar a estudiante",
@@ -63,7 +57,6 @@ function copy(locale: AppLocale) {
     saved: "Catálogo actualizado.",
     error: "No se pudo completar la acción.",
     noItems: "No encontramos canciones con esos filtros.",
-    inactive: "Inactiva",
     edit: "Editar",
   } : {
     createTitle: "Add song to catalog",
@@ -71,18 +64,13 @@ function copy(locale: AppLocale) {
     search: "Search song, artist, or tag",
     instrument: "Instrument",
     allInstruments: "All instruments",
-    includeInactive: "Include inactive",
     searchButton: "Search",
     title: "Title",
     composer: "Composer or artist",
     level: "Level",
     tags: "Tags (comma-separated)",
-    focus: "Starting focus",
-    currentTempo: "Suggested current tempo",
-    targetTempo: "Suggested target tempo",
     teacherNotes: "Suggested teacher notes",
     studentNotes: "Suggested visible notes",
-    active: "Active",
     create: "Save to catalog",
     save: "Save changes",
     assign: "Assign to student",
@@ -91,7 +79,6 @@ function copy(locale: AppLocale) {
     saved: "Catalog updated.",
     error: "Could not complete the action.",
     noItems: "No songs found with those filters.",
-    inactive: "Inactive",
     edit: "Edit",
   };
 }
@@ -110,7 +97,6 @@ export function RepertoireCatalogManager({
   const [items, setItems] = useState<CatalogItem[]>(initialItems);
   const [query, setQuery] = useState("");
   const [instrument, setInstrument] = useState("");
-  const [includeInactive, setIncludeInactive] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const instruments = useMemo(() => instrumentOptions(locale), [locale]);
@@ -120,7 +106,6 @@ export function RepertoireCatalogManager({
     const params = new URLSearchParams();
     if (query.trim()) params.set("query", query.trim());
     if (instrument) params.set("instrument", instrument);
-    if (includeInactive) params.set("includeInactive", "true");
     params.set("limit", "80");
     const response = await fetch(`/api/repertoire/catalog?${params.toString()}`);
     const payload = await response.json().catch(() => null) as { items?: CatalogItem[]; error?: string } | null;
@@ -200,7 +185,6 @@ export function RepertoireCatalogManager({
             </select>
             <Button type="button" variant="gold" disabled={pending} onClick={search}>{c.searchButton}</Button>
           </div>
-          <label className="mt-3 flex items-center gap-2 text-sm text-[var(--color-ink-soft)]"><input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} /> {c.includeInactive}</label>
           {message ? <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-white/70 px-3 py-2 text-sm text-[var(--color-ink-soft)]">{message}</p> : null}
         </Card>
 
@@ -211,7 +195,7 @@ export function RepertoireCatalogManager({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <CardTitle className="break-words">{item.title}</CardTitle>
-                    <Badge variant={item.active ? "gold" : "default"}>{item.active ? displayInstrument(item.instrument, locale) : c.inactive}</Badge>
+                    <Badge variant="gold">{displayInstrument(item.instrument, locale)}</Badge>
                   </div>
                   <CardDescription>{[item.composerOrArtist, item.level, item.tags].filter(Boolean).join(" · ") || displayInstrument(item.instrument, locale)}</CardDescription>
                 </div>
@@ -244,14 +228,8 @@ function CatalogForm({ c, locale, item, submitLabel, onSubmit }: { c: ReturnType
       <InstrumentSelect name="instrument" locale={locale} defaultValue={item?.instrument} required aria-label={c.instrument} />
       <Input name="level" defaultValue={item?.level ?? ""} placeholder={c.level} />
       <Input name="tags" defaultValue={item?.tags ?? ""} placeholder={c.tags} className="md:col-span-2" />
-      <Input name="defaultFocusSection" defaultValue={item?.defaultFocusSection ?? ""} placeholder={c.focus} className="md:col-span-2" />
-      <Input name="defaultCurrentTempo" type="number" min={1} max={400} defaultValue={item?.defaultCurrentTempo ?? ""} placeholder={c.currentTempo} />
-      <Input name="defaultTargetTempo" type="number" min={1} max={400} defaultValue={item?.defaultTargetTempo ?? ""} placeholder={c.targetTempo} />
       <Textarea name="defaultTeacherNotes" defaultValue={item?.defaultTeacherNotes ?? ""} placeholder={c.teacherNotes} className="md:col-span-2" />
       <Textarea name="defaultStudentVisibleNotes" defaultValue={item?.defaultStudentVisibleNotes ?? ""} placeholder={c.studentNotes} className="md:col-span-2" />
-      <label className="flex h-[3.35rem] items-center gap-2 rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm">
-        <input name="active" type="checkbox" defaultChecked={item?.active ?? true} /> {c.active}
-      </label>
       <Button type="submit" variant="gold" className="md:col-span-2">{submitLabel}</Button>
     </form>
   );
@@ -263,17 +241,8 @@ function catalogPayload(formData: FormData) {
     composerOrArtist: String(formData.get("composerOrArtist") ?? ""),
     instrument: String(formData.get("instrument") ?? ""),
     level: String(formData.get("level") ?? ""),
-    defaultFocusSection: String(formData.get("defaultFocusSection") ?? ""),
-    defaultCurrentTempo: numberOrUndefined(formData.get("defaultCurrentTempo")),
-    defaultTargetTempo: numberOrUndefined(formData.get("defaultTargetTempo")),
     defaultTeacherNotes: String(formData.get("defaultTeacherNotes") ?? ""),
     defaultStudentVisibleNotes: String(formData.get("defaultStudentVisibleNotes") ?? ""),
     tags: String(formData.get("tags") ?? ""),
-    active: formData.get("active") === "on",
   };
-}
-
-function numberOrUndefined(value: FormDataEntryValue | null) {
-  const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : undefined;
 }

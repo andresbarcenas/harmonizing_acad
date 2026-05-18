@@ -4,7 +4,7 @@ import { NotificationType, RescheduleStatus, Role, SessionStatus } from "@prisma
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
-import { isSlotWithinAvailability, isValidRescheduleDuration, overlapsRange } from "@/lib/scheduling";
+import { isSlotWithinAvailability, isTeacherBlackoutDate, isValidRescheduleDuration, overlapsRange } from "@/lib/scheduling";
 import { rescheduleSchema } from "@/lib/validators/schedule";
 
 export async function POST(req: Request) {
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
         include: {
           user: true,
           availability: true,
+          blackoutDates: true,
         },
       },
     },
@@ -58,6 +59,10 @@ export async function POST(req: Request) {
 
   if (!assignment || assignment.teacherId !== session.teacherId) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes una docente asignada para esta clase" : "You do not have an assigned teacher for this class." }, { status: 400 });
+  }
+
+  if (isTeacherBlackoutDate(proposedStartUtc, assignment.teacher.user.timezone, assignment.teacher.blackoutDates)) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La docente marcó ese día como no disponible." : "The teacher marked that day as unavailable." }, { status: 409 });
   }
 
   if (!isSlotWithinAvailability(proposedStartUtc, proposedEndUtc, assignment.teacher.availability, assignment.teacher.user.timezone)) {
@@ -162,11 +167,15 @@ export async function PATCH(req: Request) {
 
     const teacherUser = await db.teacherProfile.findUnique({
       where: { id: request.session.teacherId },
-      include: { user: true },
+      include: { user: true, blackoutDates: true },
     });
 
     if (!teacherUser) {
       return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrada" : "Teacher not found." }, { status: 404 });
+    }
+
+    if (isTeacherBlackoutDate(request.proposedStartUtc, teacherUser.user.timezone, teacherUser.blackoutDates)) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "La docente marcó ese día como no disponible." : "The teacher marked that day as unavailable." }, { status: 409 });
     }
 
     if (!isSlotWithinAvailability(request.proposedStartUtc, request.proposedEndUtc, availability, teacherUser.user.timezone)) {

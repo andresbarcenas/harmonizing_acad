@@ -56,7 +56,19 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           </div>
         </div>
         <div className="mt-4">
-          <WeeklyCalendar timezone={viewer.timezone} sessions={data.sessions} slots={data.slots} weekStartUtc={data.week.startUtc} locale={viewer.locale} />
+          <WeeklyCalendar
+            timezone={viewer.timezone}
+            sessions={data.sessions.map((session) => ({
+              id: session.id,
+              startsAtUtc: session.startsAtUtc,
+              lessonFocus: session.lessonFocus,
+              type: session.type,
+              attachmentCount: session._count.attachments,
+            }))}
+            slots={data.slots}
+            weekStartUtc={data.week.startUtc}
+            locale={viewer.locale}
+          />
         </div>
       </Card>
 
