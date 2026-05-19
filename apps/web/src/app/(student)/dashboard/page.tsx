@@ -23,40 +23,35 @@ export default async function StudentDashboardPage() {
 
   return (
     <AppShell role={viewer.role} activePath="/dashboard" userName={viewer.name} locale={viewer.locale}>
-      <PageIntro
-        eyebrow={dictionary.student.dashboardEyebrow}
-        title={dictionary.student.dashboardTitle}
-        description={dictionary.student.dashboardDescription}
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/72 px-2.5 py-1.5">
-            <Avatar
-              src={viewer.image}
-              alt={viewer.name}
-              fallback={viewer.name.slice(0, 1).toUpperCase()}
-              className="h-8 w-8 text-[10px]"
-            />
-            <span className="max-w-[180px] truncate text-xs font-medium text-[var(--color-ink-soft)]">{viewer.name}</span>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.18fr)_minmax(20rem,0.82fr)]">
+        <PageIntro
+          eyebrow={dictionary.student.dashboardEyebrow}
+          title={dictionary.student.dashboardTitle}
+          description={dictionary.student.dashboardDescription}
+        >
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-2.5 py-1.5 shadow-[0_8px_20px_rgba(78,55,30,0.035)]">
+              <Avatar
+                src={viewer.image}
+                alt={viewer.name}
+                fallback={viewer.name.slice(0, 1).toUpperCase()}
+                className="h-7 w-7 text-[10px]"
+              />
+              <span className="max-w-[180px] truncate text-xs font-medium text-[var(--color-ink-soft)]">{viewer.name}</span>
+            </div>
+            {data.upcomingClass ? <Badge variant="gold">{dictionary.student.nextClass}: {formatDateTimeInZone(data.upcomingClass.startsAtUtc, viewer.timezone, viewer.locale)}</Badge> : null}
+            {teacher ? <Badge variant="default">{dictionary.student.assignedTeacher}: {teacher.user.name}</Badge> : null}
           </div>
-          {data.upcomingClass ? <Badge variant="gold">{dictionary.student.nextClass}: {formatDateTimeInZone(data.upcomingClass.startsAtUtc, viewer.timezone, viewer.locale)}</Badge> : null}
-          {teacher ? <Badge variant="default">{dictionary.student.assignedTeacher}: {teacher.user.name}</Badge> : null}
-        </div>
-      </PageIntro>
+        </PageIntro>
 
-      <div className="card-grid">
-        <MetricCard title={dictionary.student.currentPlan} value="$90 USD / 4 clases" subtitle={dictionary.student.planSubtitle} />
-        <MetricCard title={dictionary.student.remainingClasses} value={`${data.remainingClasses}`} subtitle={`${data.usedClasses} ${dictionary.student.usedThisMonth}`} />
-        <MetricCard title={dictionary.student.currentLevel} value={(data.progress?.level ?? "BEGINNER").replace("_", " ")} subtitle={dictionary.student.updatedByTeacher} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
-        <Card>
-          <CardTitle>{dictionary.student.nextClass}</CardTitle>
+        <Card variant="interactive" density="compact" className="relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,var(--color-gold),transparent)] opacity-70" />
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-gold-deep)]">{dictionary.student.nextClass}</p>
           {data.upcomingClass ? (
             <>
-              <p className="mt-4 break-words font-display text-3xl tracking-[-0.05em] sm:text-4xl">{formatDateTimeInZone(data.upcomingClass.startsAtUtc, viewer.timezone, viewer.locale)}</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--color-ink-soft)]">{data.upcomingClass.lessonFocus ?? dictionary.student.personalizedSession}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <p className="mt-3 break-words font-display text-[2rem] leading-none tracking-[-0.055em] text-[var(--color-ink)] sm:text-[2.4rem]">{formatDateTimeInZone(data.upcomingClass.startsAtUtc, viewer.timezone, viewer.locale)}</p>
+              <p className="mt-3 rounded-[1.15rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] px-3 py-2 text-sm leading-6 text-[var(--color-ink-soft)]">{data.upcomingClass.lessonFocus ?? dictionary.student.personalizedSession}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
                 <a href={data.upcomingClass.meetingUrl} target="_blank" rel="noreferrer">
                   <Button variant="gold">{dictionary.common.joinClass}</Button>
                 </a>
@@ -69,8 +64,16 @@ export default async function StudentDashboardPage() {
             <CardDescription className="mt-3">{dictionary.student.noClassWeek}</CardDescription>
           )}
         </Card>
+      </div>
 
-        <Card>
+      <div className="card-grid">
+        <MetricCard title={dictionary.student.currentPlan} value="$90 USD / 4 clases" subtitle={dictionary.student.planSubtitle} />
+        <MetricCard title={dictionary.student.remainingClasses} value={`${data.remainingClasses}`} subtitle={`${data.usedClasses} ${dictionary.student.usedThisMonth}`} />
+        <MetricCard title={dictionary.student.currentLevel} value={(data.progress?.level ?? "BEGINNER").replace("_", " ")} subtitle={dictionary.student.updatedByTeacher} />
+      </div>
+
+      <div className="grid gap-4">
+        <Card variant="subtle" density="compact">
           <CardTitle>{dictionary.student.assignedTeacher}</CardTitle>
           {teacher ? (
             <div className="mt-4 flex items-center gap-3">
@@ -84,7 +87,7 @@ export default async function StudentDashboardPage() {
             <CardDescription className="mt-3">{dictionary.student.noTeacher}</CardDescription>
           )}
           {data.latestCompleted?.lessonNote?.studentVisibleNote || data.latestCompleted?.lastClassNotes ? (
-            <div className="mt-5 rounded-[1.35rem] border border-[var(--color-border)] bg-white/72 p-4">
+            <div className="mt-5 rounded-[1.35rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] p-4">
               <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold-deep)]">{dictionary.student.lastNote}</p>
               <p className="mt-2 text-sm leading-6">{data.latestCompleted.lessonNote?.studentVisibleNote ?? data.latestCompleted.lastClassNotes}</p>
             </div>
@@ -93,11 +96,11 @@ export default async function StudentDashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        <Card variant="subtle" density="compact">
           <CardTitle>{dictionary.student.songsLearned}</CardTitle>
           <div className="mt-4 space-y-2">
             {data.songs.map((song) => (
-              <div key={song.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div key={song.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{song.title}</p>
                   <p className="text-xs text-[var(--color-ink-soft)]">{song.artist}</p>
@@ -109,11 +112,11 @@ export default async function StudentDashboardPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card variant="subtle" density="compact">
           <CardTitle>{dictionary.student.upcomingGoals}</CardTitle>
           <div className="mt-4 space-y-2">
             {data.goals.map((goal) => (
-              <div key={goal.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3">
+              <div key={goal.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-4 py-3">
                 <p className="text-sm font-medium">{goal.title}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.student.goal}: {formatDate(goal.targetDate, viewer.locale)}</p>
               </div>
@@ -123,7 +126,7 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
-      <Card className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+      <Card variant="inset" className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
         <div>
           <CardTitle>{dictionary.common.managePlan}</CardTitle>
           <CardDescription>{dictionary.student.planHelp}</CardDescription>

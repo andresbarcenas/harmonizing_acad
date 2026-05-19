@@ -35,29 +35,29 @@ type DayGroup = {
 
 const dayAccents = [
   {
-    header: "border-amber-200 bg-amber-50/78",
-    chip: "border-amber-200 bg-amber-100 text-amber-950",
-    rail: "bg-amber-400",
+    header: "border-[#e8d3b6] bg-[#fbf2e6]",
+    chip: "border-[#e4c89f] bg-[#f8ead8] text-[#3a2516]",
+    rail: "bg-[var(--color-gold)]",
   },
   {
-    header: "border-orange-200 bg-orange-50/78",
-    chip: "border-orange-200 bg-orange-100 text-orange-950",
-    rail: "bg-orange-400",
+    header: "border-[#e3d2bd] bg-[#f8efe4]",
+    chip: "border-[#dbc4a8] bg-[#f3e5d2] text-[#3a2516]",
+    rail: "bg-[#c5965c]",
   },
   {
-    header: "border-emerald-200 bg-emerald-50/78",
-    chip: "border-emerald-200 bg-emerald-100 text-emerald-950",
-    rail: "bg-emerald-500",
+    header: "border-[#ddd0bd] bg-[#f6efe5]",
+    chip: "border-[#d5c3aa] bg-[#efe2d0] text-[#3a2516]",
+    rail: "bg-[#a97842]",
   },
   {
-    header: "border-sky-200 bg-sky-50/78",
-    chip: "border-sky-200 bg-sky-100 text-sky-950",
-    rail: "bg-sky-400",
+    header: "border-[#e7d8c4] bg-[#fbf4ea]",
+    chip: "border-[#dfccb1] bg-[#f5e9d7] text-[#3a2516]",
+    rail: "bg-[#d0a069]",
   },
   {
-    header: "border-rose-200 bg-rose-50/78",
-    chip: "border-rose-200 bg-rose-100 text-rose-950",
-    rail: "bg-rose-400",
+    header: "border-[#ded4c7] bg-[#f7f0e8]",
+    chip: "border-[#d6c8b8] bg-[#f0e8dd] text-[#3a2516]",
+    rail: "bg-[#9d7653]",
   },
 ] as const;
 
@@ -82,10 +82,10 @@ export function ClassSessionDayList({
     <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.key} className="space-y-2">
-          <div className={`rounded-[1.2rem] border px-4 py-3 ${group.accent.header}`}>
+          <div className={`rounded-[1.25rem] border px-4 py-3 shadow-[0_8px_22px_rgba(68,47,27,0.035)] ${group.accent.header}`}>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-display text-2xl font-normal tracking-[-0.04em] text-[var(--color-ink)]">{group.label}</h3>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-soft)]">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">
                 {group.sessions.length} {locale === "es" ? (group.sessions.length === 1 ? "clase" : "clases") : (group.sessions.length === 1 ? "class" : "classes")}
               </p>
             </div>
@@ -118,11 +118,11 @@ function ClassSessionRow({
   const teacherTime = session.teacherTimezone ? formatTimeOnly(session.startsAtUtc, session.teacherTimezone, locale) : null;
 
   return (
-    <div className="relative overflow-hidden rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-4 shadow-[0_10px_30px_rgba(90,64,33,0.04)]">
+    <div className="interactive-lift relative overflow-hidden rounded-[1.25rem] border border-[var(--color-border)] bg-[var(--color-paper-elevated)] p-4 shadow-[0_10px_30px_rgba(90,64,33,0.04)] hover:border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))]">
       <div className={`absolute inset-y-0 left-0 w-1.5 ${accent.rail}`} />
       <div className="flex flex-col gap-4 pl-1 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start">
-          <div className={`w-fit shrink-0 rounded-[1rem] border px-4 py-3 text-center ${accent.chip}`}>
+          <div className={`w-fit shrink-0 rounded-[1.05rem] border px-4 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] ${accent.chip}`}>
             <p className="font-display text-3xl leading-none tracking-[-0.05em]">{viewerTime}</p>
             <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] opacity-75">{durationMinutes} min</p>
           </div>
@@ -138,12 +138,16 @@ function ClassSessionRow({
               <Badge variant={session.type === "RECURRING" ? "default" : "gold"}>{classTypeLabel(session.type, locale)}</Badge>
               <Badge variant={session.status === "CANCELLED" ? "danger" : session.status === "COMPLETED" ? "success" : "default"}>{classStatusLabel(session.status, locale)}</Badge>
             </div>
-            <div className="mt-2 grid gap-1 text-xs text-[var(--color-ink-soft)]">
+            <div className="metadata-row mt-2 grid gap-1">
               <p>{locale === "es" ? "Hora estudiante" : "Student time"}: {studentTime} ({session.studentTimezone})</p>
               {showTeacherTime && teacherTime && session.teacherTimezone ? <p>{locale === "es" ? "Hora docente" : "Teacher time"}: {teacherTime} ({session.teacherTimezone})</p> : null}
               {session.attachmentCount ? <p className="font-semibold text-[var(--color-gold-deep)]">{locale === "es" ? "Materiales" : "Files"}: {session.attachmentCount}</p> : null}
             </div>
-            {session.lessonFocus ? <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{session.lessonFocus}</p> : null}
+            {session.lessonFocus ? (
+              <p className="mt-3 rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] px-3 py-2 text-xs leading-5 text-[var(--color-ink-soft)]">
+                {session.lessonFocus}
+              </p>
+            ) : null}
           </div>
         </div>
 

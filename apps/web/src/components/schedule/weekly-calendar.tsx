@@ -33,6 +33,7 @@ export function WeeklyCalendar({
 }) {
   const dictionary = getDictionary(locale);
   const week = buildWeekInTimezone(timezone, 1, weekStartUtc);
+  const todayKey = dayKeyInTimezone(new Date(), timezone);
 
   const sessionsByDay = new Map<string, SessionItem[]>();
   const slotsByDay = new Map<string, SlotItem[]>();
@@ -56,36 +57,66 @@ export function WeeklyCalendar({
     const daySessions = sessionsByDay.get(key) ?? [];
     const daySlots = slotsByDay.get(key) ?? [];
     const hasActivity = daySessions.length > 0 || daySlots.length > 0;
+    const isToday = key === todayKey;
+    const heatWidth = `${Math.min(100, Math.max(12, daySlots.length * 18))}%`;
 
     return (
       <div
         key={key}
         className={cn(
-          "min-w-0 rounded-[1.1rem] border px-3 py-3",
-          hasActivity ? "border-[var(--color-border)] bg-white/82" : "border-transparent bg-white/42",
+          "group min-w-0 rounded-[1.35rem] border px-3.5 py-3.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
+          hasActivity ? "border-[var(--color-border)] bg-[var(--color-paper-elevated)]" : "border-transparent bg-white/38",
+          isToday ? "border-[color-mix(in_srgb,var(--color-gold)_38%,white)] shadow-[0_12px_34px_rgba(135,83,29,0.08)]" : "",
         )}
       >
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-soft)]">
-          {labelDay(date, timezone, locale)}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-ink-soft)]">
+            {labelDay(date, timezone, locale)}
+          </p>
+          {isToday ? (
+            <span className="rounded-full bg-[var(--color-gold-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-gold-deep)]">
+              {locale === "es" ? "Hoy" : "Today"}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--color-surface-inset)]">
+          <div
+            className={cn(
+              "h-full rounded-full bg-[linear-gradient(90deg,var(--color-gold-soft),var(--color-gold))] transition-all duration-200 ease-out",
+              daySlots.length ? "opacity-100" : "opacity-30",
+            )}
+            style={{ width: heatWidth }}
+          />
+        </div>
+
         <div className="mt-3 flex items-end justify-between gap-3">
           <div>
-            <p className="font-display text-2xl leading-none text-[var(--color-ink)]">{daySlots.length}</p>
-            <p className="mt-1 text-[11px] text-[var(--color-ink-soft)]">{dictionary.schedule.spaces}</p>
+            <p className="font-display text-[2rem] leading-none tracking-[-0.05em] text-[var(--color-ink)]">{daySlots.length}</p>
+            <p className="mt-1 text-[11px] font-medium text-[var(--color-ink-soft)]">{dictionary.schedule.spaces}</p>
           </div>
-          {daySessions[0] ? (
-            <div className="text-right">
-              <Link href={`/classes/${daySessions[0].id}`} className="rounded-full bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)] transition hover:bg-[var(--color-gold)] hover:text-white">
-                {labelTime(daySessions[0].startsAtUtc, timezone, locale)}
-              </Link>
-              {daySessions[0].type ? (
-                <p className="mt-1 max-w-[5.8rem] truncate text-[10px] font-semibold text-[var(--color-ink-soft)]">
+          {daySessions.length ? (
+            <div className="grid max-w-[7.4rem] gap-1 text-right">
+              {daySessions.slice(0, 2).map((session) => (
+                <Link
+                  key={session.id}
+                  href={`/classes/${session.id}`}
+                  className="rounded-full border border-[color-mix(in_srgb,var(--color-gold)_22%,white)] bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-gold)] hover:text-white focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+                >
+                  {labelTime(session.startsAtUtc, timezone, locale)}
+                </Link>
+              ))}
+              {daySessions.length > 2 ? (
+                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">+{daySessions.length - 2}</p>
+              ) : null}
+              {daySessions[0]?.type ? (
+                <p className="truncate text-[10px] font-semibold text-[var(--color-ink-soft)]">
                   {classTypeLabel(daySessions[0].type, locale)}
                 </p>
               ) : null}
-              {daySessions[0].attachmentCount ? (
-                <p className="mt-1 max-w-[5.8rem] truncate text-[10px] font-semibold text-[var(--color-gold-deep)]">
-                  {locale === "es" ? "Materiales" : "Files"}: {daySessions[0].attachmentCount}
+              {daySessions.some((session) => session.attachmentCount) ? (
+                <p className="truncate text-[10px] font-semibold text-[var(--color-gold-deep)]">
+                  {locale === "es" ? "Materiales" : "Files"}: {daySessions.reduce((total, session) => total + (session.attachmentCount ?? 0), 0)}
                 </p>
               ) : null}
             </div>
@@ -96,13 +127,13 @@ export function WeeklyCalendar({
   }
 
   return (
-    <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/56 p-3">
+    <div className="rounded-[1.55rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-3.5 shadow-[0_12px_34px_rgba(68,47,27,0.04)]">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-deep)]">{dictionary.schedule.weeklyView}</p>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.schedule.summary}</p>
         </div>
-        <div className="hidden rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-1 text-xs text-[var(--color-ink-soft)] sm:block">
+        <div className="hidden rounded-full border border-[var(--color-border)] bg-[var(--color-paper-elevated)] px-3 py-1 text-xs font-medium text-[var(--color-ink-soft)] sm:block">
           {slots.length} {dictionary.schedule.spaces}
         </div>
       </div>

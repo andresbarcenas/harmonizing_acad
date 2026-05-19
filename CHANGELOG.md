@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.8] - 2026-05-19
+
+### Changed
+- Refreshed the shared visual system with Leonardo's input, moving the app toward a warmer premium musical/editorial feel instead of a generic dashboard look.
+- Reduced page hero height and tightened dashboard rhythm so metrics, next-class context, and schedule previews appear sooner on iPad and desktop.
+- Refined cards, buttons, badges, metric cards, skeleton loading states, and app surfaces with softer cream layers, luxury amber accents, gentler shadows, and clearer hierarchy.
+- Updated the sidebar active state with a subtle rail, warm glow, gradient surface, and elevated icon chip for a more custom Harmonizing navigation experience.
+- Improved the weekly calendar and grouped class lists with warmer day cells, availability heat indicators, stronger time hierarchy, calmer status badges, and more polished interactive states.
+
 ## [0.7.7] - 2026-05-18
 
 ### Added

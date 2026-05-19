@@ -18,7 +18,7 @@ export function PageIntro({
       <p className="page-eyebrow">{eyebrow}</p>
       <h1 className="page-title">{title}</h1>
       <p className="page-copy">{description}</p>
-      {children ? <div className="mt-5">{children}</div> : null}
+      {children ? <div className="mt-4">{children}</div> : null}
     </section>
   );
 }

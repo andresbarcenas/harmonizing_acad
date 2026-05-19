@@ -229,19 +229,19 @@ export async function AppShell({
   }));
 
   return (
-    <div className="mx-auto grid min-h-screen w-full max-w-[96rem] grid-cols-1 gap-4 px-3 pb-10 pt-3 sm:px-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:px-6 lg:pt-6">
+    <div className="mx-auto grid min-h-screen w-full max-w-[96rem] grid-cols-1 gap-4 px-3 pb-10 pt-3 sm:px-4 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-6 lg:pt-5">
       <TimezoneSync />
-      <aside className="hidden h-[calc(100vh-3rem)] min-h-[38rem] flex-col overflow-y-auto rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(160deg,rgba(255,255,255,0.9),rgba(252,247,241,0.76))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] lg:sticky lg:top-6 lg:flex">
-        <Link href={homeHrefForRole(role, validTeacherStudentId)} className="rounded-[1.6rem] p-1 transition hover:bg-white/60 focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
+      <aside className="hidden h-[calc(100vh-2.5rem)] min-h-[38rem] flex-col overflow-y-auto rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(160deg,var(--color-paper-elevated),var(--color-surface-sidebar))] p-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] lg:sticky lg:top-5 lg:flex">
+        <Link href={homeHrefForRole(role, validTeacherStudentId)} className="rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-white/62 focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
           <BrandLogo compact={false} />
         </Link>
 
-        <div className="mt-5 grid gap-3">
+        <div className="mt-4 grid gap-2.5">
           <BillingStatusBadge billing={billing} />
           <UserBadge userName={userName} />
         </div>
 
-        <nav className="mt-6 space-y-5" aria-label={mobileNavLabels.primaryNavigation}>
+        <nav className="mt-5 space-y-4" aria-label={mobileNavLabels.primaryNavigation}>
           {navGroups.map((group) => (
             <ShellNavGroup key={group.label} group={group} />
           ))}
@@ -256,7 +256,7 @@ export async function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="mb-5 rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(145deg,rgba(255,255,255,0.86),rgba(252,247,241,0.72))] px-3 py-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:px-4 md:mb-6 md:px-6 md:py-4 lg:sticky lg:top-6 lg:z-20">
+        <header className="mb-4 rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(145deg,var(--color-paper-elevated),var(--color-surface-glass))] px-3 py-3 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:px-4 md:mb-5 md:px-5 md:py-3.5 lg:sticky lg:top-5 lg:z-20">
           <div className="flex min-w-0 items-center justify-between gap-3 lg:hidden">
             <MobileNavDrawer
               userName={userName}
@@ -327,8 +327,8 @@ function BillingStatusBadge({ billing }: { billing: BillingStatus }) {
   return (
     <div
       className={cn(
-        "inline-flex w-fit items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase",
-        billing.live ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700",
+        "inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase shadow-[0_8px_22px_rgba(68,47,27,0.035)]",
+        billing.live ? "border-emerald-200/80 bg-emerald-50/82 text-emerald-700" : "border-amber-200/80 bg-amber-50/82 text-amber-700",
       )}
       title={billing.title}
     >
@@ -339,7 +339,7 @@ function BillingStatusBadge({ billing }: { billing: BillingStatus }) {
 }
 
 function UserBadge({ userName, href }: { userName: string; href?: string }) {
-  const className = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none";
+  const className = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.035)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none";
   const content = (
     <>
       <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
@@ -358,11 +358,11 @@ function UserBadge({ userName, href }: { userName: string; href?: string }) {
 
 function ShellNavGroup({ group }: { group: AppShellNavGroup }) {
   return (
-    <div className="space-y-2">
-      <p className="px-3 text-[0.66rem] font-semibold tracking-[0.2em] text-[var(--color-gold-deep)] uppercase">
+    <div className="space-y-1.5">
+      <p className="px-3 text-[0.62rem] font-semibold tracking-[0.22em] text-[var(--color-ink-muted)] uppercase">
         {group.label}
       </p>
-      <div className="grid gap-1.5">
+      <div className="grid gap-1">
         {group.items.map((item) => (
           <ShellNavLink key={item.href} item={item} />
         ))}
@@ -377,17 +377,20 @@ function ShellNavLink({ item }: { item: AppShellNavLink }) {
       href={item.href}
       aria-current={item.active ? "page" : undefined}
       className={cn(
-        "flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200",
+        "relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
         item.active
-          ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
-          : "bg-white/72 text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
+          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),var(--color-gold-soft))] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
+          : "border-transparent bg-transparent text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
       )}
     >
+      <span className={cn("absolute inset-y-2 left-1 w-1 rounded-full transition-opacity", item.active ? "bg-[var(--color-gold)] opacity-100" : "opacity-0")} />
       <span className="flex min-w-0 items-center gap-3">
         <span
           className={cn(
-            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border",
-            item.active ? "border-white/24 bg-white/16" : "border-[var(--color-border)] bg-white/70",
+            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ease-out",
+            item.active
+              ? "border-[color-mix(in_srgb,var(--color-gold)_28%,white)] bg-white/86 text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]"
+              : "border-[var(--color-border)] bg-white/64 text-[var(--color-ink-soft)]",
           )}
         >
           <NavIcon icon={item.icon} className="h-4 w-4" />

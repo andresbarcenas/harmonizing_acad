@@ -11,6 +11,22 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.8",
+    date: "2026-05-19",
+    sections: [
+      {
+        title: "Changed",
+        items: [
+          "Refreshed the shared visual system with Leonardo's input, moving the portal toward a warmer premium musical/editorial experience.",
+          "Reduced page hero height and tightened dashboard rhythm so metrics, next-class context, and schedule previews appear sooner.",
+          "Refined cards, buttons, badges, metric cards, loading states, and app surfaces with softer cream layers, luxury amber accents, and gentler shadows.",
+          "Updated sidebar active states with a subtle rail, warm glow, gradient surface, and elevated icon chip.",
+          "Improved the weekly calendar and grouped class lists with warmer day cells, availability heat indicators, stronger time hierarchy, calmer badges, and polished interactive states.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.7",
     date: "2026-05-18",
     sections: [

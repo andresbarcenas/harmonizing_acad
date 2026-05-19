@@ -145,7 +145,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
                 type="button"
                 aria-label={labels.closeMenu}
                 onClick={() => setOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/82 text-[var(--color-ink-soft)] transition hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/82 text-[var(--color-ink-soft)] transition hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -165,7 +165,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
               <Link
                 href={settingsHref ?? "/settings"}
                 onClick={() => setOpen(false)}
-                className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none"
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
               >
                 <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
                 <span className="truncate">{userName}</span>
@@ -218,7 +218,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
         aria-label={labels.openMenu}
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/84 text-[var(--color-ink)] shadow-[0_12px_26px_rgba(78,55,30,0.08)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none lg:hidden"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/84 text-[var(--color-ink)] shadow-[0_12px_26px_rgba(78,55,30,0.08)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none lg:hidden"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -235,17 +235,18 @@ function MobileNavLink({ item, onNavigate }: { item: AppShellNavLink; onNavigate
       onClick={onNavigate}
       aria-current={item.active ? "page" : undefined}
       className={cn(
-        "flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition-all duration-200",
+        "relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-200 ease-out focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
         item.active
-          ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
-          : "bg-white/72 text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
+          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),var(--color-gold-soft))] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
+          : "border-transparent bg-white/60 text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
       )}
     >
+      <span className={cn("absolute inset-y-2 left-1 w-1 rounded-full transition-opacity", item.active ? "bg-[var(--color-gold)] opacity-100" : "opacity-0")} />
       <span className="flex min-w-0 items-center gap-3">
         <span
           className={cn(
             "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border",
-            item.active ? "border-white/24 bg-white/16" : "border-[var(--color-border)] bg-white/70",
+            item.active ? "border-[color-mix(in_srgb,var(--color-gold)_28%,white)] bg-white/86 text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]" : "border-[var(--color-border)] bg-white/70",
           )}
         >
           <NavIcon icon={item.icon} className="h-4 w-4" />

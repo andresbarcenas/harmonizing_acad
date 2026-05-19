@@ -36,14 +36,14 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
         description={dictionary.schedule.description}
       />
 
-      <Card>
+      <Card density="compact">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <CardTitle>{dictionary.schedule.weeklyCalendar}</CardTitle>
             <CardDescription>{dictionary.schedule.assignedOnly}</CardDescription>
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
-            <p className="rounded-full border border-[var(--color-border)] bg-white/74 px-3 py-1.5 text-xs text-[var(--color-ink-soft)]">
+            <p className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)]">
               {viewer.timezone}
               {data.assignedTeacher?.user.timezone ? ` · Docente: ${data.assignedTeacher.user.timezone}` : ""}
             </p>
@@ -74,7 +74,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
       </Card>
 
       {!data.sessions.length && data.nextUpcomingSession ? (
-        <Card className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <Card variant="inset" className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>{dictionary.schedule.noClassesWeek}</CardTitle>
             <CardDescription>
@@ -84,7 +84,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           {nextUpcomingWeekHref ? (
             <Link
               href={nextUpcomingWeekHref}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--color-gold)] px-5 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition hover:-translate-y-0.5 hover:bg-[var(--color-gold-deep)]"
+              className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] px-5 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-95 focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
             >
               {dictionary.schedule.goNextClass}
             </Link>
@@ -92,7 +92,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
         </Card>
       ) : null}
 
-      <Card>
+      <Card density="compact">
         <CardTitle>{viewer.locale === "es" ? "Clases próximas y recientes" : "Upcoming and recent classes"}</CardTitle>
         <CardDescription>
           {viewer.locale === "es"
@@ -140,7 +140,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           locale={viewer.locale}
         />
       ) : (
-        <Card>
+        <Card variant="subtle">
           <CardTitle>{data.sessions.length ? dictionary.schedule.noFutureReschedule : dictionary.schedule.noReschedule}</CardTitle>
           <CardDescription>
             {data.nextUpcomingSession
@@ -150,7 +150,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
         </Card>
       )}
 
-      <Card>
+      <Card variant="subtle">
         <CardTitle>{viewer.locale === "es" ? "Solicitar clase individual" : "Request one-time class"}</CardTitle>
         <CardDescription>
           {viewer.locale === "es"
@@ -168,7 +168,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           <CardDescription>{viewer.locale === "es" ? "Estas solicitudes aún no se convierten en clases hasta que sean aprobadas." : "These requests become classes only after approval."}</CardDescription>
           <div className="mt-3 space-y-2">
             {data.classRequests.map((request) => (
-              <div key={request.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div key={request.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold">{classTypeLabel(request.type, viewer.locale)}</p>
                   <p className="text-xs text-[var(--color-ink-soft)]">{formatDateTimeInZone(request.preferredStartUtc, viewer.timezone, viewer.locale)} · {request.durationMin} min</p>
@@ -187,12 +187,12 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
       ) : null}
 
       {data.pendingRequests.length ? (
-        <Card>
+        <Card variant="subtle">
           <CardTitle>{dictionary.schedule.pendingRequests}</CardTitle>
           <CardDescription>{dictionary.schedule.pendingDescription}</CardDescription>
           <div className="mt-3 space-y-2">
             {data.pendingRequests.map((request) => (
-              <div key={request.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div key={request.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm">{formatDateTimeInZone(request.proposedStartUtc, viewer.timezone, viewer.locale)}</p>
                   {request.studentMessage ? <p className="text-xs text-[var(--color-ink-soft)]">{request.studentMessage}</p> : null}
@@ -211,10 +211,10 @@ function ScheduleLink({ href, active, children }: { href: string; active?: boole
   return (
     <Link
       href={href}
-      className={`inline-flex h-9 items-center rounded-full border px-3 text-xs font-semibold transition ${
+      className={`inline-flex h-9 items-center rounded-full border px-3 text-xs font-semibold transition duration-200 ease-out focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none ${
         active
-          ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]"
-          : "border-[var(--color-border)] bg-white/74 text-[var(--color-ink-soft)] hover:bg-white hover:text-[var(--color-ink)]"
+          ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.08)]"
+          : "border-[var(--color-border)] bg-[var(--color-surface-glass)] text-[var(--color-ink-soft)] hover:-translate-y-0.5 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-ink)]"
       }`}
     >
       {children}
