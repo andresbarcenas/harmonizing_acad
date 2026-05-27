@@ -1,4 +1,4 @@
-import { PracticeAssignmentStatus, RepertoireStatus, SessionStatus } from "@prisma/client";
+import { PracticeAssignmentStatus, RepertoireStatus, SessionStatus, StudentLevel } from "@prisma/client";
 import { z } from "zod";
 
 import { normalizeInstrument } from "@/lib/instruments";
@@ -173,6 +173,12 @@ export const upsertPracticeAssignmentSchema = z.object({
   expectedMinutes: z.number().int().min(1).max(600).optional(),
   requiresVideo: z.boolean().default(false),
   teacherReviewNote: optionalString(2000),
+});
+
+export const updateStudentLevelSchema = z.object({
+  studentId: z.string().min(1),
+  level: z.nativeEnum(StudentLevel),
+  summary: optionalString(500),
 });
 
 export const practiceAssignmentStatusSchema = z.object({

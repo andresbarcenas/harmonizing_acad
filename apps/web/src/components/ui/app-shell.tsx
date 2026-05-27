@@ -48,12 +48,6 @@ type NavGroup = {
   items: NavItem[];
 };
 
-type BillingStatus = {
-  label: string;
-  title: string;
-  live: boolean;
-};
-
 function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["shell"]): NavGroup[] {
   const { nav, navGroups } = shell;
   const studentNav: NavGroup[] = [
@@ -177,11 +171,7 @@ export async function AppShell({
   const dictionary = getDictionary(activeLocale);
   const groups = navGroupsByRole(role, dictionary.shell);
   const alegraConfigured = canUseAlegra();
-  const billing: BillingStatus = {
-    label: alegraConfigured ? dictionary.shell.billingLive : dictionary.shell.billingDemo,
-    title: alegraConfigured ? dictionary.shell.billingLiveTitle : dictionary.shell.billingDemoTitle,
-    live: alegraConfigured,
-  };
+  const billingTitle = alegraConfigured ? dictionary.shell.billingLiveTitle : dictionary.shell.billingDemoTitle;
   const mobileNavLabels = activeLocale === "es"
     ? {
         openMenu: "Abrir menú de navegación",
@@ -237,7 +227,6 @@ export async function AppShell({
         </Link>
 
         <div className="mt-4 grid gap-2.5">
-          <BillingStatusBadge billing={billing} />
           <UserBadge userName={userName} />
         </div>
 
@@ -265,7 +254,6 @@ export async function AppShell({
               version={APP_VERSION}
               homeHref={homeHrefForRole(role, validTeacherStudentId)}
               labels={mobileNavLabels}
-              billing={billing}
               settingsHref="/settings"
               groups={navGroups}
             />
@@ -289,10 +277,9 @@ export async function AppShell({
               <p className="text-[10px] font-semibold tracking-[0.2em] text-[var(--color-gold-deep)] uppercase">
                 Harmonizing
               </p>
-              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{billing.title}</p>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{billingTitle}</p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-              <BillingStatusBadge billing={billing} />
               <LanguageToggle locale={activeLocale} authenticated compact />
               <UserBadge userName={userName} href="/settings" />
             </div>
@@ -319,21 +306,6 @@ export async function AppShell({
           Harmonizing {APP_VERSION}
         </footer>
       </div>
-    </div>
-  );
-}
-
-function BillingStatusBadge({ billing }: { billing: BillingStatus }) {
-  return (
-    <div
-      className={cn(
-        "inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase shadow-[0_8px_22px_rgba(68,47,27,0.035)]",
-        billing.live ? "border-emerald-200/80 bg-emerald-50/82 text-emerald-700" : "border-amber-200/80 bg-amber-50/82 text-amber-700",
-      )}
-      title={billing.title}
-    >
-      <span className={cn("h-2 w-2 rounded-full", billing.live ? "bg-emerald-500" : "bg-amber-500")} />
-      <span>{billing.label}</span>
     </div>
   );
 }

@@ -37,6 +37,12 @@ const SOFT = "#6d675f";
 const BORDER = "#eadfce";
 const PAPER = "#fbf8f3";
 
+type PdfLayout = {
+  contentX: number;
+  contentWidth: number;
+  contentRight: number;
+};
+
 export async function generateConsentPdf(input: ConsentPdfInput) {
   const doc = new PDFDocument({
     size: "LETTER",
@@ -60,85 +66,126 @@ export async function generateConsentPdf(input: ConsentPdfInput) {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  drawLogo(doc);
+  const layout = getLayout(doc);
+  drawLogo(doc, layout);
   doc.moveDown(1.2);
-  title(doc, input.document.titleEs);
-  title(doc, input.document.titleEn, true);
-  small(doc, `Version: ${input.document.version}`);
-  small(doc, `Signed / Firmado: ${formatDateTimeInZone(input.signedAt, input.student.timezone, input.locale)} (${input.student.timezone})`);
-  small(doc, `Student / Estudiante: ${input.student.name} <${input.student.email}>`);
-  small(doc, `Signer / Firmante: ${input.signer.name} <${input.signer.email}>`);
-  small(doc, `Relationship / Relación: ${input.signer.relationship}`);
-  small(doc, `Consent hash: ${input.consentTextHash}`);
+  title(doc, layout, input.document.titleEs);
+  title(doc, layout, input.document.titleEn, true);
+  small(doc, layout, `Version: ${input.document.version}`);
+  small(doc, layout, `Signed / Firmado: ${formatDateTimeInZone(input.signedAt, input.student.timezone, input.locale)} (${input.student.timezone})`);
+  small(doc, layout, `Student / Estudiante: ${input.student.name} <${input.student.email}>`);
+  small(doc, layout, `Signer / Firmante: ${input.signer.name} <${input.signer.email}>`);
+  small(doc, layout, `Relationship / Relación: ${input.signer.relationship}`);
+  small(doc, layout, `Consent hash: ${chunkText(input.consentTextHash, 16)}`);
 
-  divider(doc);
-  section(doc, "Consentimiento en español", input.document.bodyEs);
-  divider(doc);
-  section(doc, "English Consent", input.document.bodyEn);
-  divider(doc);
-  signatureBlock(doc, input, signatureFont);
+  divider(doc, layout);
+  section(doc, layout, "Consentimiento en español", input.document.bodyEs);
+  divider(doc, layout);
+  section(doc, layout, "English Consent", input.document.bodyEn);
+  divider(doc, layout);
+  signatureBlock(doc, layout, input, signatureFont);
 
   doc.end();
   return finished;
 }
 
-function drawLogo(doc: PDFKit.PDFDocument) {
-  const x = doc.x;
-  const y = doc.y;
+function getLayout(doc: PDFKit.PDFDocument): PdfLayout {
+  const contentX = doc.page.margins.left;
+  const contentRight = doc.page.width - doc.page.margins.right;
+  return {
+    contentX,
+    contentRight,
+    contentWidth: contentRight - contentX,
+  };
+}
+
+function resetCursor(doc: PDFKit.PDFDocument, layout: PdfLayout, y = doc.y) {
+  doc.x = layout.contentX;
+  doc.y = y;
+}
+
+function chunkText(value: string, size: number) {
+  return value.match(new RegExp(`.{1,${size}}`, "g"))?.join(" ") ?? value;
+}
+
+function wrapLongTokens(value: string, size = 42) {
+  return value.split(/(\s+)/).map((part) => {
+    if (!part || /^\s+$/.test(part) || part.length <= size) return part;
+    return chunkText(part, size);
+  }).join("");
+}
+
+function drawLogo(doc: PDFKit.PDFDocument, layout: PdfLayout) {
+  const x = layout.contentX;
+  const y = doc.page.margins.top;
+  const brandX = x + 66;
+  const brandY = y + 6;
   doc.roundedRect(x, y, 52, 52, 14).fillAndStroke("#ffffff", BORDER);
   doc.fillColor(GOLD_DEEP).font("Times-Roman").fontSize(9).text("H", x + 19, y + 8, { width: 16, align: "center" });
   doc.fillColor(GOLD).fontSize(22).text("2", x + 17, y + 21, { width: 18, align: "center" });
-  doc.fillColor(INK).font("Times-Roman").fontSize(28).text("harmoni", x + 66, y + 6, { continued: true });
-  doc.fillColor(GOLD).text("zing");
+  doc.fillColor(INK).font("Times-Roman").fontSize(28).text("harmoni", brandX, brandY, { width: Math.max(108, layout.contentWidth - 66), lineBreak: false });
+  doc.fillColor(GOLD).text("zing", brandX + doc.widthOfString("harmoni") - 1, brandY, { width: Math.max(50, layout.contentWidth - 174), lineBreak: false });
   doc.fillColor(SOFT).font("Helvetica").fontSize(7).text("ACADEMIA MUSICAL", x + 69, y + 37);
-  doc.moveDown(4.5);
+  resetCursor(doc, layout, y + 62);
 }
 
-function title(doc: PDFKit.PDFDocument, text: string, secondary = false) {
-  doc.fillColor(secondary ? SOFT : INK).font("Times-Roman").fontSize(secondary ? 16 : 22).text(text, {
-    width: 500,
+function title(doc: PDFKit.PDFDocument, layout: PdfLayout, text: string, secondary = false) {
+  resetCursor(doc, layout);
+  doc.fillColor(secondary ? SOFT : INK).font("Times-Roman").fontSize(secondary ? 16 : 22).text(wrapLongTokens(text), layout.contentX, doc.y, {
+    width: layout.contentWidth,
     lineGap: 2,
   });
   doc.moveDown(0.25);
+  resetCursor(doc, layout);
 }
 
-function small(doc: PDFKit.PDFDocument, text: string) {
-  doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(text, { width: 500, lineGap: 2 });
+function small(doc: PDFKit.PDFDocument, layout: PdfLayout, text: string) {
+  resetCursor(doc, layout);
+  doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(wrapLongTokens(text, 36), layout.contentX, doc.y, { width: layout.contentWidth, lineGap: 2 });
+  resetCursor(doc, layout);
 }
 
-function divider(doc: PDFKit.PDFDocument) {
+function divider(doc: PDFKit.PDFDocument, layout: PdfLayout) {
   ensureSpace(doc, 42);
   doc.moveDown(0.8);
   const y = doc.y;
-  doc.strokeColor(BORDER).lineWidth(1).moveTo(doc.page.margins.left, y).lineTo(doc.page.width - doc.page.margins.right, y).stroke();
+  doc.strokeColor(BORDER).lineWidth(1).moveTo(layout.contentX, y).lineTo(layout.contentRight, y).stroke();
   doc.moveDown(1);
+  resetCursor(doc, layout);
 }
 
-function section(doc: PDFKit.PDFDocument, heading: string, body: string) {
+function section(doc: PDFKit.PDFDocument, layout: PdfLayout, heading: string, body: string) {
   ensureSpace(doc, 90);
-  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(10).text(heading.toUpperCase(), { width: 500 });
+  resetCursor(doc, layout);
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(10).text(heading.toUpperCase(), layout.contentX, doc.y, { width: layout.contentWidth });
   doc.moveDown(0.55);
   for (const paragraph of body.split(/\n{2,}/)) {
     ensureSpace(doc, 86);
-    doc.fillColor(INK).font("Helvetica").fontSize(10.4).text(paragraph, {
-      width: 500,
+    resetCursor(doc, layout);
+    doc.fillColor(INK).font("Helvetica").fontSize(10.4).text(wrapLongTokens(paragraph), layout.contentX, doc.y, {
+      width: layout.contentWidth,
       lineGap: 4,
       align: "left",
     });
     doc.moveDown(0.72);
+    resetCursor(doc, layout);
   }
 }
 
-function signatureBlock(doc: PDFKit.PDFDocument, input: ConsentPdfInput, signatureFont: string) {
+function signatureBlock(doc: PDFKit.PDFDocument, layout: PdfLayout, input: ConsentPdfInput, signatureFont: string) {
   ensureSpace(doc, 150);
-  doc.roundedRect(doc.x, doc.y, 500, 122, 18).fillAndStroke(PAPER, BORDER);
-  const x = doc.x + 20;
-  const y = doc.y + 18;
-  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(9).text("FIRMA ELECTRÓNICA / ELECTRONIC SIGNATURE", x, y);
-  doc.fillColor(INK).font(signatureFont).fontSize(34).text(input.signer.name, x, y + 26, { width: 460 });
-  doc.strokeColor(BORDER).moveTo(x, y + 70).lineTo(x + 300, y + 70).stroke();
-  doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(`${input.signer.name} · ${input.signer.relationship}`, x, y + 78);
-  doc.fillColor(SOFT).fontSize(9).text(`Signed / Firmado: ${input.signedAt.toISOString()}`, x, y + 94);
+  resetCursor(doc, layout);
+  const boxY = doc.y;
+  doc.roundedRect(layout.contentX, boxY, layout.contentWidth, 122, 18).fillAndStroke(PAPER, BORDER);
+  const x = layout.contentX + 20;
+  const y = boxY + 18;
+  const innerWidth = layout.contentWidth - 40;
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(9).text("FIRMA ELECTRÓNICA / ELECTRONIC SIGNATURE", x, y, { width: innerWidth });
+  doc.fillColor(INK).font(signatureFont).fontSize(34).text(wrapLongTokens(input.signer.name, 28), x, y + 26, { width: innerWidth });
+  doc.strokeColor(BORDER).moveTo(x, y + 70).lineTo(Math.min(x + 300, layout.contentRight - 20), y + 70).stroke();
+  doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(wrapLongTokens(`${input.signer.name} · ${input.signer.relationship}`, 36), x, y + 78, { width: innerWidth });
+  doc.fillColor(SOFT).fontSize(9).text(`Signed / Firmado: ${input.signedAt.toISOString()}`, x, y + 94, { width: innerWidth });
+  resetCursor(doc, layout, boxY + 122);
 }
 
 function ensureSpace(doc: PDFKit.PDFDocument, needed: number) {

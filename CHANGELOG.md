@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.7.9] - 2026-05-27
+
+### Added
+- Admins and teachers can now update a student's current level from existing student/progress workflows while preserving level history in progress records.
+
+### Changed
+- Student dashboard level metrics now show localized level labels instead of raw enum values.
+- Billing chrome no longer shows the demo-mode pill and now uses simpler “Invoices are not configured yet” copy when invoice integration is unavailable.
+
+### Fixed
+- Signed consent PDF attachments now use margin-safe text layout so bilingual consent text and audit hashes wrap within the page.
+
 ## [0.7.8] - 2026-05-19
 
 ### Changed

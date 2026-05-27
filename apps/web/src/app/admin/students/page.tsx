@@ -12,6 +12,7 @@ import { requireViewer } from "@/features/auth/server";
 import { planLabel } from "@/lib/billing/manual-plans";
 import { db } from "@/lib/db";
 import { formatDate, getDictionary } from "@/lib/i18n";
+import { studentLevelLabel } from "@/lib/student-levels";
 
 export default async function AdminStudentsPage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -32,6 +33,10 @@ export default async function AdminStudentsPage() {
           where: { active: true },
           include: { plan: true },
           orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        progressRecords: {
+          orderBy: { updatedAt: "desc" },
           take: 1,
         },
       },
@@ -104,6 +109,9 @@ export default async function AdminStudentsPage() {
                   {dictionary.common.plan}: {student.subscriptions[0] ? planLabel(student.subscriptions[0].plan, viewer.locale) : dictionary.admin.noActivePlan}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
+                  {dictionary.student.currentLevel}: {studentLevelLabel(student.progressRecords[0]?.level, viewer.locale)}
+                </p>
+                <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.common.joined}: {formatDate(student.joinedAt, viewer.locale)}
                 </p>
                 <StudentEditForm
@@ -121,6 +129,12 @@ export default async function AdminStudentsPage() {
                     preferredInstrument: student.preferredInstrument,
                     bio: student.bio,
                     profileImage: student.user.image,
+                    currentProgress: student.progressRecords[0]
+                      ? {
+                          level: student.progressRecords[0].level,
+                          summary: student.progressRecords[0].summary,
+                        }
+                      : null,
                     activePlan: student.subscriptions[0]
                       ? {
                           monthlyClassCount: student.subscriptions[0].monthlyClassLimit,

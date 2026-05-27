@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
-import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm } from "@/components/progress/progress-forms";
+import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm, StudentLevelForm } from "@/components/progress/progress-forms";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,6 +13,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getTeacherProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import { instrumentLabel, instrumentToSkillInstrument } from "@/lib/instruments";
+import { studentLevelLabel } from "@/lib/student-levels";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
 
@@ -86,11 +87,20 @@ function SelectedStudentProgress({
                 <Link href="/teacher/progress"><Button variant="outline" size="sm">{isSpanish ? "Ver todos" : "All students"}</Button></Link>
               </div>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              <Metric label={isSpanish ? "Nivel actual" : "Current level"} value={studentLevelLabel(data.selected.progressRecords[0]?.level, viewer.locale)} />
               <Metric label={isSpanish ? "Repertorio" : "Repertoire"} value={data.selected.repertoireItems.length} />
               <Metric label={isSpanish ? "Tareas" : "Assignments"} value={data.selected.practiceAssignments.length} />
               <Metric label={isSpanish ? "Prácticas" : "Practice logs"} value={data.selected.practiceLogs.length} />
               <Metric label={isSpanish ? "Reportes" : "Reports"} value={data.selected.progressReports.length} />
+            </div>
+            <div className="mt-4">
+              <StudentLevelForm
+                studentId={data.selected.id}
+                currentLevel={data.selected.progressRecords[0]?.level}
+                currentSummary={data.selected.progressRecords[0]?.summary}
+                locale={viewer.locale}
+              />
             </div>
           </Card>
 
@@ -212,7 +222,7 @@ function SelectedStudentProgress({
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | string }) {
   return <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3"><p className="font-display text-3xl">{value}</p><p className="text-xs text-[var(--color-ink-soft)]">{label}</p></div>;
 }
 

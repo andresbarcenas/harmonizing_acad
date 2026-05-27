@@ -11,6 +11,31 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.7.9",
+    date: "2026-05-27",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Admins and teachers can update a student's current level from the existing student and progress workflows while preserving progress history.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Student dashboard level metrics now show localized level labels instead of raw enum values.",
+          "Billing chrome no longer shows the demo-mode pill and now uses simpler invoice-not-configured copy when invoice integration is unavailable.",
+        ],
+      },
+      {
+        title: "Fixed",
+        items: [
+          "Signed consent PDF attachments now use margin-safe text layout so bilingual consent text and audit hashes wrap within the page.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.8",
     date: "2026-05-19",
     sections: [

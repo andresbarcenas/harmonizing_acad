@@ -46,7 +46,7 @@ export const es: typeof en = {
     billingLive: "Facturación Live",
     billingDemo: "Facturación Demo",
     billingLiveTitle: "Facturación conectada en modo live con Alegra.",
-    billingDemoTitle: "Facturación en modo demo (sin credenciales Alegra).",
+    billingDemoTitle: "Las facturas aún no están configuradas.",
     nav: {
       home: "Inicio",
       schedule: "Agenda",

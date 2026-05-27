@@ -82,14 +82,9 @@ type MobileNavDrawerProps = {
     primaryNavigation: string;
   };
   settingsHref?: string;
-  billing: {
-    label: string;
-    title: string;
-    live: boolean;
-  };
 };
 
-export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, labels, settingsHref, billing }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, labels, settingsHref }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(() => defaultOpenGroups(groups));
 
@@ -152,16 +147,6 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
             </div>
 
             <div className="mt-5 grid shrink-0 gap-3">
-              <div
-                className={cn(
-                  "inline-flex w-fit items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase",
-                  billing.live ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700",
-                )}
-                title={billing.title}
-              >
-                <span className={cn("h-2 w-2 rounded-full", billing.live ? "bg-emerald-500" : "bg-amber-500")} />
-                <span>{billing.label}</span>
-              </div>
               <Link
                 href={settingsHref ?? "/settings"}
                 onClick={() => setOpen(false)}

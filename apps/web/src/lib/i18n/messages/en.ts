@@ -44,7 +44,7 @@ export const en = {
     billingLive: "Billing Live",
     billingDemo: "Billing Demo",
     billingLiveTitle: "Billing is connected in live mode with Alegra.",
-    billingDemoTitle: "Billing is in demo mode without Alegra credentials.",
+    billingDemoTitle: "Invoices are not configured yet.",
     nav: {
       home: "Home",
       schedule: "Schedule",

@@ -206,6 +206,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
         take: 20,
       },
       progressReports: { where: { teacherId }, orderBy: { createdAt: "desc" }, take: 8 },
+      progressRecords: { orderBy: { updatedAt: "desc" }, take: 1 },
       practiceVideos: {
         where: { teacherId },
         include: { feedback: { include: { skillRatings: { include: { skillCategory: true } } } }, repertoireItem: true, skillCategory: true, practiceAssignment: true },

@@ -12,6 +12,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getStudentDashboardData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 import { instrumentLabel } from "@/lib/instruments";
+import { studentLevelLabel } from "@/lib/student-levels";
 import { buildWhatsAppPlanLink } from "@/lib/whatsapp";
 
 export default async function StudentDashboardPage() {
@@ -69,7 +70,7 @@ export default async function StudentDashboardPage() {
       <div className="card-grid">
         <MetricCard title={dictionary.student.currentPlan} value="$90 USD / 4 clases" subtitle={dictionary.student.planSubtitle} />
         <MetricCard title={dictionary.student.remainingClasses} value={`${data.remainingClasses}`} subtitle={`${data.usedClasses} ${dictionary.student.usedThisMonth}`} />
-        <MetricCard title={dictionary.student.currentLevel} value={(data.progress?.level ?? "BEGINNER").replace("_", " ")} subtitle={dictionary.student.updatedByTeacher} />
+        <MetricCard title={dictionary.student.currentLevel} value={studentLevelLabel(data.progress?.level, viewer.locale)} subtitle={dictionary.student.updatedByTeacher} />
       </div>
 
       <div className="grid gap-4">

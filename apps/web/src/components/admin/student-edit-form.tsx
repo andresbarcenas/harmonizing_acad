@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { InstrumentSelect } from "@/components/instrument-select";
+import { StudentLevelForm } from "@/components/progress/progress-forms";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -36,6 +37,10 @@ export function StudentEditForm({
       monthlyClassCount: number;
       priceUsd: number;
       label: string;
+    } | null;
+    currentProgress?: {
+      level: string;
+      summary: string;
     } | null;
   };
   teachers: TeacherOption[];
@@ -126,82 +131,90 @@ export function StudentEditForm({
       </Button>
 
       {open ? (
-        <form action={onSubmit} className="mt-3 space-y-3 rounded-[1rem] border border-[var(--color-border)] bg-white/82 p-3">
-          <div className="flex items-center gap-2">
-            <Avatar
-              src={profileImage || undefined}
-              alt={initial.name}
-              fallback={initial.name.slice(0, 1).toUpperCase()}
-              className="h-9 w-9 text-[10px]"
-            />
-            <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.studentEditHelp}</p>
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <Input name="name" defaultValue={initial.name} required />
-            <Input name="email" type="email" defaultValue={initial.email} required />
-          </div>
-          <div className="grid gap-2 md:grid-cols-1">
-            <select
-              name="teacherId"
-              defaultValue={initial.teacherId ?? teachers[0]?.id}
-              className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
-            >
-              {teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-2 md:grid-cols-2">
-            <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
-            <InstrumentSelect name="preferredInstrument" defaultValue={initial.preferredInstrument} locale={locale} compact required aria-label={dictionary.forms.preferredInstrumentOptional} />
-          </div>
-          <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
-            <div className="mb-2">
-              <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.currentPlanTitle}</p>
-              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
-                {initial.activePlan?.label ?? dictionary.admin.noActivePlan}. {dictionary.admin.currentPlanDescription}
-              </p>
+        <div className="mt-3 space-y-3">
+          <form action={onSubmit} className="space-y-3 rounded-[1rem] border border-[var(--color-border)] bg-white/82 p-3">
+            <div className="flex items-center gap-2">
+              <Avatar
+                src={profileImage || undefined}
+                alt={initial.name}
+                fallback={initial.name.slice(0, 1).toUpperCase()}
+                className="h-9 w-9 text-[10px]"
+              />
+              <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.studentEditHelp}</p>
             </div>
             <div className="grid gap-2 md:grid-cols-2">
-              <label className="space-y-1 text-left">
-                <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyClasses}</span>
-                <select
-                  name="monthlyClassCount"
-                  defaultValue={String(initial.activePlan?.monthlyClassCount ?? 4)}
-                  className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
-                >
-                  <option value="4">{dictionary.forms.fourClasses}</option>
-                  <option value="8">{dictionary.forms.eightClasses}</option>
-                </select>
-              </label>
-              <label className="space-y-1 text-left">
-                <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyAmountUsd}</span>
-                <Input name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={initial.activePlan?.priceUsd ?? 90} required />
-              </label>
+              <Input name="name" defaultValue={initial.name} required />
+              <Input name="email" type="email" defaultValue={initial.email} required />
             </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Input
-              id={`student-edit-file-${studentId}`}
-              name="file"
-              type="file"
-              accept="image/*"
-              className="h-auto py-2"
-              onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
-            />
-            <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
-              {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
+            <div className="grid gap-2 md:grid-cols-1">
+              <select
+                name="teacherId"
+                defaultValue={initial.teacherId ?? teachers[0]?.id}
+                className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+              >
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
+              <InstrumentSelect name="preferredInstrument" defaultValue={initial.preferredInstrument} locale={locale} compact required aria-label={dictionary.forms.preferredInstrumentOptional} />
+            </div>
+            <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
+              <div className="mb-2">
+                <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.currentPlanTitle}</p>
+                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                  {initial.activePlan?.label ?? dictionary.admin.noActivePlan}. {dictionary.admin.currentPlanDescription}
+                </p>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                <label className="space-y-1 text-left">
+                  <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyClasses}</span>
+                  <select
+                    name="monthlyClassCount"
+                    defaultValue={String(initial.activePlan?.monthlyClassCount ?? 4)}
+                    className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+                  >
+                    <option value="4">{dictionary.forms.fourClasses}</option>
+                    <option value="8">{dictionary.forms.eightClasses}</option>
+                  </select>
+                </label>
+                <label className="space-y-1 text-left">
+                  <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyAmountUsd}</span>
+                  <Input name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={initial.activePlan?.priceUsd ?? 90} required />
+                </label>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                id={`student-edit-file-${studentId}`}
+                name="file"
+                type="file"
+                accept="image/*"
+                className="h-auto py-2"
+                onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+              />
+              <Button type="button" size="sm" variant="outline" disabled={uploading || !uploadFile} onClick={uploadImage}>
+                {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
+              </Button>
+            </div>
+            <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder="Bio" />
+            <Button type="submit" size="sm" variant="gold" disabled={pending}>
+              {pending ? dictionary.common.saving : dictionary.forms.saveChanges}
             </Button>
-          </div>
-          <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder="Bio" />
-          <Button type="submit" size="sm" variant="gold" disabled={pending}>
-            {pending ? dictionary.common.saving : dictionary.forms.saveChanges}
-          </Button>
-          {error ? <p className="text-xs text-rose-700">{error}</p> : null}
-          {success ? <p className="text-xs text-emerald-700">{success}</p> : null}
-        </form>
+            {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+            {success ? <p className="text-xs text-emerald-700">{success}</p> : null}
+          </form>
+          <StudentLevelForm
+            studentId={studentId}
+            currentLevel={initial.currentProgress?.level}
+            currentSummary={initial.currentProgress?.summary}
+            locale={locale}
+          />
+        </div>
       ) : null}
     </div>
   );

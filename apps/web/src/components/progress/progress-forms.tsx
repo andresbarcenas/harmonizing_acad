@@ -9,6 +9,7 @@ import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { studentLevelLabel, studentLevelOptions, type StudentLevelValue } from "@/lib/student-levels";
 
 type SkillOption = { id: string; name: string; instrument: string };
 type RepertoireOption = { id: string; title: string };
@@ -62,6 +63,10 @@ function copy(locale: AppLocale) {
         teacherNotes: "Notas docentes",
         studentNotes: "Notas visibles",
         addAssignment: "Crear tarea de práctica",
+        currentLevel: "Nivel actual",
+        levelSummary: "Nota sobre el cambio de nivel",
+        levelSummaryPlaceholder: "Ej. Avanza con más seguridad en lectura y ritmo.",
+        saveLevel: "Guardar nivel",
         instructions: "Instrucciones",
         dueDate: "Fecha límite",
         expectedMinutes: "Minutos esperados",
@@ -115,6 +120,10 @@ function copy(locale: AppLocale) {
         teacherNotes: "Teacher notes",
         studentNotes: "Visible notes",
         addAssignment: "Create practice assignment",
+        currentLevel: "Current level",
+        levelSummary: "Level change note",
+        levelSummaryPlaceholder: "E.g. Reading and rhythm are becoming more confident.",
+        saveLevel: "Save level",
         instructions: "Instructions",
         dueDate: "Due date",
         expectedMinutes: "Expected minutes",
@@ -146,6 +155,66 @@ const assignmentStatus = {
   inProgress: "IN_PROGRESS",
   completed: "COMPLETED",
 } as const satisfies Record<string, PracticeAssignmentStatus>;
+
+export function StudentLevelForm({
+  studentId,
+  currentLevel,
+  currentSummary,
+  locale,
+}: {
+  studentId: string;
+  currentLevel?: StudentLevelValue | string | null;
+  currentSummary?: string | null;
+  locale: AppLocale;
+}) {
+  const router = useRouter();
+  const c = copy(locale);
+  const [message, setMessage] = useState("");
+  const [pending, startTransition] = useTransition();
+  const defaultLevel = studentLevelOptions.includes(currentLevel as StudentLevelValue) ? currentLevel as StudentLevelValue : "BEGINNER";
+
+  async function submit(formData: FormData) {
+    setMessage("");
+    const response = await fetch("/api/progress/level", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentId,
+        level: String(formData.get("level") ?? defaultLevel),
+        summary: String(formData.get("summary") ?? "").trim() || undefined,
+      }),
+    });
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    setMessage(response.ok ? c.saved : payload?.error ?? c.error);
+    if (response.ok) startTransition(() => router.refresh());
+  }
+
+  return (
+    <form action={submit} className="space-y-3 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4">
+      <div>
+        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[var(--color-gold-deep)]">{c.currentLevel}</p>
+        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{studentLevelLabel(defaultLevel, locale)}</p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+        <select
+          name="level"
+          defaultValue={defaultLevel}
+          aria-label={c.currentLevel}
+          className="h-[3.05rem] rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]"
+        >
+          {studentLevelOptions.map((level) => (
+            <option key={level} value={level}>
+              {studentLevelLabel(level, locale)}
+            </option>
+          ))}
+        </select>
+        <Input name="summary" defaultValue={currentSummary ?? ""} placeholder={c.levelSummaryPlaceholder} aria-label={c.levelSummary} />
+      </div>
+      <Button type="submit" size="sm" variant="gold" disabled={pending}>{c.saveLevel}</Button>
+      {message ? <p className="text-xs text-[var(--color-ink-soft)]">{message}</p> : null}
+    </form>
+  );
+}
 
 export function LessonNoteForm({ sessionId, initial, skillCategories, locale }: { sessionId: string; initial?: LessonNoteInitial | null; skillCategories: SkillOption[]; locale: AppLocale }) {
   const router = useRouter();
