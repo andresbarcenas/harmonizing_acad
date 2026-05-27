@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { canUseAlegra } from "@/lib/alegra/client";
 import { syncAllStudentsInvoices } from "@/lib/invoices/sync";
 
 function isAuthorized(request: Request) {
@@ -18,6 +19,10 @@ function isAuthorized(request: Request) {
 async function runSync(req: Request) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!canUseAlegra()) {
+    return NextResponse.json({ error: "Invoices are not configured yet." }, { status: 503 });
   }
 
   const run = await syncAllStudentsInvoices();

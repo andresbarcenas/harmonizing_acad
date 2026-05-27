@@ -41,10 +41,8 @@ export const en = {
     noItems: "Nothing to show yet.",
   },
   shell: {
-    billingLive: "Billing Live",
-    billingDemo: "Billing Demo",
-    billingLiveTitle: "Billing is connected in live mode with Alegra.",
-    billingDemoTitle: "Invoices are not configured yet.",
+    brandSubtitle: "Music academy",
+    dismissAnnouncement: "Dismiss announcement",
     nav: {
       home: "Home",
       schedule: "Schedule",
@@ -59,6 +57,7 @@ export const en = {
       videos: "Videos",
       overview: "Overview",
       billing: "Billing",
+      announcements: "Announcements",
       teachers: "Teachers",
       students: "Students",
       assignments: "Assignments",
@@ -419,7 +418,6 @@ export const en = {
   },
   notificationsList: {
     unread: "unread notification(s).",
-    simulate: "Simulate reminders",
     markAll: "Mark all",
     read: "Read",
     new: "New",

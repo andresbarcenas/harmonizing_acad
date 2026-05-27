@@ -11,6 +11,35 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.8.0",
+    date: "2026-05-27",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Admin-managed app announcements for message-of-the-day, feature updates, billing notices, and maintenance messages.",
+          "Role-targeted, bilingual, dismissible announcement banners in the app shell with optional CTA links and publish windows.",
+          "Prisma-backed announcement and per-user dismissal tracking.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Invoice pages now show production-safe invoice-not-configured messaging when Alegra is unavailable instead of cached/sample demo invoice rows.",
+          "Invoice sync APIs now reject sync attempts while invoice integration is not configured.",
+          "Production-facing docs now describe pilot-safe invoice behavior and real workflow-created notifications.",
+        ],
+      },
+      {
+        title: "Removed",
+        items: [
+          "The Simulate reminders button and notification simulation endpoint from the notifications center.",
+          "User-facing demo-mode invoice messaging from student and admin invoice surfaces.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.7.9",
     date: "2026-05-27",
     sections: [

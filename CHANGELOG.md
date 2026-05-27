@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.8.0] - 2026-05-27
+
+### Added
+- Admin-managed app announcements at `/admin/announcements` for message-of-the-day, feature updates, billing notices, and maintenance messages.
+- Role-targeted, bilingual, dismissible announcement banners in the app shell with optional CTA links and publish windows.
+- Prisma-backed announcement and per-user dismissal tracking.
+
+### Changed
+- Invoice pages now show production-safe “Invoices are not configured yet” messaging when Alegra is unavailable instead of exposing cached/sample demo invoice rows.
+- Invoice sync APIs now reject sync attempts while invoice integration is not configured.
+- Production-facing docs now describe pilot-safe invoice behavior and real workflow-created notifications.
+
+### Removed
+- The `Simulate reminders` button and notification simulation endpoint from the notifications center.
+- User-facing demo-mode invoice messaging from student and admin invoice surfaces.
+
 ## [0.7.9] - 2026-05-27
 
 ### Added

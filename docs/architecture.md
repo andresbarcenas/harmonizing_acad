@@ -62,7 +62,7 @@ Core entities:
 - Shared notification service writes to in-app `Notification`
 - Read state persisted in `readAt`
 - Unread counters exposed in shell + API
-- Dev reminder simulation endpoint creates upcoming-class notices
+- Class, reschedule, message, video, report, and reminder workflows create real in-app notifications
 - Optional MailHog SMTP mirroring via `NOTIFICATION_SMTP_MIRROR=true`
 - Production class reminder email is handled by Resend through `/api/cron/class-reminders` and deduped with `ClassReminderDelivery`
 

@@ -43,7 +43,6 @@ function badgeVariantForStatus(status: InvoiceSyncStatus | null | undefined) {
 export function AdminInvoicesPanel({
   rows,
   latestAllRun,
-  isDemoMode,
   locale = "en",
 }: {
   rows: AdminInvoiceRow[];
@@ -56,7 +55,6 @@ export function AdminInvoicesPanel({
     invoicesUpserted: number;
     errorSummary: string | null;
   } | null;
-  isDemoMode?: boolean;
   locale?: AppLocale;
 }) {
   const router = useRouter();
@@ -146,11 +144,6 @@ export function AdminInvoicesPanel({
             <p className="text-xs text-[var(--color-ink-soft)]">
               {locale === "es" ? "Estudiantes con cache vencido" : "Students with stale cache"}: {staleCount} / {rows.length}
             </p>
-            {isDemoMode ? (
-              <p className="mt-1 text-xs text-amber-700">
-                {locale === "es" ? "Modo demo: sincronizar utiliza cache local hasta configurar credenciales de Alegra." : "Demo mode: sync uses local cache until Alegra credentials are configured."}
-              </p>
-            ) : null}
           </div>
           <Button variant="gold" size="sm" onClick={syncAll} disabled={pendingGlobal} className="w-full sm:w-auto">
             {pendingGlobal ? (locale === "es" ? "Sincronizando..." : "Syncing...") : locale === "es" ? "Sincronizar todos" : "Sync all"}

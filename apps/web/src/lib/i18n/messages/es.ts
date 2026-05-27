@@ -43,10 +43,8 @@ export const es: typeof en = {
     noItems: "Nada para mostrar aún.",
   },
   shell: {
-    billingLive: "Facturación Live",
-    billingDemo: "Facturación Demo",
-    billingLiveTitle: "Facturación conectada en modo live con Alegra.",
-    billingDemoTitle: "Las facturas aún no están configuradas.",
+    brandSubtitle: "Academia musical",
+    dismissAnnouncement: "Descartar anuncio",
     nav: {
       home: "Inicio",
       schedule: "Agenda",
@@ -61,6 +59,7 @@ export const es: typeof en = {
       videos: "Videos",
       overview: "Resumen",
       billing: "Facturación",
+      announcements: "Anuncios",
       teachers: "Docentes",
       students: "Estudiantes",
       assignments: "Asignaciones",
@@ -421,7 +420,6 @@ export const es: typeof en = {
   },
   notificationsList: {
     unread: "notificación(es) sin leer.",
-    simulate: "Simular recordatorios",
     markAll: "Marcar todas",
     read: "Leída",
     new: "Nueva",

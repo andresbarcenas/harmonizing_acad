@@ -18,56 +18,63 @@ export default async function AdminInvoicesPage() {
       <PageIntro
         eyebrow={dictionary.shell.nav.billing}
         title={viewer.locale === "es" ? "Supervisa sincronización de facturas desde Alegra." : "Monitor invoice sync from Alegra."}
-        description={viewer.locale === "es" ? "Controla estado por estudiante, ejecuta sincronización manual y ajusta el contacto Alegra cuando sea necesario." : "Track status by student, run manual sync, and adjust Alegra contacts when needed."}
+        description={data.isConfigured
+          ? viewer.locale === "es" ? "Controla estado por estudiante, ejecuta sincronización manual y ajusta el contacto Alegra cuando sea necesario." : "Track status by student, run manual sync, and adjust Alegra contacts when needed."
+          : viewer.locale === "es" ? "Esta sección está lista para usarse cuando se configuren las credenciales de facturación." : "This section is ready once invoice credentials are configured."}
       />
 
       <Card>
         <CardTitle>{viewer.locale === "es" ? "Monitor de facturación" : "Billing monitor"}</CardTitle>
         <CardDescription>
-          {viewer.locale === "es" ? "V1 es de solo lectura: mostramos facturas importadas de Alegra, sin cobro interno en Harmonizing." : "V1 is read-only: we show invoices imported from Alegra without internal Harmonizing payments."}
+          {data.isConfigured
+            ? viewer.locale === "es" ? "V1 es de solo lectura: mostramos facturas importadas de Alegra, sin cobro interno en Harmonizing." : "V1 is read-only: we show invoices imported from Alegra without internal Harmonizing payments."
+            : viewer.locale === "es" ? "Las facturas aún no están configuradas." : "Invoices are not configured yet."}
         </CardDescription>
-        {data.isDemoMode ? (
+        {!data.isConfigured ? (
           <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-            {viewer.locale === "es" ? "Modo demo activo: la conexión con Alegra no está configurada y se muestran facturas locales en cache." : "Demo mode active: Alegra is not configured and local cached invoices are shown."}
+            {viewer.locale === "es"
+              ? "Cuando la integración esté lista, esta página mostrará sincronización, enlaces de contacto y facturas reales."
+              : "When the integration is ready, this page will show sync status, contact links, and real invoices."}
           </p>
         ) : null}
       </Card>
 
-      <AdminInvoicesPanel
-        rows={data.rows.map((row) => ({
-          ...row,
-          lastSyncedAt: row.lastSyncedAt ? row.lastSyncedAt.toISOString() : null,
-          link: row.link
-            ? {
-                alegraContactId: row.link.alegraContactId,
-                strategy: row.link.strategy,
-                lastError: row.link.lastError,
-              }
-            : null,
-          latestRun: row.latestRun
-            ? {
-                status: row.latestRun.status,
-                startedAt: row.latestRun.startedAt.toISOString(),
-                errorSummary: row.latestRun.errorSummary,
-              }
-            : null,
-        }))}
-        latestAllRun={
-          data.latestAllRun
-            ? {
-                status: data.latestAllRun.status,
-                startedAt: data.latestAllRun.startedAt.toISOString(),
-                finishedAt: data.latestAllRun.finishedAt?.toISOString() ?? null,
-                studentsProcessed: data.latestAllRun.studentsProcessed,
-                studentsFailed: data.latestAllRun.studentsFailed,
-                invoicesUpserted: data.latestAllRun.invoicesUpserted,
-                errorSummary: data.latestAllRun.errorSummary,
-              }
-            : null
-        }
-        isDemoMode={data.isDemoMode}
-        locale={viewer.locale}
-      />
+      {data.isConfigured ? (
+        <AdminInvoicesPanel
+          rows={data.rows.map((row) => ({
+            ...row,
+            lastSyncedAt: row.lastSyncedAt ? row.lastSyncedAt.toISOString() : null,
+            link: row.link
+              ? {
+                  alegraContactId: row.link.alegraContactId,
+                  strategy: row.link.strategy,
+                  lastError: row.link.lastError,
+                }
+              : null,
+            latestRun: row.latestRun
+              ? {
+                  status: row.latestRun.status,
+                  startedAt: row.latestRun.startedAt.toISOString(),
+                  errorSummary: row.latestRun.errorSummary,
+                }
+              : null,
+          }))}
+          latestAllRun={
+            data.latestAllRun
+              ? {
+                  status: data.latestAllRun.status,
+                  startedAt: data.latestAllRun.startedAt.toISOString(),
+                  finishedAt: data.latestAllRun.finishedAt?.toISOString() ?? null,
+                  studentsProcessed: data.latestAllRun.studentsProcessed,
+                  studentsFailed: data.latestAllRun.studentsFailed,
+                  invoicesUpserted: data.latestAllRun.invoicesUpserted,
+                  errorSummary: data.latestAllRun.errorSummary,
+                }
+              : null
+          }
+          locale={viewer.locale}
+        />
+      ) : null}
     </AppShell>
   );
 }

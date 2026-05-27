@@ -212,23 +212,10 @@ async function syncStudentInvoicesInternal(studentProfileId: string): Promise<St
   }
 
   if (!canUseAlegra()) {
-    const cachedInvoiceCount = await db.invoice.count({
-      where: { studentId: student.id },
-    });
-    if (cachedInvoiceCount > 0) {
-      await db.invoice.updateMany({
-        where: { studentId: student.id },
-        data: { lastSyncedAt: new Date() },
-      });
-    }
-
     return {
-      status: cachedInvoiceCount > 0 ? InvoiceSyncStatus.SUCCESS : InvoiceSyncStatus.PARTIAL,
+      status: InvoiceSyncStatus.FAILED,
       invoicesUpserted: 0,
-      errorSummary:
-        cachedInvoiceCount > 0
-          ? "Modo demo activo: Alegra no está configurado. Mostrando facturas locales en cache."
-          : "Modo demo activo: Alegra no está configurado y este estudiante aún no tiene facturas en cache.",
+      errorSummary: "Invoices are not configured yet.",
     };
   }
 

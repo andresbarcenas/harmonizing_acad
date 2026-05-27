@@ -13,6 +13,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Mail,
+  Megaphone,
   Music2,
   ReceiptText,
   RefreshCcw,
@@ -24,12 +25,13 @@ import {
 } from "lucide-react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { AppAnnouncementBanner } from "@/components/announcements/app-announcement-banner";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { TimezoneSync } from "@/components/system/timezone-sync";
 import { TeacherStudentSelector } from "@/components/teacher/student-context-selector";
 import { MobileNavDrawer, type AppShellNavGroup, type AppShellNavLink, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
-import { canUseAlegra } from "@/lib/alegra/client";
+import { getActiveAnnouncementForViewer, type ShellAnnouncement } from "@/lib/announcements";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -133,6 +135,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       label: navGroups.financeCommunication,
       items: [
         { href: "/admin/invoices", label: nav.billing, icon: "receipt" },
+        { href: "/admin/announcements", label: nav.announcements, icon: "megaphone" },
         { href: "/admin/emails", label: nav.emails, icon: "mail" },
         { href: "/notifications", label: nav.notifications, icon: "bell" },
       ],
@@ -170,8 +173,6 @@ export async function AppShell({
   const activeLocale = normalizeLocale(locale ?? session?.user?.locale);
   const dictionary = getDictionary(activeLocale);
   const groups = navGroupsByRole(role, dictionary.shell);
-  const alegraConfigured = canUseAlegra();
-  const billingTitle = alegraConfigured ? dictionary.shell.billingLiveTitle : dictionary.shell.billingDemoTitle;
   const mobileNavLabels = activeLocale === "es"
     ? {
         openMenu: "Abrir menú de navegación",
@@ -201,10 +202,18 @@ export async function AppShell({
     : null;
 
   let unreadCount = 0;
+  let announcement: ShellAnnouncement | null = null;
   if (session?.user?.id) {
-    unreadCount = await db.notification.count({
-      where: { userId: session.user.id, readAt: null },
-    });
+    [unreadCount, announcement] = await Promise.all([
+      db.notification.count({
+        where: { userId: session.user.id, readAt: null },
+      }),
+      getActiveAnnouncementForViewer({
+        userId: session.user.id,
+        role,
+        locale: activeLocale,
+      }),
+    ]);
   }
 
   const navGroups: AppShellNavGroup[] = groups.map((group) => ({
@@ -277,7 +286,7 @@ export async function AppShell({
               <p className="text-[10px] font-semibold tracking-[0.2em] text-[var(--color-gold-deep)] uppercase">
                 Harmonizing
               </p>
-              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{billingTitle}</p>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.shell.brandSubtitle}</p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               <LanguageToggle locale={activeLocale} authenticated compact />
@@ -300,6 +309,10 @@ export async function AppShell({
             </div>
           ) : null}
         </header>
+
+        {announcement ? (
+          <AppAnnouncementBanner announcement={announcement} dismissLabel={dictionary.shell.dismissAnnouncement} />
+        ) : null}
 
         <main className="page-stack min-w-0 flex-1">{children}</main>
         <footer className="mt-6 pb-2 text-center text-xs tracking-[0.12em] text-[var(--color-ink-soft)] uppercase lg:hidden">
@@ -394,6 +407,7 @@ function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) 
   if (icon === "house") return <House className={className} aria-hidden="true" />;
   if (icon === "key") return <KeyRound className={className} aria-hidden="true" />;
   if (icon === "mail") return <Mail className={className} aria-hidden="true" />;
+  if (icon === "megaphone") return <Megaphone className={className} aria-hidden="true" />;
   if (icon === "music") return <Music2 className={className} aria-hidden="true" />;
   if (icon === "receipt") return <ReceiptText className={className} aria-hidden="true" />;
   if (icon === "refresh") return <RefreshCcw className={className} aria-hidden="true" />;

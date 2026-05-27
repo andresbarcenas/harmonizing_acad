@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { getAdminInvoicesOverview } from "@/features/invoices/data";
 import { requireApiUser } from "@/lib/api-auth";
+import { canUseAlegra } from "@/lib/alegra/client";
 import { syncAllStudentsInvoices, syncStudentInvoices } from "@/lib/invoices/sync";
 import { adminInvoiceSyncSchema } from "@/lib/validators/invoices";
 
@@ -24,6 +25,13 @@ export async function POST(req: Request) {
 
   if (auth.user.role !== Role.ADMIN) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!canUseAlegra()) {
+    return NextResponse.json(
+      { error: auth.user.locale === "es" ? "Las facturas aún no están configuradas." : "Invoices are not configured yet." },
+      { status: 503 },
+    );
   }
 
   const parsed = adminInvoiceSyncSchema.safeParse(await req.json().catch(() => ({})));

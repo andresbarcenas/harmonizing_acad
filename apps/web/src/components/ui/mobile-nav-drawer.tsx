@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Mail,
   Menu,
+  Megaphone,
   Music2,
   ReceiptText,
   RefreshCcw,
@@ -45,6 +46,7 @@ export type NavIconKey =
   | "house"
   | "key"
   | "mail"
+  | "megaphone"
   | "music"
   | "receipt"
   | "refresh"
@@ -269,6 +271,7 @@ function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) 
   if (icon === "house") return <House className={className} aria-hidden="true" />;
   if (icon === "key") return <KeyRound className={className} aria-hidden="true" />;
   if (icon === "mail") return <Mail className={className} aria-hidden="true" />;
+  if (icon === "megaphone") return <Megaphone className={className} aria-hidden="true" />;
   if (icon === "music") return <Music2 className={className} aria-hidden="true" />;
   if (icon === "receipt") return <ReceiptText className={className} aria-hidden="true" />;
   if (icon === "refresh") return <RefreshCcw className={className} aria-hidden="true" />;

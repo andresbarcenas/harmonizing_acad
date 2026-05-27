@@ -5,6 +5,19 @@ import { isInvoiceDataStale } from "@/lib/invoices/sync";
 import { canUseAlegra } from "@/lib/alegra/client";
 
 export async function getStudentInvoicesView(studentProfileId: string) {
+  const isConfigured = canUseAlegra();
+  if (!isConfigured) {
+    return {
+      invoices: [],
+      link: null,
+      latestRun: null,
+      totalInvoices: 0,
+      lastSyncedAt: null,
+      isStale: false,
+      isConfigured,
+    };
+  }
+
   const [invoices, link, latestRun, aggregates] = await Promise.all([
     db.invoice.findMany({
       where: { studentId: studentProfileId },
@@ -35,11 +48,20 @@ export async function getStudentInvoicesView(studentProfileId: string) {
     totalInvoices: aggregates._count.id,
     lastSyncedAt,
     isStale: isInvoiceDataStale(lastSyncedAt),
-    isDemoMode: !canUseAlegra(),
+    isConfigured,
   };
 }
 
 export async function getAdminInvoicesOverview() {
+  const isConfigured = canUseAlegra();
+  if (!isConfigured) {
+    return {
+      rows: [],
+      latestAllRun: null,
+      isConfigured,
+    };
+  }
+
   const students = await db.studentProfile.findMany({
     include: {
       user: true,
@@ -110,6 +132,6 @@ export async function getAdminInvoicesOverview() {
   return {
     rows,
     latestAllRun,
-    isDemoMode: !canUseAlegra(),
+    isConfigured,
   };
 }

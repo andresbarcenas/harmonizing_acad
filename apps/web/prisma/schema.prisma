@@ -125,6 +125,19 @@ enum EmailProvider {
   RESEND
 }
 
+enum AppAnnouncementType {
+  GENERAL
+  FEATURE
+  BILLING
+  MAINTENANCE
+}
+
+enum AppAnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum StudentLevel {
   BEGINNER
   INTERMEDIATE
@@ -251,6 +264,9 @@ model User {
   consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
   createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
   emailDeliveryLogs             EmailDeliveryLog[] @relation("EmailDeliveryRecipient")
+  createdAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementCreatedBy")
+  updatedAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementUpdatedBy")
+  appAnnouncementDismissals     AppAnnouncementDismissal[]
 
   @@index([role])
 }
@@ -1028,6 +1044,47 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model AppAnnouncement {
+  id              String                @id @default(cuid())
+  type            AppAnnouncementType   @default(GENERAL)
+  status          AppAnnouncementStatus @default(DRAFT)
+  targetRoles     Role[]
+  titleEn         String
+  bodyEn          String
+  titleEs         String
+  bodyEs          String
+  ctaLabelEn      String?
+  ctaLabelEs      String?
+  ctaUrl          String?
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdByUserId String
+  updatedByUserId String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  createdBy  User                         @relation("AppAnnouncementCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  updatedBy  User?                        @relation("AppAnnouncementUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  dismissals AppAnnouncementDismissal[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model AppAnnouncementDismissal {
+  id             String   @id @default(cuid())
+  announcementId String
+  userId         String
+  dismissedAt    DateTime @default(now())
+
+  announcement AppAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([userId, dismissedAt])
 }
 
 model ClassReminderDelivery {

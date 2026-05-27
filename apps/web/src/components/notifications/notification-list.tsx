@@ -38,17 +38,12 @@ export function NotificationList({
     setItems((prev) => prev.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() })));
   }
 
-  async function simulateReminders() {
-    await fetch("/api/notifications", { method: "POST" });
-  }
-
   return (
     <div className="space-y-3">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-[var(--color-ink-soft)]">{unread} {dictionary.notificationsList.unread}</p>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button variant="outline" onClick={simulateReminders} className="w-full sm:w-auto">{dictionary.notificationsList.simulate}</Button>
             <Button variant="ghost" onClick={markAllRead} disabled={!unread} className="w-full sm:w-auto">{dictionary.notificationsList.markAll}</Button>
           </div>
         </div>

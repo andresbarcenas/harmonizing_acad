@@ -93,7 +93,7 @@ Current placeholders / known simplifications:
 - Admin monitor: `/admin/invoices`
 - Sync strategy: cached snapshots in DB, daily Vercel cron in production plus manual sync from admin/student views
 - Mapping default: exact email match from Harmonizing student email to Alegra contact
-- Demo fallback: if Alegra credentials are missing, Harmonizing uses seeded local invoice snapshots and keeps the experience operable in read-only mode
+- Production fallback: if Alegra credentials are missing, invoice pages stay available but show a simple “Invoices are not configured yet.” message and do not display cached/sample invoice data.
 
 Required environment variables:
 - `ALEGRA_API_BASE_URL` (default `https://api.alegra.com/api/v1`)
@@ -102,10 +102,10 @@ Required environment variables:
 - `INVOICE_SYNC_HOURS` (default `6`)
 - `CRON_SECRET` (required for `/api/cron/invoices/sync`)
 
-Demo fallback details:
-- Seed creates sample invoices for demo students (`isabella@harmonizing.com`, `luis@harmonizing.com`)
-- Student and admin invoice screens display a “modo demo” warning when credentials are missing
-- Manual sync still works in demo mode and refreshes cache timestamps without external API calls
+Pilot behavior before Alegra is configured:
+- Student and admin invoice screens do not expose sample invoice rows.
+- Manual invoice sync is unavailable until Alegra credentials are configured.
+- Local seed data can still exist for development, but production UI should not present it as live invoice data.
 
 ## Historical Imports
 - Admin review UI: `/admin/imports`
