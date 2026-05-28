@@ -1,10 +1,11 @@
 import "server-only";
 
-import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
+import { ClassRequestStatus, PracticeAssignmentStatus, RepertoireStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
 import { addDays, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { parentCanAccessStudent } from "@/lib/parents";
 
 async function resolveTeacherStudentContext(teacherProfileId: string, studentId?: string | null) {
   if (!studentId) return null;
@@ -141,12 +142,147 @@ export async function getClassDetailData(viewer: AppViewer, classId: string) {
   });
 
   if (!session) return null;
-  if (viewer.role === Role.ADMIN) return session;
-  if (viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId) return session;
-  if (viewer.role === Role.STUDENT && viewer.studentProfileId === session.studentId) return session;
+  if (viewer.role === Role.ADMIN) return { ...session, teacherPrep: null };
+  if (viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId) {
+    return { ...session, teacherPrep: await getTeacherClassPrepData(session.studentId, session.teacherId, session.id, session.startsAtUtc, session.lessonFocus) };
+  }
+  if (viewer.role === Role.STUDENT && viewer.studentProfileId === session.studentId) return { ...session, teacherPrep: null };
+  if (viewer.role === Role.PARENT && await parentCanAccessStudent(viewer.parentGuardianProfileId, session.studentId)) return { ...session, teacherPrep: null };
   return null;
 }
 
 export function statusBlocksSchedule(status: SessionStatus) {
   return status !== SessionStatus.CANCELLED;
+}
+
+async function getTeacherClassPrepData(studentId: string, teacherId: string, classId: string, startsAtUtc: Date, lessonFocus?: string | null) {
+  const activeRepertoireStatuses = [
+    RepertoireStatus.ASSIGNED,
+    RepertoireStatus.LEARNING,
+    RepertoireStatus.IMPROVING,
+    RepertoireStatus.PERFORMANCE_READY,
+  ];
+  const activeAssignmentStatuses = [
+    PracticeAssignmentStatus.ASSIGNED,
+    PracticeAssignmentStatus.IN_PROGRESS,
+    PracticeAssignmentStatus.COMPLETED,
+    PracticeAssignmentStatus.OVERDUE,
+  ];
+
+  const [latestLevel, previousLesson, activeRepertoire, activeAssignments, recentPracticeLogs, recentVideos] = await Promise.all([
+    db.progressRecord.findFirst({
+      where: { studentId },
+      orderBy: { updatedAt: "desc" },
+    }),
+    db.classSession.findFirst({
+      where: {
+        id: { not: classId },
+        studentId,
+        teacherId,
+        status: SessionStatus.COMPLETED,
+        startsAtUtc: { lt: startsAtUtc },
+        lessonNote: { isNot: null },
+      },
+      include: {
+        lessonNote: {
+          include: {
+            skillRatings: { include: { skillCategory: true }, orderBy: { skillCategory: { sortOrder: "asc" } } },
+            practiceAssignments: { include: { repertoireItem: true, skillCategory: true }, orderBy: { createdAt: "desc" } },
+          },
+        },
+      },
+      orderBy: { startsAtUtc: "desc" },
+    }),
+    db.repertoireItem.findMany({
+      where: {
+        studentId,
+        status: { in: activeRepertoireStatuses },
+        OR: [{ teacherId }, { teacherId: null }],
+      },
+      include: {
+        attachments: { orderBy: { createdAt: "desc" } },
+      },
+      orderBy: [{ masteryPercent: "asc" }, { updatedAt: "desc" }],
+      take: 8,
+    }),
+    db.practiceAssignment.findMany({
+      where: {
+        studentId,
+        teacherId,
+        status: { in: activeAssignmentStatuses },
+      },
+      include: {
+        repertoireItem: true,
+        skillCategory: true,
+        practiceLogs: { orderBy: { practicedOn: "desc" }, take: 3 },
+        practiceVideos: { orderBy: { submittedAt: "desc" }, take: 2 },
+      },
+      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+      take: 8,
+    }),
+    db.practiceLog.findMany({
+      where: { studentId },
+      include: { assignment: true, repertoireItem: true, skillCategory: true },
+      orderBy: { practicedOn: "desc" },
+      take: 6,
+    }),
+    db.practiceVideo.findMany({
+      where: { studentId, teacherId },
+      include: {
+        feedback: true,
+        practiceAssignment: true,
+        repertoireItem: true,
+        skillCategory: true,
+      },
+      orderBy: { submittedAt: "desc" },
+      take: 6,
+    }),
+  ]);
+
+  return {
+    latestLevel,
+    previousLesson,
+    activeRepertoire,
+    activeAssignments,
+    recentPracticeLogs,
+    recentVideos,
+    suggestedFocus: buildSuggestedFocus({
+      lessonFocus,
+      previousLessonFocus: previousLesson?.lessonNote?.nextLessonFocus,
+      activeAssignments,
+      activeRepertoire,
+      recentVideos,
+    }),
+  };
+}
+
+function buildSuggestedFocus({
+  lessonFocus,
+  previousLessonFocus,
+  activeAssignments,
+  activeRepertoire,
+  recentVideos,
+}: {
+  lessonFocus?: string | null;
+  previousLessonFocus?: string | null;
+  activeAssignments: Array<{ title: string; status: PracticeAssignmentStatus; dueDate: Date | null }>;
+  activeRepertoire: Array<{ title: string; currentFocusSection: string | null; masteryPercent: number }>;
+  recentVideos: Array<{ originalName: string; status: VideoStatus }>;
+}) {
+  if (lessonFocus?.trim()) return { source: "CLASS_FOCUS" as const, text: lessonFocus.trim() };
+  if (previousLessonFocus?.trim()) return { source: "PREVIOUS_LESSON" as const, text: previousLessonFocus.trim() };
+
+  const overdueAssignment = activeAssignments.find((assignment) => assignment.status === PracticeAssignmentStatus.OVERDUE);
+  const activeAssignment = overdueAssignment ?? activeAssignments.find((assignment) => assignment.status === PracticeAssignmentStatus.ASSIGNED || assignment.status === PracticeAssignmentStatus.IN_PROGRESS);
+  if (activeAssignment) return { source: "ASSIGNMENT" as const, text: activeAssignment.title };
+
+  const focusRepertoire = activeRepertoire.find((item) => item.masteryPercent < 70 || item.currentFocusSection);
+  if (focusRepertoire) {
+    return { source: "REPERTOIRE" as const, text: focusRepertoire.currentFocusSection ? `${focusRepertoire.title}: ${focusRepertoire.currentFocusSection}` : focusRepertoire.title };
+  }
+
+  const pendingVideo = recentVideos.find((video) => video.status === VideoStatus.PENDING);
+  if (pendingVideo) return { source: "VIDEO" as const, text: pendingVideo.originalName };
+
+  return { source: "FALLBACK" as const, text: "" };
 }

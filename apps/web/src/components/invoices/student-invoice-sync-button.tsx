@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { AppLocale } from "@/lib/i18n/locales";
 
-export function StudentInvoiceSyncButton({ locale }: { locale: AppLocale }) {
+export function StudentInvoiceSyncButton({ locale, studentId }: { locale: AppLocale; studentId?: string }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ kind: "success" | "error"; message: string } | null>(null);
@@ -17,6 +17,8 @@ export function StudentInvoiceSyncButton({ locale }: { locale: AppLocale }) {
 
     const response = await fetch("/api/invoices", {
       method: "POST",
+      headers: studentId ? { "Content-Type": "application/json" } : undefined,
+      body: studentId ? JSON.stringify({ studentId }) : undefined,
     });
 
     if (!response.ok) {

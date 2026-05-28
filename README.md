@@ -30,6 +30,7 @@ Premium, mobile-first web app for an online music school serving Spanish-speakin
    - `docker compose restart web`
 
 The web container runs `next dev` by default, so source changes under `apps/web` hot reload without rebuilding the image. To test production-like startup locally, run `docker compose exec web npm run build`, then restart with `APP_RUNTIME=start docker compose up -d web`.
+The local web container defaults to a `2048MB` Node heap to avoid noisy Next.js dev memory restarts. If your machine has room and the warning continues, set `WEB_NODE_MAX_OLD_SPACE_SIZE=3072` in `.env`; once seed data exists, you can also set `SEED_ON_BOOT=false` to reduce boot work.
 6. Run route smoke after boot:
    - `cd apps/web && npm run smoke:routes`
 
@@ -129,6 +130,7 @@ Pilot behavior before Alegra is configured:
 - Architecture: `docs/architecture.md`
 - Deployment: `docs/deployment.md`
 - Phases: `docs/phases.md`
+- Roadmap: [`docs/roadmap.md`](./docs/roadmap.md)
 - Responsive QA: `docs/responsive-qa.md`
 - Progress reports: `docs/progress-reports.md`
 - Historical imports: `docs/historical-imports.md`

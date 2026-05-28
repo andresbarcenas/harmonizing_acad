@@ -4,6 +4,7 @@ import { ProgressReportStatus, Role } from "@prisma/client";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { parentCanAccessStudent } from "@/lib/parents";
 import { reportRangeFromMonth } from "@/lib/progress-reports/generator";
 
 export async function getTeacherReportGenerationData(viewer: AppViewer, studentId?: string | null) {
@@ -50,6 +51,15 @@ export async function getProgressReportForViewer(viewer: AppViewer, reportId: st
       where: { id: reportId, studentId: viewer.studentProfileId, status: ProgressReportStatus.PUBLISHED },
       include,
     });
+  }
+
+  if (viewer.role === Role.PARENT && viewer.parentGuardianProfileId) {
+    const report = await db.progressReport.findFirst({
+      where: { id: reportId, status: ProgressReportStatus.PUBLISHED },
+      include,
+    });
+    if (!report) return null;
+    return await parentCanAccessStudent(viewer.parentGuardianProfileId, report.studentId) ? report : null;
   }
 
   return null;

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.9.0] - 2026-05-28
+
+### Added
+- Parent/guardian accounts and parent portal access for linked students, including schedule, progress, videos, invoices, messages, consent, and settings flows.
+- Admin guardian management, parent welcome/access support, and parent password reset coverage from the admin access center.
+- Parent-aware consent, protected media, invoice, messaging, notification, and student-data permission checks.
+- Alegra admin explorer at `/admin/alegra` for live contact, invoice, and payment lookup with local student/family matching context.
+- Manual Alegra contact linking per student plus invoice sync shortcuts from the Alegra explorer.
+
+### Changed
+- Invoice sync now supports linked parent emails while preserving per-student manual Alegra contact links.
+- Local Docker/dev database workflow now uses Prisma migrations by default, with `db:push` reserved for disposable schema experiments.
+- Development docs and env examples were updated for parent access, Alegra lookup, and safer migration behavior.
+
 ## [0.8.0] - 2026-05-27
 
 ### Added

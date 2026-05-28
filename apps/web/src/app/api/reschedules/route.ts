@@ -4,6 +4,7 @@ import { NotificationType, RescheduleStatus, Role, SessionStatus } from "@prisma
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { ParentAccessError, resolveStudentIdForStudentOrParent } from "@/lib/parents";
 import { isSlotWithinAvailability, isTeacherBlackoutDate, isValidRescheduleDuration, overlapsRange } from "@/lib/scheduling";
 import { rescheduleSchema } from "@/lib/validators/schedule";
 
@@ -11,8 +12,8 @@ export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = rescheduleSchema.safeParse(await req.json());
@@ -21,6 +22,15 @@ export async function POST(req: Request) {
   }
 
   const payload = parsed.data;
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, payload.studentId);
+  } catch (error) {
+    if (error instanceof ParentAccessError) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    }
+    throw error;
+  }
   const proposedStartUtc = new Date(payload.proposedStartUtc);
   const proposedEndUtc = new Date(payload.proposedEndUtc);
 
@@ -35,7 +45,7 @@ export async function POST(req: Request) {
   const session = await db.classSession.findFirst({
     where: {
       id: payload.sessionId,
-      studentId: auth.user.studentProfile.id,
+      studentId,
       status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
     },
   });
@@ -45,7 +55,7 @@ export async function POST(req: Request) {
   }
 
   const assignment = await db.teacherAssignment.findUnique({
-    where: { studentId: auth.user.studentProfile.id },
+    where: { studentId },
     include: {
       teacher: {
         include: {
@@ -127,7 +137,7 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
   const teacherProfileId = auth.user.teacherProfile.id;
 

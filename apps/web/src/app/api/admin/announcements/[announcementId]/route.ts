@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { appAnnouncementSchema, type AppAnnouncementInput } from "@/lib/validators/announcements";
 
 type RouteContext = {
@@ -12,12 +13,12 @@ type RouteContext = {
 export async function PATCH(req: Request, context: RouteContext) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
 
   const { announcementId } = await context.params;
   const parsed = appAnnouncementSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid announcement." }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale, auth.user.locale === "es" ? "Anuncio inválido." : "Invalid announcement.") }, { status: 400 });
   }
 
   const announcement = await db.appAnnouncement.update({
@@ -39,7 +40,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 export async function DELETE(_req: Request, context: RouteContext) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
 
   const { announcementId } = await context.params;
   await db.appAnnouncement.delete({ where: { id: announcementId } });

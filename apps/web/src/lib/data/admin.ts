@@ -15,7 +15,7 @@ export async function getAdminDashboardData(viewer: AppViewer) {
     db.studentProfile.findMany({ include: { user: true } }),
     db.teacherProfile.findMany({ include: { user: true, availability: true } }),
     db.teacherAssignment.findMany({ include: { student: { include: { user: true } }, teacher: { include: { user: true } } } }),
-    db.activeSubscription.findMany({ where: { active: true }, include: { plan: true } }),
+    db.activeSubscription.findMany({ where: { active: true }, select: { studentId: true, active: true } }),
     db.classSession.count({
       where: {
         startsAtUtc: { gte: subDays(new Date(), 7) },
@@ -39,8 +39,6 @@ export async function getAdminDashboardData(viewer: AppViewer) {
       },
     }),
   ]);
-
-  const mrr = activeSubscriptions.reduce((acc, sub) => acc + sub.plan.priceUsd, 0);
 
   const workload = teachers.map((teacher) => {
     const assigned = assignments.filter((assign) => assign.teacherId === teacher.id).length;
@@ -104,7 +102,6 @@ export async function getAdminDashboardData(viewer: AppViewer) {
     assignments,
     activeSubscriptions: activeSubscriptions.length,
     classesWeek,
-    mrr,
     cancelledCount,
     workload,
     weeklyClassesTrend,

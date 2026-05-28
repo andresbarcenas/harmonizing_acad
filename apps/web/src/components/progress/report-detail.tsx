@@ -165,10 +165,10 @@ export function ReportDetail({ report, locale, privateMode = false }: { report: 
         </Card>
 
         <Card>
-          <CardTitle>{isSpanish ? "Feedback reciente" : "Recent feedback"}</CardTitle>
+          <CardTitle>{isSpanish ? "Comentarios recientes" : "Recent feedback"}</CardTitle>
           <div className="mt-4 space-y-2">
             {highlights.map((item, index) => <p key={index} className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm text-[var(--color-ink-soft)]">{String(item.comment ?? "-")}</p>)}
-            {!highlights.length ? <CardDescription>{isSpanish ? "Sin feedback de video en este rango." : "No video feedback in this range."}</CardDescription> : null}
+            {!highlights.length ? <CardDescription>{isSpanish ? "Sin comentarios de video en este rango." : "No video feedback in this range."}</CardDescription> : null}
           </div>
         </Card>
       </div>

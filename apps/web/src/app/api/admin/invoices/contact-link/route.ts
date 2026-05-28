@@ -10,7 +10,7 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = invoiceContactLinkSchema.safeParse(await req.json());
@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
   });
 
   if (!student) {
-    return NextResponse.json({ error: "Estudiante no encontrado." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante no encontrado." : "Student not found." }, { status: 404 });
   }
 
   const link = await db.invoiceContactLink.upsert({

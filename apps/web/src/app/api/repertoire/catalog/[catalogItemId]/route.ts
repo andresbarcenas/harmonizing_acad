@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { assertCanManageCatalog, getRepertoireCatalogErrorMessage, updateCatalogItem } from "@/lib/data/repertoire-catalog";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { repertoireCatalogItemSchema } from "@/lib/validators/repertoire-catalog";
 
 type Params = { params: Promise<{ catalogItemId: string }> };
@@ -19,7 +20,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const parsed = repertoireCatalogItemSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   try {
     const { catalogItemId } = await params;

@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 export async function POST(_req: Request, { params }: { params: Promise<{ reportId: string }> }) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.ADMIN) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
 
   const { reportId } = await params;
   const report = await db.progressReport.findUnique({ where: { id: reportId } });

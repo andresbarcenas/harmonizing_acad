@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { parentCanAccessStudent } from "@/lib/parents";
 import { readProtectedMedia } from "@/lib/storage";
 
 type Params = { params: Promise<{ attachmentId: string }> };
@@ -24,7 +25,8 @@ export async function GET(request: Request, { params }: Params) {
   const isAdmin = auth.user.role === Role.ADMIN;
   const isAssignedTeacher = auth.user.role === Role.TEACHER && auth.user.teacherProfile?.id === attachment.classSession.teacherId;
   const isOwnerStudent = auth.user.role === Role.STUDENT && auth.user.studentProfile?.id === attachment.classSession.studentId;
-  if (!isAdmin && !isAssignedTeacher && !isOwnerStudent) {
+  const isLinkedParent = auth.user.role === Role.PARENT && await parentCanAccessStudent(auth.user.parentGuardianProfile?.id, attachment.classSession.studentId);
+  if (!isAdmin && !isAssignedTeacher && !isOwnerStudent && !isLinkedParent) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para ver este material." : "You do not have permission to view this material." }, { status: 403 });
   }
 

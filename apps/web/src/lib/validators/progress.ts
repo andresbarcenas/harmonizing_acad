@@ -188,6 +188,7 @@ export const practiceAssignmentStatusSchema = z.object({
 });
 
 export const createPracticeLogSchema = z.object({
+  studentId: optionalId,
   assignmentId: optionalId,
   repertoireItemId: optionalId,
   skillCategoryId: optionalId,

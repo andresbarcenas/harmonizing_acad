@@ -7,6 +7,7 @@ import { assertRepertoireForTeacherStudent, getProgressErrorResponse, inferLesso
 import { assignCatalogItemToStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
 import { skillInstrumentToInstrument } from "@/lib/instruments";
 import { createNotification } from "@/lib/notifications";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { completeClassWorkflowSchema } from "@/lib/validators/progress";
 
 type Params = { params: Promise<{ classId: string }> };
@@ -54,7 +55,7 @@ export async function POST(req: Request, { params }: Params) {
   const { classId } = await params;
   const parsed = completeClassWorkflowSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? c.invalid }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale, c.invalid) }, { status: 400 });
   }
 
   const input = parsed.data;

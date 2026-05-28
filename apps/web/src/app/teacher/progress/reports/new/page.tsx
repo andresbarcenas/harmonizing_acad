@@ -30,7 +30,7 @@ export default async function TeacherNewReportPage({ searchParams }: { searchPar
       <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <Card>
           <div className="flex items-center gap-3">
-            <Avatar src={data.student.user.image} alt={data.student.user.name} fallback={data.student.user.name.slice(0, 1)} />
+            <Avatar src={data.student.user.image} alt={data.student.user.name} fallback={data.student.user.name.slice(0, 1)} locale={viewer.locale} />
             <div>
               <CardTitle>{data.student.user.name}</CardTitle>
               <CardDescription>{instrumentLabel(data.student.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")}</CardDescription>

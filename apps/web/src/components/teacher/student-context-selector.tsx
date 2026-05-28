@@ -56,6 +56,7 @@ export function TeacherStudentSelector({
           alt={selected?.name ?? dictionary.teacher.allStudents}
           fallback={(selected?.name ?? "A").slice(0, 1).toUpperCase()}
           className="h-8 w-8 shrink-0 text-[10px]"
+          locale={locale}
         />
         <select
           aria-label={dictionary.teacher.switchStudent}

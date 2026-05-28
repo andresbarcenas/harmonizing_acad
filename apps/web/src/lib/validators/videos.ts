@@ -4,8 +4,8 @@ export const reviewVideoSchema = z.object({
   videoId: z.string().min(1, "Video inválido."),
   comment: z
     .string()
-    .min(3, "El feedback debe tener al menos 3 caracteres.")
-    .max(2000, "El feedback no puede superar 2000 caracteres."),
+    .min(3, "El comentario debe tener al menos 3 caracteres.")
+    .max(2000, "El comentario no puede superar 2000 caracteres."),
   skillRatings: z
     .array(
       z.object({

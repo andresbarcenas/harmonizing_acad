@@ -174,6 +174,7 @@ export function AdminInvoicesPanel({
                 alt={row.name}
                 fallback={row.name.slice(0, 1).toUpperCase()}
                 className="h-10 w-10 text-xs"
+                locale={locale}
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{row.name}</p>
@@ -183,9 +184,9 @@ export function AdminInvoicesPanel({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={row.isStale ? "warning" : "success"}>{row.isStale ? "Stale" : locale === "es" ? "Actualizada" : "Updated"}</Badge>
+              <Badge variant={row.isStale ? "warning" : "success"}>{row.isStale ? (locale === "es" ? "Desactualizada" : "Stale") : locale === "es" ? "Actualizada" : "Updated"}</Badge>
               <Badge variant="default">{row.invoiceCount} {locale === "es" ? "factura(s)" : "invoice(s)"}</Badge>
-              <Badge variant={badgeVariantForStatus(row.latestRun?.status)}>{row.latestRun?.status ?? "SIN CORRIDA"}</Badge>
+              <Badge variant={badgeVariantForStatus(row.latestRun?.status)}>{row.latestRun?.status ?? (locale === "es" ? "SIN CORRIDA" : "NO RUN")}</Badge>
             </div>
           </div>
 
@@ -198,7 +199,7 @@ export function AdminInvoicesPanel({
                   [row.studentId]: event.target.value,
                 }))
               }
-              placeholder="Alegra contact ID (manual)"
+              placeholder={locale === "es" ? "ID de contacto Alegra (manual)" : "Alegra contact ID (manual)"}
             />
             <Button
               variant="outline"
@@ -216,7 +217,7 @@ export function AdminInvoicesPanel({
               disabled={pendingByStudent[row.studentId]}
               className="w-full lg:w-auto"
             >
-              {pendingByStudent[row.studentId] ? "Sync..." : locale === "es" ? "Sync estudiante" : "Sync student"}
+              {pendingByStudent[row.studentId] ? (locale === "es" ? "Sincronizando..." : "Syncing...") : locale === "es" ? "Sincronizar estudiante" : "Sync student"}
             </Button>
           </div>
 
@@ -228,7 +229,7 @@ export function AdminInvoicesPanel({
               {locale === "es" ? "Enlace actual" : "Current link"}: {row.link?.alegraContactId ?? (locale === "es" ? "Sin contacto" : "No contact")} · {locale === "es" ? "estrategia" : "strategy"}: {row.link?.strategy ?? "EMAIL_AUTO"}
             </p>
             {row.link?.lastError ? <p className="text-rose-700">Error: {row.link.lastError}</p> : null}
-            {row.latestRun?.errorSummary ? <p className="text-rose-700">Corrida: {row.latestRun.errorSummary}</p> : null}
+            {row.latestRun?.errorSummary ? <p className="text-rose-700">{locale === "es" ? "Corrida" : "Run"}: {row.latestRun.errorSummary}</p> : null}
           </div>
         </Card>
       ))}

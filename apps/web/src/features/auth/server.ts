@@ -21,6 +21,7 @@ export type AppViewer = {
   authMethod?: "credentials" | "magic-link";
   studentProfileId?: string;
   teacherProfileId?: string;
+  parentGuardianProfileId?: string;
 };
 
 type RequireViewerOptions = {
@@ -39,6 +40,7 @@ export async function requireViewer(expectedRoles?: Role[], options?: RequireVie
     include: {
       studentProfile: true,
       teacherProfile: true,
+      parentGuardianProfile: true,
     },
   });
 
@@ -75,5 +77,6 @@ export async function requireViewer(expectedRoles?: Role[], options?: RequireVie
     authMethod: session.user.authMethod,
     studentProfileId: dbUser.studentProfile?.id,
     teacherProfileId: dbUser.teacherProfile?.id,
+    parentGuardianProfileId: dbUser.parentGuardianProfile?.id,
   };
 }

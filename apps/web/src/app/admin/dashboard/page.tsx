@@ -35,7 +35,7 @@ export default async function AdminDashboardPage() {
       <div className="card-grid">
         <MetricCard title={dictionary.admin.activeStudents} value={`${data.totalStudents}`} />
         <MetricCard title={dictionary.admin.activeTeachers} value={`${data.totalTeachers}`} />
-        <MetricCard title="MRR" value={`$${data.mrr}`} subtitle={dictionary.admin.mrrSubtitle} />
+        <MetricCard title={dictionary.admin.invoiceRevenueTitle} value={dictionary.admin.invoiceNotConfigured} subtitle={dictionary.admin.mrrSubtitle} />
       </div>
 
       <Card>

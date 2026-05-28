@@ -43,12 +43,12 @@ export function VideoReviewForm({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setMessage(payload?.error ?? (locale === "es" ? "No se pudo enviar feedback." : "Could not send feedback."));
+      setMessage(payload?.error ?? (locale === "es" ? "No se pudieron enviar los comentarios." : "Could not send feedback."));
       setPending(false);
       return;
     }
 
-    setMessage(locale === "es" ? "Feedback guardado correctamente." : "Feedback saved.");
+    setMessage(locale === "es" ? "Comentarios guardados correctamente." : "Feedback saved.");
     setComment("");
     setPending(false);
     router.refresh();
@@ -59,7 +59,7 @@ export function VideoReviewForm({
       <Textarea
         value={comment}
         onChange={(event) => setComment(event.target.value)}
-        placeholder={disabled ? (locale === "es" ? "Este video ya fue revisado." : "This video has already been reviewed.") : locale === "es" ? "Escribe feedback personalizado" : "Write personalized feedback"}
+        placeholder={disabled ? (locale === "es" ? "Este video ya fue revisado." : "This video has already been reviewed.") : locale === "es" ? "Escribe comentarios personalizados" : "Write personalized feedback"}
         disabled={disabled}
       />
       {skillCategories.length && !disabled ? (

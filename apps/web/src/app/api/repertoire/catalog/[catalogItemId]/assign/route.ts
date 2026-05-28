@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { assignCatalogItemToStudent, assertCanAssignCatalogToStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { repertoireCatalogAssignSchema } from "@/lib/validators/repertoire-catalog";
 
 type Params = { params: Promise<{ catalogItemId: string }> };
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: Params) {
   if ("error" in auth) return auth.error;
 
   const parsed = repertoireCatalogAssignSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   try {
     await assertCanAssignCatalogToStudent(auth.user, parsed.data.studentId);

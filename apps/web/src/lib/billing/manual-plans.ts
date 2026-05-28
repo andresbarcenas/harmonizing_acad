@@ -1,17 +1,19 @@
 export type ManualMonthlyClassCount = 4 | 8;
 
-export function manualPlanId(monthlyClassCount: ManualMonthlyClassCount, priceUsd: number) {
-  return `plan_manual_${monthlyClassCount}_${priceUsd}`;
+export const INTERNAL_CLASS_ALLOWANCE_PRICE_USD = 0;
+
+export function manualPlanId(monthlyClassCount: ManualMonthlyClassCount) {
+  return `plan_manual_${monthlyClassCount}`;
 }
 
 export function manualPlanName(monthlyClassCount: ManualMonthlyClassCount, locale?: string) {
-  return locale === "es" ? `Plan manual ${monthlyClassCount} clases` : `Manual ${monthlyClassCount}-class plan`;
+  return locale === "es" ? `Plan de ${monthlyClassCount} clases` : `${monthlyClassCount}-class plan`;
 }
 
 export function manualPlanDescription(locale?: string) {
-  return locale === "es" ? "Plan registrado para facturación externa/manual." : "Plan recorded for external/manual billing.";
+  return locale === "es" ? "Cantidad de clases registrada; los montos vienen de Alegra." : "Class allowance recorded; invoice amounts come from Alegra.";
 }
 
-export function planLabel({ priceUsd, monthlyClassCount }: { priceUsd: number; monthlyClassCount: number }, locale?: string) {
-  return `$${priceUsd} USD / ${monthlyClassCount} ${locale === "es" ? "clases" : "classes"}`;
+export function planLabel({ monthlyClassCount }: { monthlyClassCount: number }, locale?: string) {
+  return locale === "es" ? `${monthlyClassCount} clases/mes` : `${monthlyClassCount} classes/month`;
 }

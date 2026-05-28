@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { localizeNotificationCopy } from "@/lib/notification-copy";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -20,7 +21,13 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({ notifications, unreadCount });
+  return NextResponse.json({
+    notifications: notifications.map((notification) => ({
+      ...notification,
+      ...localizeNotificationCopy(notification, auth.user.locale),
+    })),
+    unreadCount,
+  });
 }
 
 export async function PATCH(req: Request) {

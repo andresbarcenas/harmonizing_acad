@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { updateStudentLevelSchema } from "@/lib/validators/progress";
 
 export async function POST(req: Request) {
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
 
   const parsed = updateStudentLevelSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const input = parsed.data;

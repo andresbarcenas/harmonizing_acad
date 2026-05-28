@@ -3,6 +3,7 @@ import { NotificationType, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { assertActiveSkillCategories, getProgressErrorResponse } from "@/lib/data/progress";
 import { createNotification } from "@/lib/notifications";
 import { upsertLessonNoteSchema } from "@/lib/validators/progress";
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
   }
 
   const parsed = upsertLessonNoteSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   const input = parsed.data;
   const session = await db.classSession.findFirst({ where: { id: input.sessionId, teacherId: auth.user.teacherProfile.id }, include: { student: true } });

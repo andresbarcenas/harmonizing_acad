@@ -4,6 +4,7 @@ import { ProgressReportStatus, Role } from "@prisma/client";
 import { requireApiUser } from "@/lib/api-auth";
 import { assertTeacherCanAccessStudent, getProgressErrorResponse } from "@/lib/data/progress";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { updateProgressReportSchema } from "@/lib/validators/progress";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ reportId: string }> }) {
@@ -14,7 +15,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ report
   if (!report) return NextResponse.json({ error: auth.user.locale === "es" ? "Reporte no encontrado." : "Report not found." }, { status: 404 });
 
   if (auth.user.role === Role.TEACHER) {
-    if (!auth.user.teacherProfile) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!auth.user.teacherProfile) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
     if (report.status !== ProgressReportStatus.DRAFT) {
       return NextResponse.json({ error: auth.user.locale === "es" ? "Solo puedes editar borradores." : "You can only edit drafts." }, { status: 403 });
     }
@@ -26,11 +27,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ report
       throw error;
     }
   } else if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = updateProgressReportSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   const data = auth.user.role === Role.TEACHER
     ? {

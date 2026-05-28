@@ -5,8 +5,10 @@ import { NextResponse } from "next/server";
 import { getActiveConsentDocument, consentTextHash } from "@/lib/consent/service";
 import { generateConsentPdf } from "@/lib/consent/pdf";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { sendConsentSignedEmail } from "@/lib/email/consent";
 import { normalizeLocale } from "@/lib/i18n/locales";
+import { ParentAccessError, resolveStudentIdForStudentOrParent } from "@/lib/parents";
 import { requireApiUser } from "@/lib/api-auth";
 import { signConsentSchema } from "@/lib/validators/consent";
 
@@ -16,18 +18,31 @@ export async function POST(req: Request) {
   const auth = await requireApiUser({ skipConsent: true });
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT) {
-    return NextResponse.json({ error: auth.user.locale === "es" ? "Solo cuentas de estudiante pueden firmar este consentimiento." : "Only student accounts can sign this consent." }, { status: 403 });
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Solo cuentas de estudiante o acudiente pueden firmar este consentimiento." : "Only student or guardian accounts can sign this consent." }, { status: 403 });
   }
 
   const parsed = signConsentSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const document = await getActiveConsentDocument();
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, parsed.data.studentId);
+  } catch (error) {
+    if (error instanceof ParentAccessError) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    }
+    throw error;
+  }
+  const coveredStudent = await db.studentProfile.findUnique({ where: { id: studentId }, include: { user: true } });
+  if (!coveredStudent) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Estudiante no encontrado." : "Student not found." }, { status: 404 });
+  }
   const existing = await db.consentSignature.findUnique({
-    where: { userId_documentId: { userId: auth.user.id, documentId: document.id } },
+    where: { studentId_documentId: { studentId, documentId: document.id } },
     select: { id: true },
   });
   if (existing) {
@@ -40,9 +55,9 @@ export async function POST(req: Request) {
   const pdf = await generateConsentPdf({
     document,
     student: {
-      name: auth.user.name,
-      email: auth.user.email,
-      timezone: auth.user.timezone,
+      name: coveredStudent.user.name,
+      email: coveredStudent.user.email,
+      timezone: coveredStudent.user.timezone,
     },
     signer: {
       name: parsed.data.signerName,
@@ -62,6 +77,7 @@ export async function POST(req: Request) {
     const signature = await db.consentSignature.create({
       data: {
         userId: auth.user.id,
+        studentId,
         documentId: document.id,
         signerName: parsed.data.signerName,
         signerRelationship: parsed.data.signerRelationship,

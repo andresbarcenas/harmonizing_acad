@@ -99,8 +99,9 @@ The Prisma migration history was squashed into a single baseline migration after
 Current intent:
 
 - Fresh staging/production databases should use `npm run db:deploy` from `apps/web`, which runs `prisma migrate deploy`.
-- Local Docker remains compatible with the existing boot flow, which still uses `prisma db push` for fast local iteration. Before `db push`, `scripts/prisma-prepush-reports.cjs` safely backfills `ProgressReport.reportKey` and creates the expected unique index on existing dev databases so report upgrades do not require `--force-reset`.
-- Existing local databases that were created before the baseline may continue working with `db push`; for a clean migration-style reset, use a fresh database or reset Docker volumes.
+- Normal local development uses `npm run db:migrate` / `npm run prisma:migrate`, which apply checked-in migrations with `prisma migrate dev`.
+- Local Docker boot uses `prisma migrate deploy` because the entrypoint is non-interactive and should only apply existing migration files.
+- `npm run db:push` remains available only for disposable local schema experiments and should not be used when a migration contains data-preserving backfill logic.
 - Migration correctness should be checked with:
 
 ```bash

@@ -10,6 +10,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentDashboardData } from "@/lib/data";
+import { planLabel } from "@/lib/billing/manual-plans";
 import { formatDate, formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 import { instrumentLabel } from "@/lib/instruments";
 import { studentLevelLabel } from "@/lib/student-levels";
@@ -37,6 +38,7 @@ export default async function StudentDashboardPage() {
                 alt={viewer.name}
                 fallback={viewer.name.slice(0, 1).toUpperCase()}
                 className="h-7 w-7 text-[10px]"
+                locale={viewer.locale}
               />
               <span className="max-w-[180px] truncate text-xs font-medium text-[var(--color-ink-soft)]">{viewer.name}</span>
             </div>
@@ -68,7 +70,11 @@ export default async function StudentDashboardPage() {
       </div>
 
       <div className="card-grid">
-        <MetricCard title={dictionary.student.currentPlan} value="$90 USD / 4 clases" subtitle={dictionary.student.planSubtitle} />
+        <MetricCard
+          title={dictionary.student.currentPlan}
+          value={data.activeSubscription ? planLabel({ monthlyClassCount: data.activeSubscription.monthlyClassLimit }, viewer.locale) : dictionary.admin.noActivePlan}
+          subtitle={dictionary.student.planSubtitle}
+        />
         <MetricCard title={dictionary.student.remainingClasses} value={`${data.remainingClasses}`} subtitle={`${data.usedClasses} ${dictionary.student.usedThisMonth}`} />
         <MetricCard title={dictionary.student.currentLevel} value={studentLevelLabel(data.progress?.level, viewer.locale)} subtitle={dictionary.student.updatedByTeacher} />
       </div>
@@ -78,7 +84,7 @@ export default async function StudentDashboardPage() {
           <CardTitle>{dictionary.student.assignedTeacher}</CardTitle>
           {teacher ? (
             <div className="mt-4 flex items-center gap-3">
-              <Avatar src={teacher.user.image} alt={teacher.user.name} fallback={teacher.user.name.slice(0, 1)} />
+              <Avatar src={teacher.user.image} alt={teacher.user.name} fallback={teacher.user.name.slice(0, 1)} locale={viewer.locale} />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{teacher.user.name}</p>
                 <p className="text-sm text-[var(--color-ink-soft)]">{instrumentLabel(teacher.specialty, viewer.locale)}</p>

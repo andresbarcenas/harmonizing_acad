@@ -63,7 +63,7 @@ export async function consumeMagicLinkToken(input: { email: string; token: strin
   }
 
   const user = await db.user.findUnique({ where: { email } });
-  if (!user || (user.role !== Role.STUDENT && user.role !== Role.TEACHER)) {
+  if (!user || (user.role !== Role.STUDENT && user.role !== Role.TEACHER && user.role !== Role.PARENT)) {
     await db.verificationToken.deleteMany({ where: { token: tokenHash } });
     return null;
   }

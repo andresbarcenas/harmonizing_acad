@@ -12,7 +12,7 @@ export async function PATCH(_: Request, { params }: Params) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const { seriesId } = await params;
@@ -64,7 +64,7 @@ export async function DELETE(_: Request, { params }: Params) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const { seriesId } = await params;

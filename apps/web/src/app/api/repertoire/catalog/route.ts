@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { createCatalogItem, getRepertoireCatalogErrorMessage, searchRepertoireCatalog, assertCanManageCatalog } from "@/lib/data/repertoire-catalog";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { repertoireCatalogItemSchema } from "@/lib/validators/repertoire-catalog";
 
 export async function GET(request: Request) {
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   const parsed = repertoireCatalogItemSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   const item = await createCatalogItem(parsed.data, auth.user.id);
   return NextResponse.json({ item });

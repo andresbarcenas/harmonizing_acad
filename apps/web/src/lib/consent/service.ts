@@ -35,10 +35,10 @@ export async function getActiveConsentDocument() {
   });
 }
 
-export async function getConsentStatusForUser(userId: string) {
+export async function getConsentStatusForStudent(studentId: string) {
   const document = await getActiveConsentDocument();
   const signature = await db.consentSignature.findUnique({
-    where: { userId_documentId: { userId, documentId: document.id } },
+    where: { studentId_documentId: { studentId, documentId: document.id } },
     include: { document: true },
   });
 
@@ -49,14 +49,29 @@ export async function getConsentStatusForUser(userId: string) {
   };
 }
 
+export async function getConsentStatusForUser(userId: string) {
+  const student = await db.studentProfile.findUnique({ where: { userId }, select: { id: true } });
+  if (!student) {
+    const document = await getActiveConsentDocument();
+    return { document, signature: null, signed: false };
+  }
+  return getConsentStatusForStudent(student.id);
+}
+
+export async function hasSignedActiveConsentForStudent(studentId: string) {
+  const status = await getConsentStatusForStudent(studentId);
+  return status.signed;
+}
+
 export async function hasSignedActiveConsent(userId: string) {
   const status = await getConsentStatusForUser(userId);
   return status.signed;
 }
 
-export async function ensureStudentConsent(user: { id: string; role: Role; locale?: string | null }) {
+export async function ensureStudentConsent(user: { id: string; role: Role; locale?: string | null; studentProfile?: { id: string } | null }) {
   if (user.role !== Role.STUDENT) return;
-  const signed = await hasSignedActiveConsent(user.id);
+  const studentId = user.studentProfile?.id ?? (await db.studentProfile.findUnique({ where: { userId: user.id }, select: { id: true } }))?.id;
+  const signed = studentId ? await hasSignedActiveConsentForStudent(studentId) : false;
   if (!signed) throw new ConsentRequiredError(normalizeLocale(user.locale));
 }
 

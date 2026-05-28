@@ -46,8 +46,14 @@ function copy(locale: AppLocale) {
         privateNote: "Nota privada docente",
         visibleNote: "Nota visible para estudiante/familia",
         ratings: "Calificaciones",
+        prep: "Preparación",
+        focus: "Enfoque",
+        effort: "Esfuerzo",
+        overall: "General",
         skillRatings: "Habilidades observadas",
         chooseSkill: "Elegir habilidad",
+        chooseAssignment: "Tarea",
+        chooseRepertoire: "Repertorio",
         note: "Nota",
         addRepertoire: "Guardar repertorio",
         sheetMusic: "Partitura / hoja de canción",
@@ -103,8 +109,14 @@ function copy(locale: AppLocale) {
         privateNote: "Private teacher note",
         visibleNote: "Student/family visible note",
         ratings: "Ratings",
+        prep: "Prep",
+        focus: "Focus",
+        effort: "Effort",
+        overall: "Overall",
         skillRatings: "Observed skills",
         chooseSkill: "Choose skill",
+        chooseAssignment: "Assignment",
+        chooseRepertoire: "Repertoire",
         note: "Note",
         addRepertoire: "Save repertoire",
         sheetMusic: "Sheet music / song sheet",
@@ -269,10 +281,10 @@ export function LessonNoteForm({ sessionId, initial, skillCategories, locale }: 
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.ratings}</p>
       <div className="grid gap-2 sm:grid-cols-4">
-        <RatingInput name="preparednessRating" label="Prep" defaultValue={initial?.preparednessRating} />
-        <RatingInput name="focusRating" label="Focus" defaultValue={initial?.focusRating} />
-        <RatingInput name="effortRating" label="Effort" defaultValue={initial?.effortRating} />
-        <RatingInput name="overallLessonRating" label="Overall" defaultValue={initial?.overallLessonRating} />
+        <RatingInput name="preparednessRating" label={c.prep} defaultValue={initial?.preparednessRating} />
+        <RatingInput name="focusRating" label={c.focus} defaultValue={initial?.focusRating} />
+        <RatingInput name="effortRating" label={c.effort} defaultValue={initial?.effortRating} />
+        <RatingInput name="overallLessonRating" label={c.overall} defaultValue={initial?.overallLessonRating} />
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.skillRatings}</p>
       <div className="grid gap-2 md:grid-cols-2">
@@ -396,7 +408,7 @@ export function PracticeAssignmentForm({ studentId, lessonNoteId, classSessionId
     <form action={submit} className="grid gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4 md:grid-cols-2">
       <Input name="title" required placeholder={c.title} />
       <Input name="dueDate" type="date" aria-label={c.dueDate} />
-      <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">Repertorio</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
+      <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseRepertoire}</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
       <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
       <Input name="expectedMinutes" type="number" min={1} max={600} placeholder={c.expectedMinutes} />
       <label className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><input name="requiresVideo" type="checkbox" /> {c.requiresVideo}</label>
@@ -407,13 +419,13 @@ export function PracticeAssignmentForm({ studentId, lessonNoteId, classSessionId
   );
 }
 
-export function PracticeLogForm({ assignments, repertoire, skills, locale }: { assignments: AssignmentOption[]; repertoire: RepertoireOption[]; skills: SkillOption[]; locale: AppLocale }) {
+export function PracticeLogForm({ assignments, repertoire, skills, locale, studentId }: { assignments: AssignmentOption[]; repertoire: RepertoireOption[]; skills: SkillOption[]; locale: AppLocale; studentId?: string }) {
   const router = useRouter();
   const c = copy(locale);
   const [message, setMessage] = useState("");
   async function submit(formData: FormData) {
     const payload = Object.fromEntries(formData.entries());
-    const response = await fetch("/api/progress/practice-logs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, practicedOn: toIsoDate(payload.practicedOn) ?? new Date().toISOString(), minutesPracticed: Number(payload.minutesPracticed), moodRating: numberOrUndefined(payload.moodRating), difficultyRating: numberOrUndefined(payload.difficultyRating) }) });
+    const response = await fetch("/api/progress/practice-logs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, studentId, practicedOn: toIsoDate(payload.practicedOn) ?? new Date().toISOString(), minutesPracticed: Number(payload.minutesPracticed), moodRating: numberOrUndefined(payload.moodRating), difficultyRating: numberOrUndefined(payload.difficultyRating) }) });
     setMessage(response.ok ? c.saved : c.error);
     if (response.ok) router.refresh();
   }
@@ -421,8 +433,8 @@ export function PracticeLogForm({ assignments, repertoire, skills, locale }: { a
     <form action={submit} className="grid gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4 md:grid-cols-2">
       <Input name="practicedOn" type="date" required aria-label={c.practicedOn} />
       <Input name="minutesPracticed" type="number" required min={1} max={600} placeholder={c.minutes} />
-      <select name="assignmentId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">Tarea</option>{assignments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
-      <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">Repertorio</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
+      <select name="assignmentId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseAssignment}</option>{assignments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
+      <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseRepertoire}</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
       <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
       <Input name="moodRating" type="number" min={1} max={5} placeholder={c.mood} />
       <Input name="difficultyRating" type="number" min={1} max={5} placeholder={c.difficulty} />

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = createBlackoutSchema.safeParse(await req.json());
@@ -54,7 +54,7 @@ export async function DELETE(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = deleteBlackoutSchema.safeParse(await req.json());

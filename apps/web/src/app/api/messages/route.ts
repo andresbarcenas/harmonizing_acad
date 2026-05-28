@@ -4,24 +4,28 @@ import { NotificationType, Role } from "@prisma/client";
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { parentCanAccessStudent } from "@/lib/parents";
 import { createMessageSchema } from "@/lib/validators/messages";
 
-function canAccessThread({
+async function canAccessThread({
   role,
   threadStudentId,
   threadTeacherId,
   studentProfileId,
   teacherProfileId,
+  parentProfileId,
 }: {
   role: Role;
   threadStudentId: string;
   threadTeacherId: string;
   studentProfileId?: string;
   teacherProfileId?: string;
+  parentProfileId?: string;
 }) {
   if (role === Role.ADMIN) return true;
   if (role === Role.STUDENT) return studentProfileId === threadStudentId;
   if (role === Role.TEACHER) return teacherProfileId === threadTeacherId;
+  if (role === Role.PARENT) return parentCanAccessStudent(parentProfileId, threadStudentId);
   return false;
 }
 
@@ -49,15 +53,16 @@ export async function GET(req: Request) {
 
     if (
       thread &&
-      !canAccessThread({
+      !(await canAccessThread({
         role: auth.user.role,
         threadStudentId: thread.studentId,
         threadTeacherId: thread.teacherId,
         studentProfileId: auth.user.studentProfile?.id,
         teacherProfileId: auth.user.teacherProfile?.id,
-      })
+        parentProfileId: auth.user.parentGuardianProfile?.id,
+      }))
     ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
     }
   } else if (auth.user.role === Role.STUDENT && auth.user.studentProfile) {
     const assignment = await db.teacherAssignment.findUnique({ where: { studentId: auth.user.studentProfile.id } });
@@ -78,6 +83,33 @@ export async function GET(req: Request) {
           teacher: { include: { user: true } },
         },
       });
+    }
+  } else if (auth.user.role === Role.PARENT && auth.user.parentGuardianProfile) {
+    const selectedStudentId = searchParams.get("studentId");
+    const link = selectedStudentId
+      ? await db.parentStudentLink.findUnique({ where: { parentId_studentId: { parentId: auth.user.parentGuardianProfile.id, studentId: selectedStudentId } } })
+      : await db.parentStudentLink.findFirst({ where: { parentId: auth.user.parentGuardianProfile.id }, orderBy: [{ primaryContact: "desc" }, { createdAt: "asc" }] });
+
+    if (link) {
+      const assignment = await db.teacherAssignment.findUnique({ where: { studentId: link.studentId } });
+      if (assignment) {
+        thread = await db.messageThread.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: link.studentId,
+              teacherId: assignment.teacherId,
+            },
+          },
+          include: {
+            messages: {
+              include: { sender: true },
+              orderBy: { createdAt: "asc" },
+            },
+            student: { include: { user: true } },
+            teacher: { include: { user: true } },
+          },
+        });
+      }
     }
   } else if (auth.user.role === Role.TEACHER && auth.user.teacherProfile) {
     thread = await db.messageThread.findFirst({
@@ -138,16 +170,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Conversación no encontrada" : "Conversation not found." }, { status: 404 });
   }
 
-  const canSend = canAccessThread({
+  const canSend = await canAccessThread({
     role: auth.user.role,
     threadStudentId: thread.studentId,
     threadTeacherId: thread.teacherId,
     studentProfileId: auth.user.studentProfile?.id,
     teacherProfileId: auth.user.teacherProfile?.id,
+    parentProfileId: auth.user.parentGuardianProfile?.id,
   });
 
   if (!canSend) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const message = await db.message.create({
@@ -161,7 +194,7 @@ export async function POST(req: Request) {
     },
   });
 
-  const recipientUserId = auth.user.id === thread.student.userId ? thread.teacher.userId : thread.student.userId;
+  const recipientUserId = auth.user.role === Role.TEACHER ? thread.student.userId : thread.teacher.userId;
 
   await createNotification({
     userId: recipientUserId,

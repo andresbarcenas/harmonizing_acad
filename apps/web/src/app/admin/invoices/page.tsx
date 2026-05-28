@@ -27,7 +27,7 @@ export default async function AdminInvoicesPage() {
         <CardTitle>{viewer.locale === "es" ? "Monitor de facturación" : "Billing monitor"}</CardTitle>
         <CardDescription>
           {data.isConfigured
-            ? viewer.locale === "es" ? "V1 es de solo lectura: mostramos facturas importadas de Alegra, sin cobro interno en Harmonizing." : "V1 is read-only: we show invoices imported from Alegra without internal Harmonizing payments."
+            ? viewer.locale === "es" ? "V1 es de solo lectura: mostramos facturas importadas de Alegra, sin cobro interno en Harmonizing. Si un contacto no tiene email, guarda su ID de contacto Alegra manualmente antes de sincronizar." : "V1 is read-only: we show invoices imported from Alegra without internal Harmonizing payments. If a contact has no email, save its Alegra contact ID manually before syncing."
             : viewer.locale === "es" ? "Las facturas aún no están configuradas." : "Invoices are not configured yet."}
         </CardDescription>
         {!data.isConfigured ? (

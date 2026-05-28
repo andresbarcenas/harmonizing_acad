@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { assertStudentExists, assertTeacherCanAccessStudent, getProgressErrorResponse } from "@/lib/data/progress";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { generateProgressReportSchema } from "@/lib/validators/progress";
 import { generateProgressReport, ProgressReportConflictError, reportRangeFromMonth } from "@/lib/progress-reports/generator";
 
@@ -14,13 +15,13 @@ export async function POST(req: Request) {
   }
 
   const parsed = generateProgressReportSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   const input = parsed.data;
   const teacherId = auth.user.role === Role.TEACHER ? auth.user.teacherProfile?.id : input.teacherId;
 
   try {
     if (auth.user.role === Role.TEACHER) {
-      if (!teacherId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!teacherId) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
       await assertTeacherCanAccessStudent(teacherId, input.studentId);
     } else {
       await assertStudentExists(input.studentId);

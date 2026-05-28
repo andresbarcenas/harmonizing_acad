@@ -176,7 +176,7 @@ export function TeacherOnboardingForm({ locale = "en" }: { locale?: AppLocale })
           {dictionary.forms.profilePhotoOptional}
         </label>
         <div className="flex items-center gap-3">
-          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewTeacher} fallback="D" className="h-10 w-10 text-xs" />
+          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewTeacher} fallback="D" className="h-10 w-10 text-xs" locale={locale} />
           <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.imageCreateApplyTeacher}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

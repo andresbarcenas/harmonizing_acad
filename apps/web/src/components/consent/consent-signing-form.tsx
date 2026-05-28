@@ -10,7 +10,10 @@ import type { AppLocale } from "@/lib/i18n/locales";
 
 type ConsentSigningFormProps = {
   locale: AppLocale;
+  studentId?: string;
   studentEmail: string;
+  studentName?: string;
+  continueHref?: string;
   document: {
     version: string;
     titleEn: string;
@@ -26,7 +29,7 @@ type ConsentSigningFormProps = {
   } | null;
 };
 
-export function ConsentSigningForm({ locale, studentEmail, document, existingSignature }: ConsentSigningFormProps) {
+export function ConsentSigningForm({ locale, studentId, studentEmail, studentName, continueHref = "/dashboard", document, existingSignature }: ConsentSigningFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [signerName, setSignerName] = useState(existingSignature?.signerName ?? "");
@@ -43,13 +46,14 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
     download: isSpanish ? "Descargar PDF firmado" : "Download signed PDF",
     signerName: isSpanish ? "Nombre legal completo de madre/padre/tutor" : "Parent/guardian full legal name",
     relationship: isSpanish ? "Relación con el estudiante" : "Relationship to student",
-    signerEmail: isSpanish ? "Email para recibir la copia PDF" : "Email to receive PDF copy",
+    signerEmail: isSpanish ? "Correo para recibir la copia PDF" : "Email to receive PDF copy",
     acknowledge: isSpanish
       ? "Confirmo que leí el consentimiento en español e inglés, tengo autoridad para firmar por el estudiante y acepto el uso de registros electrónicos."
       : "I confirm that I read the consent in Spanish and English, I have authority to sign for the student, and I agree to electronic records.",
     submit: isSpanish ? "Firmar consentimiento" : "Sign consent",
     submitting: isSpanish ? "Firmando..." : "Signing...",
     signaturePreview: isSpanish ? "Vista de firma" : "Signature preview",
+    signaturePlaceholder: isSpanish ? "Nombre completo" : "Full name",
     legalNote: isSpanish
       ? "Al firmar, el acceso del estudiante se habilita y enviaremos una copia PDF al email indicado."
       : "After signing, student access is enabled and we will email a PDF copy to the address provided.",
@@ -72,7 +76,7 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
           <a href={`/api/consent/signatures/${existingSignature.id}/pdf`} className="w-full sm:w-auto">
             <Button type="button" variant="outline" className="w-full sm:w-auto">{copy.download}</Button>
           </a>
-          <Button type="button" variant="gold" onClick={() => router.push("/dashboard")}>{copy.continue}</Button>
+          <Button type="button" variant="gold" onClick={() => router.push(continueHref)}>{copy.continue}</Button>
         </div>
       </Card>
     );
@@ -88,6 +92,7 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
           signerName: String(formData.get("signerName") ?? ""),
           signerRelationship: String(formData.get("signerRelationship") ?? ""),
           signerEmail: String(formData.get("signerEmail") ?? ""),
+          studentId,
           acknowledged,
         }),
       });
@@ -96,7 +101,7 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
         setMessage(result.error ?? copy.error);
         return;
       }
-      router.push("/dashboard");
+      router.push(continueHref);
       router.refresh();
     });
   }
@@ -115,6 +120,7 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
 
       <Card className="h-fit lg:sticky lg:top-6">
         <CardTitle>{copy.submit}</CardTitle>
+        {studentName ? <CardDescription>{isSpanish ? "Estudiante cubierto" : "Covered student"}: {studentName}</CardDescription> : null}
         <CardDescription>{copy.legalNote}</CardDescription>
         <form
           onSubmit={(event) => {
@@ -139,7 +145,7 @@ export function ConsentSigningForm({ locale, studentEmail, document, existingSig
           <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/72 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{copy.signaturePreview}</p>
             <p className="font-signature mt-3 min-h-16 break-words text-5xl leading-none text-[var(--color-ink)]">
-              {signerName || "Nombre completo"}
+              {signerName || copy.signaturePlaceholder}
             </p>
           </div>
 

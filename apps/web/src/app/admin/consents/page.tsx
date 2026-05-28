@@ -23,14 +23,12 @@ export default async function AdminConsentsPage({ searchParams }: PageProps) {
   const document = await getActiveConsentDocument();
   const students = await db.studentProfile.findMany({
     include: {
-      user: {
-        include: {
-          consentSignatures: {
-            where: { documentId: document.id },
-            orderBy: { signedAt: "desc" },
-            take: 1,
-          },
-        },
+      user: true,
+      consentSignatures: {
+        where: { documentId: document.id },
+        include: { user: true },
+        orderBy: { signedAt: "desc" },
+        take: 1,
       },
       assignment: {
         include: { teacher: { include: { user: true } } },
@@ -40,7 +38,7 @@ export default async function AdminConsentsPage({ searchParams }: PageProps) {
   });
 
   const rows = students
-    .map((student) => ({ student, signature: student.user.consentSignatures[0] ?? null }))
+    .map((student) => ({ student, signature: student.consentSignatures[0] ?? null }))
     .filter((row) => {
       if (filter === "signed") return Boolean(row.signature);
       if (filter === "missing") return !row.signature;
@@ -48,8 +46,8 @@ export default async function AdminConsentsPage({ searchParams }: PageProps) {
       return true;
     });
 
-  const signedCount = students.filter((student) => student.user.consentSignatures.length > 0).length;
-  const failedCount = students.filter((student) => student.user.consentSignatures[0]?.emailStatus === "FAILED").length;
+  const signedCount = students.filter((student) => student.consentSignatures.length > 0).length;
+  const failedCount = students.filter((student) => student.consentSignatures[0]?.emailStatus === "FAILED").length;
 
   return (
     <AppShell role={viewer.role} activePath="/admin/consents" userName={viewer.name} locale={viewer.locale}>
@@ -62,7 +60,7 @@ export default async function AdminConsentsPage({ searchParams }: PageProps) {
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryCard label={isSpanish ? "Estudiantes" : "Students"} value={students.length} />
         <SummaryCard label={isSpanish ? "Firmados" : "Signed"} value={signedCount} />
-        <SummaryCard label={isSpanish ? "Email fallido" : "Email failed"} value={failedCount} />
+        <SummaryCard label={isSpanish ? "Correo fallido" : "Email failed"} value={failedCount} />
       </div>
 
       <Card>
@@ -75,7 +73,7 @@ export default async function AdminConsentsPage({ searchParams }: PageProps) {
             <FilterLink active={filter === "all"} href="/admin/consents" label={isSpanish ? "Todos" : "All"} />
             <FilterLink active={filter === "signed"} href="/admin/consents?status=signed" label={isSpanish ? "Firmados" : "Signed"} />
             <FilterLink active={filter === "missing"} href="/admin/consents?status=missing" label={isSpanish ? "Pendientes" : "Missing"} />
-            <FilterLink active={filter === "email_failed"} href="/admin/consents?status=email_failed" label={isSpanish ? "Email fallido" : "Email failed"} />
+            <FilterLink active={filter === "email_failed"} href="/admin/consents?status=email_failed" label={isSpanish ? "Correo fallido" : "Email failed"} />
           </div>
         </div>
 

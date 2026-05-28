@@ -18,6 +18,7 @@ export function VideoUploadForm({
   defaultAssignmentId,
   defaultRepertoireItemId,
   defaultSkillCategoryId,
+  studentId,
 }: {
   locale: AppLocale;
   assignments?: Array<{ id: string; title: string }>;
@@ -26,6 +27,7 @@ export function VideoUploadForm({
   defaultAssignmentId?: string;
   defaultRepertoireItemId?: string;
   defaultSkillCategoryId?: string;
+  studentId?: string;
 }) {
   const router = useRouter();
   const copy = videoUploadCopy[locale];
@@ -140,6 +142,7 @@ export function VideoUploadForm({
     if (selectedAssignment) formData.set("practiceAssignmentId", selectedAssignment);
     if (selectedRepertoire) formData.set("repertoireItemId", selectedRepertoire);
     if (selectedSkill) formData.set("skillCategoryId", selectedSkill);
+    if (studentId) formData.set("studentId", studentId);
 
     let response: Response;
     try {

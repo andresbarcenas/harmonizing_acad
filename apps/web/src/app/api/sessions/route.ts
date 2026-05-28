@@ -17,7 +17,7 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const { sessionId, status, notes } = (await req.json()) as {
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     (auth.user.role !== Role.TEACHER && auth.user.role !== Role.ADMIN) ||
     (auth.user.role === Role.TEACHER && !auth.user.teacherProfile)
   ) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = createRecurringSessionsSchema.safeParse(await req.json());

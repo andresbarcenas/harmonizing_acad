@@ -60,6 +60,7 @@ export function ProfileImageForm({
           alt={userName}
           fallback={userName.slice(0, 1).toUpperCase()}
           className="h-16 w-16 text-base"
+          locale={locale}
         />
         <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.forms.imageAutoApply}</p>
       </div>

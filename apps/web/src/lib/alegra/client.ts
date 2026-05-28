@@ -19,6 +19,83 @@ type AlegraConfig = {
   token: string;
 };
 
+type SearchPagination = {
+  start?: number;
+  limit?: number;
+};
+
+export type AlegraContactSearchInput = SearchPagination & {
+  query?: string;
+  identification?: string;
+  name?: string;
+};
+
+export type AlegraInvoiceSearchInput = SearchPagination & {
+  contactId?: string;
+  clientName?: string;
+  invoiceNumber?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type AlegraPaymentSearchInput = SearchPagination & {
+  contactId?: string;
+  paymentId?: string;
+  type?: string;
+};
+
+export type AlegraLookupContact = {
+  id: string;
+  name?: string;
+  emails: string[];
+  identification?: string;
+  type?: string;
+  phone?: string;
+  city?: string;
+  raw: Record<string, unknown>;
+  rawPreview: Record<string, unknown>;
+};
+
+export type AlegraLookupInvoice = {
+  id: string;
+  number?: string;
+  clientId?: string;
+  clientName?: string;
+  status?: string;
+  issueDate?: string;
+  dueDate?: string;
+  currency?: string;
+  total?: number;
+  balance?: number;
+  viewUrl?: string;
+  pdfUrl?: string;
+  raw: Record<string, unknown>;
+  rawPreview: Record<string, unknown>;
+};
+
+export type AlegraLookupPaymentInvoiceRef = {
+  id?: string;
+  number?: string;
+  amount?: number;
+};
+
+export type AlegraLookupPayment = {
+  id: string;
+  number?: string;
+  date?: string;
+  clientId?: string;
+  clientName?: string;
+  type?: string;
+  amount?: number;
+  currency?: string;
+  paymentMethod?: string;
+  account?: string;
+  invoices: AlegraLookupPaymentInvoiceRef[];
+  raw: Record<string, unknown>;
+  rawPreview: Record<string, unknown>;
+};
+
 function getAlegraConfig(): AlegraConfig {
   const baseUrl = (process.env.ALEGRA_API_BASE_URL || DEFAULT_ALEGRA_BASE_URL).replace(/\/$/, "");
   const email = process.env.ALEGRA_API_EMAIL?.trim() ?? "";
@@ -40,6 +117,11 @@ function parseJsonSafely(value: string) {
   }
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
 function toArray(payload: unknown): Record<string, unknown>[] {
   if (Array.isArray(payload)) {
     return payload.filter((item): item is Record<string, unknown> => !!item && typeof item === "object");
@@ -48,6 +130,14 @@ function toArray(payload: unknown): Record<string, unknown>[] {
   if (!payload || typeof payload !== "object") return [];
 
   const objectPayload = payload as Record<string, unknown>;
+
+  // Alegra entity detail responses are plain objects that can include an `items`
+  // line-item array. Treat objects with their own id as one entity before trying
+  // wrapper keys, otherwise invoice details become the first line item.
+  if (readString(objectPayload, "id", "_id")) {
+    return [objectPayload];
+  }
+
   const candidates = [objectPayload.data, objectPayload.results, objectPayload.items];
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
@@ -82,6 +172,17 @@ function readString(source: Record<string, unknown>, ...paths: string[]): string
   return undefined;
 }
 
+function readNumber(source: Record<string, unknown>, ...paths: string[]): number | undefined {
+  for (const path of paths) {
+    const value = readString(source, path);
+    if (!value) continue;
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return undefined;
+}
+
 function contactEmails(contact: Record<string, unknown>): string[] {
   const primary = readString(contact, "email", "emailAddress", "email1");
   const emails = new Set<string>();
@@ -92,13 +193,143 @@ function contactEmails(contact: Record<string, unknown>): string[] {
     for (const item of secondary) {
       if (typeof item === "string" && item.trim()) emails.add(item.toLowerCase());
       if (item && typeof item === "object") {
-        const value = readString(item as Record<string, unknown>, "email", "value");
+        const value = readString(item as Record<string, unknown>, "email", "value", "address");
         if (value) emails.add(value.toLowerCase());
       }
     }
   }
 
+  const contacts = contact.contacts;
+  if (Array.isArray(contacts)) {
+    for (const item of contacts) {
+      const record = asRecord(item);
+      if (!record) continue;
+      const value = readString(record, "email", "emailAddress");
+      if (value) emails.add(value.toLowerCase());
+    }
+  }
+
   return Array.from(emails);
+}
+
+function buildQuery(params: Record<string, string | number | null | undefined>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    query.set(key, String(value));
+  }
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : "";
+}
+
+function compactRawPreview(source: Record<string, unknown>) {
+  const preview: Record<string, unknown> = {};
+  for (const key of Object.keys(source).slice(0, 18)) {
+    const value = source[key];
+    if (Array.isArray(value)) {
+      preview[key] = value.slice(0, 3).map((item) => {
+        const record = asRecord(item);
+        if (!record) return item;
+        return Object.fromEntries(Object.entries(record).slice(0, 8));
+      });
+      continue;
+    }
+
+    const record = asRecord(value);
+    if (record) {
+      preview[key] = Object.fromEntries(Object.entries(record).slice(0, 8));
+      continue;
+    }
+
+    preview[key] = value;
+  }
+  return preview;
+}
+
+function normalizeContact(raw: Record<string, unknown>): AlegraLookupContact | null {
+  const id = readString(raw, "id", "_id");
+  if (!id) return null;
+
+  return {
+    id,
+    name: readString(raw, "name", "nameObject.name", "fullName"),
+    emails: contactEmails(raw),
+    identification: readString(raw, "identification", "identificationObject.number", "numberIdentification", "identificationNumber"),
+    type: readString(raw, "type", "kind", "contactType"),
+    phone: readString(raw, "phonePrimary", "phone", "phone1", "mobile", "cellphone"),
+    city: readString(raw, "address.city", "city", "city.name", "address.city.name"),
+    raw,
+    rawPreview: compactRawPreview(raw),
+  };
+}
+
+function normalizeInvoice(raw: Record<string, unknown>): AlegraLookupInvoice | null {
+  const id = readString(raw, "id", "_id", "invoice.id");
+  if (!id) return null;
+
+  return {
+    id,
+    number: readString(raw, "number", "numberTemplate.fullNumber", "numberTemplate.number", "invoiceNumber"),
+    clientId: readString(raw, "client.id", "contact.id", "customer.id", "client._id", "contact._id"),
+    clientName: readString(raw, "client.name", "contact.name", "customer.name", "client.nameObject.name"),
+    status: readString(raw, "status", "state", "statusInvoice"),
+    issueDate: readString(raw, "date", "issueDate", "createdAt"),
+    dueDate: readString(raw, "dueDate", "expirationDate", "datePayment"),
+    currency: readString(raw, "currency.code", "currency", "currencyCode"),
+    total: readNumber(raw, "total", "totalPrice", "totalAmount", "amount"),
+    balance: readNumber(raw, "balance", "balanceAmount", "amountDue"),
+    viewUrl: readString(raw, "url", "publicUrl", "shareLink", "htmlUrl"),
+    pdfUrl: readString(raw, "pdf", "pdfUrl", "pdfURL", "pdf.url"),
+    raw,
+    rawPreview: compactRawPreview(raw),
+  };
+}
+
+function normalizePaymentInvoiceRef(value: unknown): AlegraLookupPaymentInvoiceRef | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const invoiceRecord = asRecord(raw.invoice) ?? raw;
+  const id = readString(invoiceRecord, "id", "_id");
+  const number = readString(invoiceRecord, "number", "numberTemplate.fullNumber", "invoiceNumber");
+  const amount = readNumber(raw, "amount", "total", "paidAmount") ?? readNumber(invoiceRecord, "amount", "total", "totalAmount");
+  if (!id && !number && amount === undefined) return null;
+  return { id, number, amount };
+}
+
+function paymentInvoiceRefs(raw: Record<string, unknown>) {
+  const candidates = [raw.invoices, raw.bills, raw.items, raw.invoicePayments];
+  const refs: AlegraLookupPaymentInvoiceRef[] = [];
+  for (const candidate of candidates) {
+    if (!Array.isArray(candidate)) continue;
+    for (const item of candidate) {
+      const ref = normalizePaymentInvoiceRef(item);
+      if (ref) refs.push(ref);
+    }
+  }
+  return refs;
+}
+
+function normalizePayment(raw: Record<string, unknown>): AlegraLookupPayment | null {
+  const id = readString(raw, "id", "_id");
+  if (!id) return null;
+
+  const clientRecord = asRecord(raw.client) ?? asRecord(raw.contact) ?? asRecord(raw.customer);
+
+  return {
+    id,
+    number: readString(raw, "number", "numberTemplate.fullNumber", "numberTemplate.number", "reference", "receiptNumber"),
+    date: readString(raw, "date", "paymentDate", "createdAt"),
+    clientId: clientRecord ? readString(clientRecord, "id", "_id") : readString(raw, "client.id", "contact.id", "customer.id"),
+    clientName: clientRecord ? readString(clientRecord, "name", "nameObject.name") : readString(raw, "client.name", "contact.name", "customer.name"),
+    type: readString(raw, "type", "kind"),
+    amount: readNumber(raw, "amount", "total", "totalAmount", "value"),
+    currency: readString(raw, "currency.code", "currency", "currencyCode"),
+    paymentMethod: readString(raw, "paymentMethod", "paymentMethod.name", "method", "method.name"),
+    account: readString(raw, "account.name", "bankAccount.name", "paymentAccount.name"),
+    invoices: paymentInvoiceRefs(raw),
+    raw,
+    rawPreview: compactRawPreview(raw),
+  };
 }
 
 async function requestAlegra(path: string, init?: RequestInit) {
@@ -192,6 +423,47 @@ export const alegraClient = {
     }
 
     return null;
+  },
+
+  async searchContacts(input: AlegraContactSearchInput): Promise<AlegraLookupContact[]> {
+    const query = buildQuery({
+      query: input.query,
+      identification: input.identification,
+      name: input.name,
+      type: "client",
+      mode: "advanced",
+      start: input.start ?? 0,
+      limit: input.limit ?? 30,
+    });
+    const payload = await requestAlegra(`/contacts${query}`);
+    return toArray(payload).map(normalizeContact).filter((item): item is AlegraLookupContact => Boolean(item));
+  },
+
+  async searchInvoices(input: AlegraInvoiceSearchInput): Promise<AlegraLookupInvoice[]> {
+    const query = buildQuery({
+      client_id: input.contactId,
+      client_name: input.clientName,
+      numberTemplate_fullNumber: input.invoiceNumber,
+      status: input.status,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      start: input.start ?? 0,
+      limit: input.limit ?? 30,
+    });
+    const payload = await requestAlegra(`/invoices${query}`);
+    return toArray(payload).map(normalizeInvoice).filter((item): item is AlegraLookupInvoice => Boolean(item));
+  },
+
+  async searchPayments(input: AlegraPaymentSearchInput): Promise<AlegraLookupPayment[]> {
+    const query = buildQuery({
+      client_id: input.contactId,
+      type: input.type ?? "in",
+      id: input.paymentId,
+      start: input.start ?? 0,
+      limit: input.limit ?? 30,
+    });
+    const payload = await requestAlegra(`/payments${query}`);
+    return toArray(payload).map(normalizePayment).filter((item): item is AlegraLookupPayment => Boolean(item));
   },
 
   async listInvoices(startDate: string, endDate: string): Promise<AlegraInvoiceRecord[]> {

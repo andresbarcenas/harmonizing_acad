@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials.token) return null;
 
-        // Security-sensitive: this provider only accepts one-time magic links for student/teacher accounts.
+        // Security-sensitive: this provider only accepts one-time magic links for student, parent, and teacher accounts.
         return consumeMagicLinkToken({
           email: credentials.email,
           token: credentials.token,

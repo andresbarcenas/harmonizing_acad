@@ -1,6 +1,6 @@
 import "server-only";
 
-import { ClassRequestStatus, RescheduleStatus, SessionStatus } from "@prisma/client";
+import { ClassRequestStatus, RescheduleStatus, SessionStatus, Role } from "@prisma/client";
 import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
@@ -14,7 +14,10 @@ export async function getStudentDashboardData(viewer: AppViewer) {
     throw new Error("Unauthorized: student role required");
   }
 
-  const studentProfileId = viewer.studentProfileId;
+  return getStudentDashboardDataForProfile(viewer.studentProfileId);
+}
+
+export async function getStudentDashboardDataForProfile(studentProfileId: string) {
   const now = new Date();
 
   const [student, upcomingClass, latestCompleted, activeSubscription, progress, songs, goals] = await Promise.all([
@@ -98,9 +101,16 @@ export async function getStudentScheduleData(viewer: AppViewer, options: { week?
     throw new Error("Unauthorized: student role required");
   }
 
-  const studentProfileId = viewer.studentProfileId;
+  return getStudentScheduleDataForProfile(studentProfileIdForViewer(viewer), { week: options.week });
+}
+
+export async function getStudentScheduleDataForProfile(studentProfileId: string, options: { week?: string } = {}) {
   const now = new Date();
-  const studentTimezone = normalizeIanaTimezone(viewer.timezone);
+  const studentForTimezone = await db.studentProfile.findUnique({
+    where: { id: studentProfileId },
+    select: { user: { select: { timezone: true } } },
+  });
+  const studentTimezone = normalizeIanaTimezone(studentForTimezone?.user.timezone ?? "America/New_York");
   const week = resolveScheduleWeek(studentTimezone, options.week);
 
   const [student, sessions, classListSessions, nextUpcomingSession, pendingRequests, classRequests] = await Promise.all([
@@ -215,19 +225,23 @@ export async function getStudentVideosData(viewer: AppViewer) {
     throw new Error("Unauthorized: student role required");
   }
 
+  return getStudentVideosDataForProfile(viewer.studentProfileId);
+}
+
+export async function getStudentVideosDataForProfile(studentProfileId: string) {
   const [videos, assignments, repertoireItems, skillCategories] = await Promise.all([
     db.practiceVideo.findMany({
-      where: { studentId: viewer.studentProfileId },
+      where: { studentId: studentProfileId },
       include: { feedback: true, practiceAssignment: true, repertoireItem: true, skillCategory: true },
       orderBy: { submittedAt: "desc" },
     }),
     db.practiceAssignment.findMany({
-      where: { studentId: viewer.studentProfileId },
+      where: { studentId: studentProfileId },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
       take: 12,
     }),
     db.repertoireItem.findMany({
-      where: { studentId: viewer.studentProfileId },
+      where: { studentId: studentProfileId },
       orderBy: { updatedAt: "desc" },
       take: 12,
     }),
@@ -235,6 +249,11 @@ export async function getStudentVideosData(viewer: AppViewer) {
   ]);
 
   return { videos, assignments, repertoireItems, skillCategories };
+}
+
+function studentProfileIdForViewer(viewer: AppViewer) {
+  if (viewer.role === Role.STUDENT && viewer.studentProfileId) return viewer.studentProfileId;
+  throw new Error("Unauthorized: student role required");
 }
 
 type Availability = {

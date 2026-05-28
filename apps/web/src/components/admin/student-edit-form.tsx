@@ -35,13 +35,19 @@ export function StudentEditForm({
     profileImage?: string | null;
     activePlan?: {
       monthlyClassCount: number;
-      priceUsd: number;
       label: string;
     } | null;
     currentProgress?: {
       level: string;
       summary: string;
     } | null;
+    guardians?: Array<{
+      linkId: string;
+      name: string;
+      email: string;
+      relationship: string;
+      primaryContact: boolean;
+    }>;
   };
   teachers: TeacherOption[];
   locale?: AppLocale;
@@ -53,6 +59,7 @@ export function StudentEditForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [unlinkingGuardianId, setUnlinkingGuardianId] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [profileImage, setProfileImage] = useState(initial.profileImage ?? "");
 
@@ -61,16 +68,30 @@ export function StudentEditForm({
     setError(null);
     setSuccess(null);
 
+    const guardianName = String(formData.get("guardianName") ?? "").trim();
+    const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
+    const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
+    const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
+    const guardian = guardianName || guardianEmail || guardianRelationship || guardianPhone
+      ? {
+          name: guardianName,
+          email: guardianEmail,
+          relationship: guardianRelationship,
+          phone: guardianPhone || undefined,
+          primaryContact: formData.get("guardianPrimaryContact") === "on",
+        }
+      : undefined;
+
     const payload = {
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       teacherId: String(formData.get("teacherId") ?? "").trim() || undefined,
       monthlyClassCount: Number(formData.get("monthlyClassCount") ?? initial.activePlan?.monthlyClassCount ?? 4),
-      priceUsd: Number(formData.get("priceUsd") ?? initial.activePlan?.priceUsd ?? Number.NaN),
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
       profileImage: profileImage.trim() || undefined,
+      guardian,
     };
 
     const response = await fetch(`/api/admin/students/${studentId}`, {
@@ -98,6 +119,26 @@ export function StudentEditForm({
     setSuccess(dictionary.admin.studentUpdated);
     setPending(false);
     setOpen(false);
+    router.refresh();
+  }
+
+  async function unlinkGuardian(linkId: string) {
+    setUnlinkingGuardianId(linkId);
+    setError(null);
+    setSuccess(null);
+    const response = await fetch("/api/admin/guardians", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ linkId }),
+    });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(data?.error ?? dictionary.admin.guardianUnlinkError);
+      setUnlinkingGuardianId(null);
+      return;
+    }
+    setSuccess(dictionary.admin.guardianUnlinked);
+    setUnlinkingGuardianId(null);
     router.refresh();
   }
 
@@ -139,6 +180,7 @@ export function StudentEditForm({
                 alt={initial.name}
                 fallback={initial.name.slice(0, 1).toUpperCase()}
                 className="h-9 w-9 text-[10px]"
+                locale={locale}
               />
               <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.studentEditHelp}</p>
             </div>
@@ -170,7 +212,7 @@ export function StudentEditForm({
                   {initial.activePlan?.label ?? dictionary.admin.noActivePlan}. {dictionary.admin.currentPlanDescription}
                 </p>
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-1">
                 <label className="space-y-1 text-left">
                   <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyClasses}</span>
                   <select
@@ -182,9 +224,38 @@ export function StudentEditForm({
                     <option value="8">{dictionary.forms.eightClasses}</option>
                   </select>
                 </label>
-                <label className="space-y-1 text-left">
-                  <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.monthlyAmountUsd}</span>
-                  <Input name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={initial.activePlan?.priceUsd ?? 90} required />
+              </div>
+            </div>
+            <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
+              <div className="mb-3">
+                <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.guardianEyebrow}</p>
+                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{dictionary.admin.guardianManagementDescription}</p>
+              </div>
+              <div className="space-y-2">
+                {(initial.guardians ?? []).map((guardian) => (
+                  <div key={guardian.linkId} className="flex flex-col gap-2 rounded-[0.9rem] border border-[var(--color-border)] bg-white/72 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-ink)]">{guardian.name} · {guardian.relationship}</p>
+                      <p className="text-[11px] text-[var(--color-ink-soft)]">
+                        {guardian.email}
+                        {guardian.primaryContact ? ` · ${dictionary.admin.guardianPrimaryContact}` : ""}
+                      </p>
+                    </div>
+                    <Button type="button" size="sm" variant="outline" disabled={unlinkingGuardianId === guardian.linkId} onClick={() => unlinkGuardian(guardian.linkId)}>
+                      {unlinkingGuardianId === guardian.linkId ? dictionary.common.saving : dictionary.common.remove}
+                    </Button>
+                  </div>
+                ))}
+                {!(initial.guardians ?? []).length ? <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.admin.noGuardians}</p> : null}
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <Input name="guardianName" placeholder={dictionary.admin.guardianName} />
+                <Input name="guardianEmail" type="email" placeholder={dictionary.admin.guardianEmail} />
+                <Input name="guardianRelationship" placeholder={dictionary.admin.guardianRelationship} />
+                <Input name="guardianPhone" placeholder={dictionary.admin.guardianPhone} />
+                <label className="flex items-center gap-2 rounded-[0.9rem] border border-[var(--color-border)] bg-white/66 px-3 py-2 text-xs font-semibold text-[var(--color-ink-soft)] md:col-span-2">
+                  <input name="guardianPrimaryContact" type="checkbox" defaultChecked className="h-4 w-4 accent-[var(--color-gold)]" />
+                  <span>{dictionary.admin.guardianPrimaryContact}</span>
                 </label>
               </div>
             </div>
@@ -201,7 +272,7 @@ export function StudentEditForm({
                 {uploading ? dictionary.forms.uploading : dictionary.forms.uploadPhoto}
               </Button>
             </div>
-            <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder="Bio" />
+            <Textarea name="bio" rows={2} defaultValue={initial.bio ?? ""} placeholder={locale === "es" ? "Biografía" : "Bio"} />
             <Button type="submit" size="sm" variant="gold" disabled={pending}>
               {pending ? dictionary.common.saving : dictionary.forms.saveChanges}
             </Button>

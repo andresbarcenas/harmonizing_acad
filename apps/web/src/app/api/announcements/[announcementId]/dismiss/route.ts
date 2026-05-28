@@ -28,7 +28,7 @@ export async function POST(_req: Request, context: RouteContext) {
   });
 
   if (!announcement) {
-    return NextResponse.json({ error: "Announcement not found." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Anuncio no encontrado." : "Announcement not found." }, { status: 404 });
   }
 
   await db.appAnnouncementDismissal.upsert({

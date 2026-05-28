@@ -14,7 +14,7 @@ if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ] || [ "$PA
 fi
 
 npm run prisma:generate
-npm run prisma:migrate
+npx prisma migrate deploy
 
 if [ "${SEED_ON_BOOT:-true}" = "true" ]; then
   npm run prisma:seed

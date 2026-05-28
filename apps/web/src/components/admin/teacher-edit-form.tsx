@@ -115,6 +115,7 @@ export function TeacherEditForm({
               alt={initial.name}
               fallback={initial.name.slice(0, 1).toUpperCase()}
               className="h-9 w-9 text-[10px]"
+              locale={locale}
             />
             <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.teacherEditHelp}</p>
           </div>

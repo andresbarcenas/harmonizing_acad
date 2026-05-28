@@ -10,6 +10,7 @@ This package contains the Next.js application for Harmonizing.
 - `npm run typecheck`
 - `npm run prisma:generate`
 - `npm run prisma:migrate`
+- `npm run db:push`
 - `npm run prisma:seed`
 - `npm run bootstrap:admin`
 - `npm run bootstrap:prod`
@@ -19,7 +20,7 @@ This package contains the Next.js application for Harmonizing.
 ## Local env
 See root `.env.example` and `apps/web/.env.example`.
 
-`npm run prisma:migrate` uses `prisma db push` for local Docker convenience and runs a small pre-push compatibility step for existing progress report rows. Do not use `--force-reset` unless you intentionally want to delete local data.
+`npm run prisma:migrate` and `npm run db:migrate` use Prisma migrations (`prisma migrate dev`) and preserve local data through checked-in migration files. Docker boot applies existing migrations with `prisma migrate deploy` because the entrypoint is non-interactive. Use `npm run db:push` only for disposable local schema experiments; do not accept a reset prompt unless you intentionally want to delete local data.
 
 ## Class reminders
 Production class reminder emails use Resend. Set `RESEND_API_KEY`, a verified `RESEND_FROM_EMAIL`, `CLASS_EMAIL_REMINDERS_ENABLED=true`, and `CRON_SECRET`. Vercel Cron calls `/api/cron/class-reminders`; local development can trigger the endpoint manually.

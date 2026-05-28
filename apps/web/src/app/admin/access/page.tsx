@@ -15,11 +15,13 @@ function roleLabel(role: Role, locale: string) {
   if (locale === "es") {
     if (role === Role.ADMIN) return "Admin";
     if (role === Role.TEACHER) return "Docente";
+    if (role === Role.PARENT) return "Acudiente";
     return "Estudiante";
   }
 
   if (role === Role.ADMIN) return "Admin";
   if (role === Role.TEACHER) return "Teacher";
+  if (role === Role.PARENT) return "Guardian";
   return "Student";
 }
 
@@ -63,6 +65,7 @@ export default async function AdminAccessPage() {
                   alt={user.name}
                   fallback={user.name.slice(0, 1).toUpperCase()}
                   className="mt-1 h-11 w-11 text-xs"
+                  locale={viewer.locale}
                 />
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">

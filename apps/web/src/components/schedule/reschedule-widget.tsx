@@ -24,6 +24,7 @@ type CalendarSession = {
 
 export function RescheduleWidget({
   sessionId,
+  studentId,
   sessions = [],
   slots,
   timezone,
@@ -31,6 +32,7 @@ export function RescheduleWidget({
   locale,
 }: {
   sessionId: string;
+  studentId?: string;
   sessions?: CalendarSession[];
   slots: RescheduleSlot[];
   timezone: string;
@@ -119,6 +121,7 @@ export function RescheduleWidget({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId,
+        studentId,
         proposedStartUtc: chosen.startUtc,
         proposedEndUtc: chosen.endUtc,
         studentMessage: dictionary.schedule.quickRequestMessage,

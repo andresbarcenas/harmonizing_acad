@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { Prisma, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { manualPlanDescription, manualPlanId, manualPlanName, planLabel, type ManualMonthlyClassCount } from "@/lib/billing/manual-plans";
+import { createOrLinkGuardian } from "@/lib/admin/guardians";
+import { INTERNAL_CLASS_ALLOWANCE_PRICE_USD, manualPlanDescription, manualPlanId, manualPlanName, planLabel, type ManualMonthlyClassCount } from "@/lib/billing/manual-plans";
 import { db } from "@/lib/db";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { updateStudentSchema } from "@/lib/validators/admin";
+
+function baseUrlFromRequest(request: Request) {
+  return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
+}
 
 export async function PATCH(
   req: Request,
@@ -15,7 +20,7 @@ export async function PATCH(
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const { studentId } = await params;
@@ -64,6 +69,20 @@ export async function PATCH(
     }
   }
 
+  if (data.guardian?.email === data.email) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El acudiente debe usar un correo diferente al estudiante." : "The guardian must use a different email than the student." }, { status: 400 });
+  }
+
+  if (data.guardian?.email) {
+    const existingGuardianUser = await db.user.findUnique({
+      where: { email: data.guardian.email },
+      select: { role: true },
+    });
+    if (existingGuardianUser && existingGuardianUser.role !== Role.PARENT) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ese email ya pertenece a otra cuenta." : "That email belongs to another account." }, { status: 409 });
+    }
+  }
+
   try {
     const updated = await db.$transaction(async (tx) => {
       const user = await tx.user.update({
@@ -99,30 +118,29 @@ export async function PATCH(
       }
 
       let activePlan = student.subscriptions[0]?.plan ?? null;
-      if (typeof data.monthlyClassCount === "number" && typeof data.priceUsd === "number") {
+      if (typeof data.monthlyClassCount === "number") {
         const monthlyClassCount = data.monthlyClassCount as ManualMonthlyClassCount;
         const currentSubscription = student.subscriptions[0] ?? null;
         const planChanged =
           !currentSubscription ||
           currentSubscription.monthlyClassLimit !== monthlyClassCount ||
-          currentSubscription.plan.monthlyClassCount !== monthlyClassCount ||
-          currentSubscription.plan.priceUsd !== data.priceUsd;
+          currentSubscription.plan.monthlyClassCount !== monthlyClassCount;
 
         if (planChanged) {
           const now = new Date();
           const plan = await tx.subscriptionPlan.upsert({
-            where: { id: manualPlanId(monthlyClassCount, data.priceUsd) },
+            where: { id: manualPlanId(monthlyClassCount) },
             update: {
               name: manualPlanName(monthlyClassCount, auth.user.locale),
-              priceUsd: data.priceUsd,
+              priceUsd: INTERNAL_CLASS_ALLOWANCE_PRICE_USD,
               monthlyClassCount,
               description: manualPlanDescription(auth.user.locale),
               active: true,
             },
             create: {
-              id: manualPlanId(monthlyClassCount, data.priceUsd),
+              id: manualPlanId(monthlyClassCount),
               name: manualPlanName(monthlyClassCount, auth.user.locale),
-              priceUsd: data.priceUsd,
+              priceUsd: INTERNAL_CLASS_ALLOWANCE_PRICE_USD,
               monthlyClassCount,
               description: manualPlanDescription(auth.user.locale),
               active: true,
@@ -151,6 +169,15 @@ export async function PATCH(
       return { user, profile, activePlan };
     });
 
+    const guardian = data.guardian
+      ? await createOrLinkGuardian({
+          studentId,
+          ...data.guardian,
+          actorLocale: auth.user.locale,
+          baseUrl: baseUrlFromRequest(req),
+        })
+      : null;
+
     return NextResponse.json({
       ok: true,
       student: {
@@ -158,7 +185,15 @@ export async function PATCH(
         name: updated.user.name,
         email: updated.user.email,
         planLabel: updated.activePlan ? planLabel(updated.activePlan, auth.user.locale) : null,
+        guardianName: guardian?.parentUser.name ?? null,
+        guardianEmail: guardian?.parentUser.email ?? null,
       },
+      guardianWelcomeEmail: guardian
+        ? {
+            ...guardian.welcomeEmail,
+            previewUrl: process.env.NODE_ENV !== "production" ? guardian.previewUrl : undefined,
+          }
+        : null,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

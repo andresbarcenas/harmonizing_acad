@@ -3,6 +3,7 @@ import { ClassRequestStatus, NotificationType, Role, SessionStatus } from "@pris
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { normalizeInstrument } from "@/lib/instruments";
 import { createNotifications } from "@/lib/notifications";
 import { validateClassBookingWindow } from "@/lib/scheduling";
@@ -21,7 +22,7 @@ export async function PATCH(req: Request, { params }: Params) {
   const { requestId } = await params;
   const parsed = reviewClassRequestSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const request = await db.classRequest.findFirst({

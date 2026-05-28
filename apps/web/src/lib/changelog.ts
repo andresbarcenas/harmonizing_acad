@@ -11,6 +11,30 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.9.0",
+    date: "2026-05-28",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Parent and guardian accounts with parent portal access for linked student schedule, progress, videos, invoices, messages, consent, and settings flows.",
+          "Admin guardian management, parent welcome/access support, and parent password reset coverage from the admin access center.",
+          "Parent-aware consent, protected media, invoice, messaging, notification, and student-data permission checks.",
+          "Alegra admin explorer for live contact, invoice, and payment lookup with local student/family matching context.",
+          "Manual Alegra contact linking per student plus invoice sync shortcuts from the Alegra explorer.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Invoice sync now supports linked parent emails while preserving per-student manual Alegra contact links.",
+          "Local Docker and development database workflows now use Prisma migrations by default, with db:push reserved for disposable schema experiments.",
+          "Development docs and environment examples were updated for parent access, Alegra lookup, and safer migration behavior.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-05-27",
     sections: [

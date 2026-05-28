@@ -100,7 +100,7 @@ export default async function AdminEmailsPage({ searchParams }: PageProps) {
             </select>
           </Field>
           <Field label={isSpanish ? "Buscar" : "Search"}>
-            <Input name="q" defaultValue={query} placeholder={isSpanish ? "Email, asunto o id" : "Email, subject, or id"} />
+            <Input name="q" defaultValue={query} placeholder={isSpanish ? "Correo, asunto o id" : "Email, subject, or id"} />
           </Field>
           <Field label={isSpanish ? "Desde" : "From"}>
             <Input name="from" type="date" defaultValue={params?.from ?? ""} />
@@ -135,7 +135,7 @@ export default async function AdminEmailsPage({ searchParams }: PageProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">{isSpanish ? "Destinatario" : "Recipient"}</p>
-                <p className="mt-1 truncate text-sm font-semibold text-[var(--color-ink)]">{log.recipient?.name ?? log.recipientEmail ?? (isSpanish ? "Sin email" : "No email")}</p>
+                <p className="mt-1 truncate text-sm font-semibold text-[var(--color-ink)]">{log.recipient?.name ?? log.recipientEmail ?? (isSpanish ? "Sin correo" : "No email")}</p>
                 <p className="truncate text-xs text-[var(--color-ink-soft)]">{log.recipientEmail ?? log.recipient?.email ?? "-"}</p>
               </div>
               <div className="min-w-0">
@@ -145,7 +145,7 @@ export default async function AdminEmailsPage({ searchParams }: PageProps) {
                 {log.providerMessageId ? <p className="mt-1 truncate text-xs text-[var(--color-ink-soft)]">ID: {log.providerMessageId}</p> : null}
               </div>
               <div>
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">Provider</p>
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">{isSpanish ? "Proveedor" : "Provider"}</p>
                 <p className="mt-1 text-sm font-semibold text-[var(--color-ink)]">{log.provider}</p>
               </div>
               <div>

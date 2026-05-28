@@ -129,7 +129,7 @@ function ClassSessionRow({
 
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              {session.primaryImage !== undefined ? <Avatar src={session.primaryImage} alt={session.primaryName} fallback={session.primaryName.slice(0, 1)} className="h-8 w-8 text-[10px]" /> : null}
+              {session.primaryImage !== undefined ? <Avatar src={session.primaryImage} alt={session.primaryName} fallback={session.primaryName.slice(0, 1)} className="h-8 w-8 text-[10px]" locale={locale} /> : null}
               <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
                 {session.primaryName}{session.secondaryName ? ` · ${session.secondaryName}` : ""}
               </p>

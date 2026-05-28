@@ -12,7 +12,7 @@ export async function GET() {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const data = await getAdminInvoicesOverview();
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   if (!canUseAlegra()) {

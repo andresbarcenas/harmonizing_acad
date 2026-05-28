@@ -3,6 +3,7 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { createNotifications } from "@/lib/notifications";
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
 
   const parsed = singleClassBookingSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const payload = parsed.data;

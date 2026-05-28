@@ -273,11 +273,15 @@ export async function getStudentProgressData(viewer: AppViewer) {
     throw new Error("Unauthorized: student role required");
   }
 
+  return getStudentProgressDataForProfile(viewer.studentProfileId);
+}
+
+export async function getStudentProgressDataForProfile(studentProfileId: string) {
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
 
   const student = await db.studentProfile.findUnique({
-    where: { id: viewer.studentProfileId },
+    where: { id: studentProfileId },
     include: {
       user: true,
       assignment: { include: { teacher: { include: { user: true } } } },
@@ -327,7 +331,7 @@ export async function getStudentProgressData(viewer: AppViewer) {
     db.skillCategory.findMany({ where: { active: true }, orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
     db.classSession.findFirst({
       where: {
-        studentId: viewer.studentProfileId,
+        studentId: studentProfileId,
         startsAtUtc: { gte: now },
         status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
       },

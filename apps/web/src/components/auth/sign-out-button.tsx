@@ -12,7 +12,7 @@ export function SignOutButton({
 }: {
   className?: string;
   compact?: boolean;
-  label?: string;
+  label: string;
 }) {
   return (
     <Button
@@ -21,7 +21,7 @@ export function SignOutButton({
       className={cn(compact ? "px-3" : "", className)}
       onClick={() => signOut({ callbackUrl: "/sign-in" })}
     >
-      {label ?? "Sign out"}
+      {label}
     </Button>
   );
 }

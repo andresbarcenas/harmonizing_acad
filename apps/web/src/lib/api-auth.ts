@@ -22,6 +22,7 @@ export async function requireApiUser(options?: RequireApiUserOptions) {
     include: {
       studentProfile: true,
       teacherProfile: true,
+      parentGuardianProfile: true,
     },
   });
 

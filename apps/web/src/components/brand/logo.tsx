@@ -3,10 +3,12 @@ import { cn } from "@/lib/utils";
 export function BrandLogo({
   compact = false,
   stacked = false,
+  subtitle,
   className,
 }: {
   compact?: boolean;
   stacked?: boolean;
+  subtitle: string;
   className?: string;
 }) {
   return (
@@ -20,7 +22,7 @@ export function BrandLogo({
           <p className="font-display text-[1.75rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
             harmoni<span className="text-[var(--color-gold)]">zing</span>
           </p>
-          <p className="mt-1 text-[0.58rem] uppercase tracking-[0.34em] text-[var(--color-ink-muted)]">Academia musical</p>
+          <p className="mt-1 text-[0.58rem] uppercase tracking-[0.34em] text-[var(--color-ink-muted)]">{subtitle}</p>
         </div>
       )}
     </div>

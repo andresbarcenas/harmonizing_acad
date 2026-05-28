@@ -12,6 +12,7 @@ enum Role {
   STUDENT
   TEACHER
   ADMIN
+  PARENT
 }
 
 // Compatibility enums reserved for naming convergence in future refactors.
@@ -19,6 +20,7 @@ enum UserRole {
   STUDENT
   TEACHER
   ADMIN
+  PARENT
 }
 
 enum SessionStatus {
@@ -245,6 +247,7 @@ model User {
   sessions                 Session[]
   studentProfile           StudentProfile?
   teacherProfile           TeacherProfile?
+  parentGuardianProfile    ParentGuardianProfile?
   sentMessages             Message[]         @relation("MessageSender")
   notifications            Notification[]
   progressUpdates          ProgressRecord[]  @relation("ProgressUpdatedBy")
@@ -300,8 +303,41 @@ model StudentProfile {
   practiceLogs        PracticeLog[]
   progressReports     ProgressReport[]
   classRequests       ClassRequest[]
+  parentLinks         ParentStudentLink[]
+  consentSignatures   ConsentSignature[]
   historicalImportBatches HistoricalImportBatch[]
   historicalImportRows    HistoricalImportRow[]
+}
+
+model ParentGuardianProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students ParentStudentLink[]
+
+  @@index([createdAt])
+}
+
+model ParentStudentLink {
+  id             String   @id @default(cuid())
+  parentId       String
+  studentId      String
+  relationship   String
+  primaryContact Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parent  ParentGuardianProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student StudentProfile         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([studentId])
+  @@index([parentId])
 }
 
 model TeacherProfile {
@@ -1104,7 +1140,7 @@ model ClassReminderDelivery {
   classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   recipient    User         @relation("ClassReminderRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
 
-  @@unique([classSessionId, recipientUserId, channel, offsetMinutes])
+  @@unique([classSessionId, recipientUserId, channel, offsetMinutes], map: "ClassReminderDelivery_classSessionId_recipientUserId_channel_of")
   @@index([recipientUserId, createdAt])
   @@index([status, createdAt])
 }
@@ -1129,6 +1165,7 @@ model ConsentDocument {
 model ConsentSignature {
   id                 String             @id @default(cuid())
   userId             String
+  studentId          String
   documentId         String
   signerRole         ConsentSignerRole  @default(PARENT_GUARDIAN)
   signerName         String
@@ -1149,11 +1186,13 @@ model ConsentSignature {
   updatedAt          DateTime           @updatedAt
 
   user     User            @relation("ConsentSignedUser", fields: [userId], references: [id], onDelete: Cascade)
+  student  StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   document ConsentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   emailDeliveryLogs EmailDeliveryLog[]
 
-  @@unique([userId, documentId])
+  @@unique([studentId, documentId])
   @@index([userId, signedAt])
+  @@index([studentId, signedAt])
   @@index([documentId, signedAt])
   @@index([emailStatus, signedAt])
 }

@@ -40,6 +40,7 @@ export async function sendConsentSignedEmail(signatureId: string) {
     where: { id: signatureId },
     include: {
       user: true,
+      student: { include: { user: true } },
       document: true,
     },
   });
@@ -77,11 +78,11 @@ export async function sendConsentSignedEmail(signatureId: string) {
     const text = [
       `Hola ${signature.signerName},`,
       "",
-      `Adjuntamos una copia PDF del consentimiento de privacidad y medios firmado para ${signature.user.name}.`,
+      `Adjuntamos una copia PDF del consentimiento de privacidad y medios firmado para ${signature.student.user.name}.`,
       "",
       `Hi ${signature.signerName},`,
       "",
-      `Attached is a PDF copy of the signed privacy and media consent for ${signature.user.name}.`,
+      `Attached is a PDF copy of the signed privacy and media consent for ${signature.student.user.name}.`,
       "",
       "Harmonizing Academy",
     ].join("\n");
@@ -92,10 +93,10 @@ export async function sendConsentSignedEmail(signatureId: string) {
       to: signature.signerEmail,
       subject,
       text,
-      html: consentEmailHtml({ signerName: signature.signerName, studentName: signature.user.name }),
+      html: consentEmailHtml({ signerName: signature.signerName, studentName: signature.student.user.name }),
       attachments: [
         {
-          filename: `harmonizing-consent-${signature.user.email.replace(/[^a-z0-9._-]/gi, "_")}.pdf`,
+          filename: `harmonizing-consent-${signature.student.user.email.replace(/[^a-z0-9._-]/gi, "_")}.pdf`,
           content: Buffer.from(signature.pdfBytes).toString("base64"),
         },
       ],

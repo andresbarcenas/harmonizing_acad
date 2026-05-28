@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { parentCanAccessStudent } from "@/lib/parents";
 import { readProtectedMedia } from "@/lib/storage";
 
 type Params = { params: Promise<{ attachmentId: string }> };
@@ -24,9 +25,10 @@ export async function GET(request: Request, { params }: Params) {
   const studentId = attachment.repertoireItem.studentId;
   const assignedTeacherId = attachment.repertoireItem.student.assignment?.teacherId;
   const isOwnerStudent = auth.user.role === Role.STUDENT && auth.user.studentProfile?.id === studentId;
+  const isLinkedParent = auth.user.role === Role.PARENT && await parentCanAccessStudent(auth.user.parentGuardianProfile?.id, studentId);
   const isAssignedTeacher = auth.user.role === Role.TEACHER && auth.user.teacherProfile?.id === assignedTeacherId;
   const isAdmin = auth.user.role === Role.ADMIN;
-  if (!isAdmin && !isOwnerStudent && !isAssignedTeacher) {
+  if (!isAdmin && !isOwnerStudent && !isLinkedParent && !isAssignedTeacher) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para ver esta partitura." : "You do not have permission to view this sheet." }, { status: 403 });
   }
 

@@ -39,6 +39,10 @@ export default async function AdminStudentsPage() {
           orderBy: { updatedAt: "desc" },
           take: 1,
         },
+        parentLinks: {
+          include: { parent: { include: { user: true } } },
+          orderBy: [{ primaryContact: "desc" }, { createdAt: "asc" }],
+        },
       },
       orderBy: { joinedAt: "desc" },
       take: 12,
@@ -95,6 +99,7 @@ export default async function AdminStudentsPage() {
                   alt={student.user.name}
                   fallback={student.user.name.slice(0, 1).toUpperCase()}
                   className="h-10 w-10 text-xs"
+                  locale={viewer.locale}
                 />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{student.user.name}</p>
@@ -110,6 +115,9 @@ export default async function AdminStudentsPage() {
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.student.currentLevel}: {studentLevelLabel(student.progressRecords[0]?.level, viewer.locale)}
+                </p>
+                <p className="text-xs text-[var(--color-ink-soft)]">
+                  {dictionary.shell.nav.guardians}: {student.parentLinks.length ? student.parentLinks.map((link) => link.parent.user.name).join(", ") : dictionary.admin.noGuardians}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.common.joined}: {formatDate(student.joinedAt, viewer.locale)}
@@ -135,10 +143,16 @@ export default async function AdminStudentsPage() {
                           summary: student.progressRecords[0].summary,
                         }
                       : null,
+                    guardians: student.parentLinks.map((link) => ({
+                      linkId: link.id,
+                      name: link.parent.user.name,
+                      email: link.parent.user.email,
+                      relationship: link.relationship,
+                      primaryContact: link.primaryContact,
+                    })),
                     activePlan: student.subscriptions[0]
                       ? {
                           monthlyClassCount: student.subscriptions[0].monthlyClassLimit,
-                          priceUsd: student.subscriptions[0].plan.priceUsd,
                           label: planLabel(student.subscriptions[0].plan, viewer.locale),
                         }
                       : null,

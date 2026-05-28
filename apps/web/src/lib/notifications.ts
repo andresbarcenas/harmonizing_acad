@@ -2,6 +2,7 @@ import net from "node:net";
 import { NotificationType } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { localizeNotificationCopy } from "@/lib/notification-copy";
 
 type CreateNotificationInput = {
   userId: string;
@@ -86,26 +87,26 @@ async function sendMailhogPreview(to: string, subject: string, body: string) {
 }
 
 export async function createNotification(input: CreateNotificationInput) {
+  const user = await db.user.findUnique({
+    where: { id: input.userId },
+    select: { email: true, locale: true },
+  });
+  const locale = user?.locale === "es" ? "es" : "en";
+  const copy = localizeNotificationCopy(input, locale);
+
   const notification = await db.notification.create({
     data: {
       userId: input.userId,
       type: input.type,
-      title: input.title,
-      body: input.body,
+      title: copy.title,
+      body: copy.body,
       actionUrl: input.actionUrl ?? null,
     },
   });
 
-  if (smtpMirrorEnabled) {
-    const user = await db.user.findUnique({
-      where: { id: input.userId },
-      select: { email: true },
-    });
-
-    if (user?.email) {
-      const content = `${input.body}\n\nRuta sugerida: ${input.actionUrl ?? "/"}`;
-      await sendMailhogPreview(user.email, `[Harmonizing] ${input.title}`, content);
-    }
+  if (smtpMirrorEnabled && user?.email) {
+    const content = `${copy.body}\n\n${locale === "es" ? "Ruta sugerida" : "Suggested route"}: ${input.actionUrl ?? "/"}`;
+    await sendMailhogPreview(user.email, `[Harmonizing] ${copy.title}`, content);
   }
 
   return notification;
@@ -121,4 +122,3 @@ export async function createNotifications(inputs: CreateNotificationInput[]) {
 
   return created;
 }
-

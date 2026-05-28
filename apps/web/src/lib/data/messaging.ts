@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { resolveParentStudentSelection } from "@/lib/parents";
 
 export async function getMessagesThreadForViewer(viewer: AppViewer, options: { studentId?: string | null } = {}) {
   let thread = null;
@@ -55,6 +56,27 @@ export async function getMessagesThreadForViewer(viewer: AppViewer, options: { s
           },
           orderBy: { createdAt: "desc" },
         });
+  }
+
+  if (viewer.role === Role.PARENT && viewer.parentGuardianProfileId) {
+    const selection = await resolveParentStudentSelection(viewer.parentGuardianProfileId, options.studentId);
+    selectedStudentId = selection.selectedStudentId;
+    if (selectedStudentId) {
+      const assignment = await db.teacherAssignment.findUnique({ where: { studentId: selectedStudentId } });
+      if (assignment) {
+        thread = await db.messageThread.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: selectedStudentId,
+              teacherId: assignment.teacherId,
+            },
+          },
+          include: {
+            messages: { include: { sender: true }, orderBy: { createdAt: "asc" } },
+          },
+        });
+      }
+    }
   }
 
   if (viewer.role === Role.ADMIN) {

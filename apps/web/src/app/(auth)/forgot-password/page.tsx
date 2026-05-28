@@ -17,7 +17,7 @@ export default async function ForgotPasswordPage() {
     <div className="relative isolate min-h-screen overflow-hidden px-3 py-6 sm:px-4 md:px-6 md:py-12">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-xl flex-col items-center justify-center">
         <div className="rounded-[2rem] border border-white/70 bg-white/68 px-10 py-8 shadow-[var(--shadow-soft)] backdrop-blur-[16px]">
-          <BrandLogo stacked className="justify-center" />
+          <BrandLogo stacked className="justify-center" subtitle={dictionary.shell.brandSubtitle} />
         </div>
         <div className="mt-4">
           <LanguageToggle locale={locale} compact />

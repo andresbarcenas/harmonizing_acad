@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if (shouldAssign) {
     assignedUserId = targetUserId ?? auth.user.id;
     if (auth.user.role !== Role.ADMIN && assignedUserId !== auth.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
     }
 
     const target = await db.user.findUnique({

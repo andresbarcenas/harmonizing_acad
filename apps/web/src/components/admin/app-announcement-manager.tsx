@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
-type RoleValue = "STUDENT" | "TEACHER" | "ADMIN";
+type RoleValue = "STUDENT" | "TEACHER" | "ADMIN" | "PARENT";
 type AnnouncementTypeValue = "GENERAL" | "FEATURE" | "BILLING" | "MAINTENANCE";
 type AnnouncementStatusValue = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
@@ -50,7 +50,7 @@ type AnnouncementFormState = {
   endsAt: string;
 };
 
-const roleOptions: RoleValue[] = ["STUDENT", "TEACHER", "ADMIN"];
+const roleOptions: RoleValue[] = ["STUDENT", "PARENT", "TEACHER", "ADMIN"];
 const typeOptions: AnnouncementTypeValue[] = ["GENERAL", "FEATURE", "BILLING", "MAINTENANCE"];
 const statusOptions: AnnouncementStatusValue[] = ["DRAFT", "PUBLISHED", "ARCHIVED"];
 
@@ -342,6 +342,7 @@ function statusLabel(status: AnnouncementStatusValue, isSpanish: boolean) {
 function roleLabel(role: RoleValue, isSpanish: boolean) {
   const labels = {
     STUDENT: isSpanish ? "Estudiantes" : "Students",
+    PARENT: isSpanish ? "Acudientes" : "Guardians",
     TEACHER: isSpanish ? "Docentes" : "Teachers",
     ADMIN: isSpanish ? "Administración" : "Admins",
   };

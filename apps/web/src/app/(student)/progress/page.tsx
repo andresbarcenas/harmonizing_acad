@@ -227,7 +227,7 @@ function RepertoireCard({ items, locale }: { items: StudentRepertoire[]; locale:
                 </div>
               ) : null}
               {latestAssignment ? <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Última tarea" : "Latest assignment"}: {latestAssignment.title}</p> : null}
-              {latestFeedback ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Feedback de video" : "Video feedback"}: {latestFeedback.comment}</p> : null}
+              {latestFeedback ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Comentario de video" : "Video feedback"}: {latestFeedback.comment}</p> : null}
             </div>
           );
         })}
@@ -267,7 +267,7 @@ function TeacherFeedbackCard({ feedback, locale }: { feedback: Array<{ video: St
   const isSpanish = locale === "es";
   return (
     <Card>
-      <CardTitle>{isSpanish ? "Feedback reciente" : "Recent feedback"}</CardTitle>
+      <CardTitle>{isSpanish ? "Comentarios recientes" : "Recent feedback"}</CardTitle>
       <CardDescription>{isSpanish ? "Comentarios de tu docente sobre videos de práctica." : "Teacher comments on practice videos."}</CardDescription>
       <div className="mt-4 space-y-2">
         {feedback.map(({ video, feedback: item }) => (
@@ -276,7 +276,7 @@ function TeacherFeedbackCard({ feedback, locale }: { feedback: Array<{ video: St
             <p className="text-xs leading-5 text-[var(--color-ink-soft)]">{item.comment}</p>
           </div>
         ))}
-        {!feedback.length ? <EmptyState text={isSpanish ? "Aún no hay feedback reciente." : "No recent feedback yet."} /> : null}
+        {!feedback.length ? <EmptyState text={isSpanish ? "Aún no hay comentarios recientes." : "No recent feedback yet."} /> : null}
       </div>
     </Card>
   );

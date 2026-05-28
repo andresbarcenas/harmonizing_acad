@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 import { buildMagicLinkUrl, createMagicLinkToken, WELCOME_MAGIC_LINK_MAX_AGE_SECONDS } from "@/lib/auth/magic-link";
 import { requireApiUser } from "@/lib/api-auth";
-import { manualPlanDescription, manualPlanId, manualPlanName, planLabel } from "@/lib/billing/manual-plans";
+import { createOrLinkGuardian } from "@/lib/admin/guardians";
+import { INTERNAL_CLASS_ALLOWANCE_PRICE_USD, manualPlanDescription, manualPlanId, manualPlanName, planLabel, type ManualMonthlyClassCount } from "@/lib/billing/manual-plans";
 import { db } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = createStudentSchema.safeParse(await req.json());
@@ -50,6 +51,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe un usuario con este email." : "A user with this email already exists." }, { status: 409 });
   }
 
+  if (data.guardian?.email === data.email) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "El acudiente debe usar un correo diferente al estudiante." : "The guardian must use a different email than the student." }, { status: 400 });
+  }
+
+  if (data.guardian?.email) {
+    const existingGuardianUser = await db.user.findUnique({
+      where: { email: data.guardian.email },
+      select: { role: true },
+    });
+    if (existingGuardianUser && existingGuardianUser.role !== Role.PARENT) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ese email ya pertenece a otra cuenta." : "That email belongs to another account." }, { status: 409 });
+    }
+  }
+
   if (!teacher) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
   }
@@ -57,23 +72,24 @@ export async function POST(req: Request) {
   try {
     const adminTimezone = normalizeIanaTimezone(adminUser?.timezone ?? auth.user.timezone);
     const studentTimezone = normalizeIanaTimezone(data.timezone ?? adminTimezone);
+    const monthlyClassCount = data.monthlyClassCount as ManualMonthlyClassCount;
     const passwordHash = await hash(data.temporaryPassword, 10);
 
     const created = await db.$transaction(async (tx) => {
       const plan = await tx.subscriptionPlan.upsert({
-        where: { id: manualPlanId(data.monthlyClassCount, data.priceUsd) },
+        where: { id: manualPlanId(monthlyClassCount) },
         update: {
-          name: manualPlanName(data.monthlyClassCount, auth.user.locale),
-          priceUsd: data.priceUsd,
-          monthlyClassCount: data.monthlyClassCount,
+          name: manualPlanName(monthlyClassCount, auth.user.locale),
+          priceUsd: INTERNAL_CLASS_ALLOWANCE_PRICE_USD,
+          monthlyClassCount,
           description: manualPlanDescription(auth.user.locale),
           active: true,
         },
         create: {
-          id: manualPlanId(data.monthlyClassCount, data.priceUsd),
-          name: manualPlanName(data.monthlyClassCount, auth.user.locale),
-          priceUsd: data.priceUsd,
-          monthlyClassCount: data.monthlyClassCount,
+          id: manualPlanId(monthlyClassCount),
+          name: manualPlanName(monthlyClassCount, auth.user.locale),
+          priceUsd: INTERNAL_CLASS_ALLOWANCE_PRICE_USD,
+          monthlyClassCount,
           description: manualPlanDescription(auth.user.locale),
           active: true,
         },
@@ -112,7 +128,7 @@ export async function POST(req: Request) {
           studentId: studentProfile.id,
           planId: plan.id,
           startsAt: new Date(),
-          monthlyClassLimit: data.monthlyClassCount,
+          monthlyClassLimit: monthlyClassCount,
           active: true,
         },
       });
@@ -161,6 +177,15 @@ export async function POST(req: Request) {
       };
     }
 
+    const guardian = data.guardian
+      ? await createOrLinkGuardian({
+          studentId: created.studentProfile.id,
+          ...data.guardian,
+          actorLocale: auth.user.locale,
+          baseUrl: baseUrlFromRequest(req),
+        })
+      : null;
+
     return NextResponse.json({
       student: {
         userId: created.user.id,
@@ -169,13 +194,20 @@ export async function POST(req: Request) {
         email: created.user.email,
         image: created.user.image,
         teacherName: teacher.user.name,
-        planName: created.plan.name,
         planLabel: planLabel(created.plan, auth.user.locale),
+        guardianName: guardian?.parentUser.name ?? null,
+        guardianEmail: guardian?.parentUser.email ?? null,
       },
       welcomeEmail: {
         ...welcomeEmail,
         previewUrl: process.env.NODE_ENV !== "production" ? welcomePreviewUrl : undefined,
       },
+      guardianWelcomeEmail: guardian
+        ? {
+            ...guardian.welcomeEmail,
+            previewUrl: process.env.NODE_ENV !== "production" ? guardian.previewUrl : undefined,
+          }
+        : null,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

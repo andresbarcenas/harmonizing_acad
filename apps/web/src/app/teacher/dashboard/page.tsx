@@ -12,6 +12,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getTeacherDashboardData } from "@/lib/data";
 import { formatDateTimeInZone, getDictionary } from "@/lib/i18n";
 import { instrumentLabel } from "@/lib/instruments";
+import { classStatusLabel } from "@/lib/class-session-labels";
 
 const dayNames = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -52,6 +53,49 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
           <p className="mt-3 font-display text-4xl tracking-[-0.05em]">{data.pendingRequests.length}</p>
         </Card>
       </div>
+
+      <Card>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>{dictionary.teacher.classPrepTitle}</CardTitle>
+            <CardDescription>{dictionary.teacher.classPrepDescription}</CardDescription>
+          </div>
+          <Badge variant="gold">{data.prepSessions.length ? dictionary.teacher.activeQueue : dictionary.teacher.noClasses}</Badge>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {data.prepSessions.map((session) => (
+            <div key={session.id} className="rounded-[1.35rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)]/80 p-4 shadow-[var(--shadow-soft)]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-deep)]">
+                    {instrumentLabel(session.instrument ?? session.student.preferredInstrument, viewer.locale) || (viewer.locale === "es" ? "Música" : "Music")} · {classStatusLabel(session.status, viewer.locale)}
+                  </p>
+                  <p className="mt-1 truncate text-lg font-semibold text-[var(--color-ink)]">{session.student.user.name}</p>
+                </div>
+                <a href={`/classes/${session.id}`}>
+                  <Button size="sm" variant="gold">{dictionary.teacher.prepareClass}</Button>
+                </a>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <p className="rounded-xl border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
+                  <span className="font-semibold text-[var(--color-ink)]">{dictionary.teacher.teacherTime}:</span> {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)}
+                </p>
+                <p className="rounded-xl border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
+                  <span className="font-semibold text-[var(--color-ink)]">{dictionary.teacher.studentTime}:</span> {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)}
+                </p>
+              </div>
+              {session.lessonFocus ? (
+                <p className="mt-3 rounded-xl border border-[var(--color-gold)]/25 bg-[var(--color-gold-soft)]/55 px-3 py-2 text-sm text-[var(--color-ink)]">
+                  <span className="font-semibold">{dictionary.teacher.suggestedFocus}:</span> {session.lessonFocus}
+                </p>
+              ) : null}
+            </div>
+          ))}
+          {!data.prepSessions.length ? (
+            <CardDescription>{dictionary.teacher.noClassPrep}</CardDescription>
+          ) : null}
+        </div>
+      </Card>
 
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -121,6 +165,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                       alt={session.student.user.name}
                       fallback={session.student.user.name.slice(0, 1).toUpperCase()}
                       className="h-8 w-8 text-[10px]"
+                      locale={viewer.locale}
                     />
                     <p className="truncate text-sm font-medium">{session.student.user.name}</p>
                   </div>
@@ -161,6 +206,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                     alt={video.student.user.name}
                     fallback={video.student.user.name.slice(0, 1).toUpperCase()}
                     className="h-8 w-8 text-[10px]"
+                    locale={viewer.locale}
                   />
                   <p className="truncate text-sm font-medium">{video.student.user.name}</p>
                 </div>
@@ -183,6 +229,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                     alt={assignment.student.user.name}
                     fallback={assignment.student.user.name.slice(0, 1).toUpperCase()}
                     className="h-8 w-8 text-[10px]"
+                    locale={viewer.locale}
                   />
                   <p className="truncate text-sm font-medium">{assignment.student.user.name}</p>
                 </div>
@@ -210,6 +257,7 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                   alt={request.session.student.user.name}
                   fallback={request.session.student.user.name.slice(0, 1).toUpperCase()}
                   className="h-8 w-8 text-[10px]"
+                  locale={viewer.locale}
                 />
                 <p className="truncate text-sm font-medium">{request.session.student.user.name}</p>
               </div>

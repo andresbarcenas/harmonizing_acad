@@ -28,6 +28,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AppAnnouncementBanner } from "@/components/announcements/app-announcement-banner";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { ParentStudentSelector } from "@/components/parent/student-selector";
 import { TimezoneSync } from "@/components/system/timezone-sync";
 import { TeacherStudentSelector } from "@/components/teacher/student-context-selector";
 import { MobileNavDrawer, type AppShellNavGroup, type AppShellNavLink, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
@@ -104,6 +105,31 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       ],
     },
   ];
+  const parentNav: NavGroup[] = [
+    {
+      label: navGroups.start,
+      items: [
+        { href: "/parent/dashboard", label: nav.home, icon: "house" },
+        { href: "/parent/schedule", label: nav.schedule, icon: "calendar" },
+      ],
+    },
+    {
+      label: navGroups.learning,
+      items: [
+        { href: "/parent/videos", label: nav.practice, icon: "video" },
+        { href: "/parent/progress", label: nav.progress, icon: "trending" },
+      ],
+    },
+    {
+      label: navGroups.account,
+      items: [
+        { href: "/parent/invoices", label: nav.invoices, icon: "receipt" },
+        { href: "/messages", label: nav.messages, icon: "mail" },
+        { href: "/notifications", label: nav.notifications, icon: "bell" },
+        { href: "/settings", label: nav.profile, icon: "settings" },
+      ],
+    },
+  ];
   const adminNav: NavGroup[] = [
     {
       label: navGroups.operations,
@@ -119,6 +145,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       items: [
         { href: "/admin/students", label: nav.students, icon: "graduation" },
         { href: "/admin/teachers", label: nav.teachers, icon: "users" },
+        { href: "/admin/guardians", label: nav.guardians, icon: "users" },
         { href: "/admin/access", label: nav.access, icon: "key" },
         { href: "/admin/consents", label: nav.consents, icon: "signature" },
       ],
@@ -135,6 +162,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       label: navGroups.financeCommunication,
       items: [
         { href: "/admin/invoices", label: nav.billing, icon: "receipt" },
+        { href: "/admin/alegra", label: nav.alegra, icon: "receipt" },
         { href: "/admin/announcements", label: nav.announcements, icon: "megaphone" },
         { href: "/admin/emails", label: nav.emails, icon: "mail" },
         { href: "/notifications", label: nav.notifications, icon: "bell" },
@@ -151,6 +179,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
 
   if (role === Role.TEACHER) return teacherNav;
   if (role === Role.ADMIN) return adminNav;
+  if (role === Role.PARENT) return parentNav;
   return studentNav;
 }
 
@@ -160,6 +189,7 @@ export async function AppShell({
   userName,
   locale,
   selectedTeacherStudentId,
+  selectedParentStudentId,
   children,
 }: {
   role: Role;
@@ -167,6 +197,7 @@ export async function AppShell({
   userName: string;
   locale?: AppLocale;
   selectedTeacherStudentId?: string | null;
+  selectedParentStudentId?: string | null;
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
@@ -200,6 +231,20 @@ export async function AppShell({
   const validTeacherStudentId = teacherContextStudents?.students.some((assignment) => assignment.studentId === selectedTeacherStudentId)
     ? selectedTeacherStudentId
     : null;
+  const parentContextStudents = role === Role.PARENT && session?.user?.id
+    ? await db.parentGuardianProfile.findUnique({
+        where: { userId: session.user.id },
+        include: {
+          students: {
+            include: { student: { include: { user: true } } },
+            orderBy: [{ primaryContact: "desc" }, { student: { user: { name: "asc" } } }],
+          },
+        },
+      })
+    : null;
+  const validParentStudentId = parentContextStudents?.students.some((link) => link.studentId === selectedParentStudentId)
+    ? selectedParentStudentId
+    : parentContextStudents?.students[0]?.studentId ?? null;
 
   let unreadCount = 0;
   let announcement: ShellAnnouncement | null = null;
@@ -217,9 +262,9 @@ export async function AppShell({
   }
 
   const navGroups: AppShellNavGroup[] = groups.map((group) => ({
-    label: group.label,
-    items: group.items.map((item) => ({
-      href: withTeacherStudentContext(item.href, role, validTeacherStudentId),
+      label: group.label,
+      items: group.items.map((item) => ({
+      href: withParentStudentContext(withTeacherStudentContext(item.href, role, validTeacherStudentId), role, validParentStudentId),
       label: item.label,
       icon: item.icon,
       active: activePath === item.href,
@@ -231,8 +276,8 @@ export async function AppShell({
     <div className="mx-auto grid min-h-screen w-full max-w-[96rem] grid-cols-1 gap-4 px-3 pb-10 pt-3 sm:px-4 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-6 lg:pt-5">
       <TimezoneSync />
       <aside className="hidden h-[calc(100vh-2.5rem)] min-h-[38rem] flex-col overflow-y-auto rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(160deg,var(--color-paper-elevated),var(--color-surface-sidebar))] p-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] lg:sticky lg:top-5 lg:flex">
-        <Link href={homeHrefForRole(role, validTeacherStudentId)} className="rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-white/62 focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
-          <BrandLogo compact={false} />
+        <Link href={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)} className="rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-white/62 focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
+          <BrandLogo compact={false} subtitle={dictionary.shell.brandSubtitle} />
         </Link>
 
         <div className="mt-4 grid gap-2.5">
@@ -261,18 +306,19 @@ export async function AppShell({
               locale={activeLocale}
               signOutLabel={dictionary.common.signOut}
               version={APP_VERSION}
-              homeHref={homeHrefForRole(role, validTeacherStudentId)}
+              homeHref={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)}
+              brandSubtitle={dictionary.shell.brandSubtitle}
               labels={mobileNavLabels}
               settingsHref="/settings"
               groups={navGroups}
             />
-            <Link href={homeHrefForRole(role, validTeacherStudentId)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
-              <BrandLogo compact />
+            <Link href={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
+              <BrandLogo compact subtitle={dictionary.shell.brandSubtitle} />
               <div className="min-w-0">
                 <p className="truncate font-display text-[1.45rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
                   harmoni<span className="text-[var(--color-gold)]">zing</span>
                 </p>
-                <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">Academia musical</p>
+                <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">{dictionary.shell.brandSubtitle}</p>
               </div>
             </Link>
             <Link href="/settings" className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none sm:inline-flex">
@@ -304,6 +350,21 @@ export async function AppShell({
                   instrument: assignment.student.preferredInstrument,
                 }))}
                 selectedStudentId={validTeacherStudentId}
+                locale={activeLocale}
+              />
+            </div>
+          ) : null}
+          {role === Role.PARENT ? (
+            <div className="mt-4 flex min-w-0 lg:justify-end">
+              <ParentStudentSelector
+                students={(parentContextStudents?.students ?? []).map((link) => ({
+                  id: link.student.id,
+                  name: link.student.user.name,
+                  image: link.student.user.image,
+                  instrument: link.student.preferredInstrument,
+                  relationship: link.relationship,
+                }))}
+                selectedStudentId={validParentStudentId}
                 locale={activeLocale}
               />
             </div>
@@ -419,9 +480,10 @@ function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) 
   return <Video className={className} aria-hidden="true" />;
 }
 
-function homeHrefForRole(role: Role, studentId?: string | null) {
+function homeHrefForRole(role: Role, teacherStudentId?: string | null, parentStudentId?: string | null) {
   if (role === Role.STUDENT) return "/dashboard";
-  if (role === Role.TEACHER) return withTeacherStudentContext("/teacher/dashboard", role, studentId);
+  if (role === Role.TEACHER) return withTeacherStudentContext("/teacher/dashboard", role, teacherStudentId);
+  if (role === Role.PARENT) return withParentStudentContext("/parent/dashboard", role, parentStudentId);
   return "/admin/dashboard";
 }
 
@@ -430,6 +492,17 @@ function withTeacherStudentContext(href: string, role: Role, studentId?: string 
 
   const contextualRoutes = ["/teacher/dashboard", "/teacher/schedule", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/messages"];
   if (!contextualRoutes.includes(href)) return href;
+
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}studentId=${encodeURIComponent(studentId)}`;
+}
+
+function withParentStudentContext(href: string, role: Role, studentId?: string | null) {
+  if (role !== Role.PARENT || !studentId) return href;
+
+  const contextualRoutes = ["/parent/dashboard", "/parent/schedule", "/parent/videos", "/parent/progress", "/parent/invoices", "/messages", "/consent"];
+  const pathname = href.split("?")[0];
+  if (!contextualRoutes.includes(pathname)) return href;
 
   const separator = href.includes("?") ? "&" : "?";
   return `${href}${separator}studentId=${encodeURIComponent(studentId)}`;

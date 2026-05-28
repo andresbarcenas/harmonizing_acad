@@ -77,6 +77,7 @@ type MobileNavDrawerProps = {
   signOutLabel: string;
   version: string;
   homeHref: string;
+  brandSubtitle: string;
   labels: {
     openMenu: string;
     closeMenu: string;
@@ -86,7 +87,7 @@ type MobileNavDrawerProps = {
   settingsHref?: string;
 };
 
-export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, labels, settingsHref }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, brandSubtitle, labels, settingsHref }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(() => defaultOpenGroups(groups));
 
@@ -128,13 +129,13 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
           >
             <div className="flex shrink-0 items-center justify-between gap-3">
               <Link href={homeHref} onClick={() => setOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
-                <BrandLogo compact />
+                <BrandLogo compact subtitle={brandSubtitle} />
                 <div className="min-w-0">
                   <p className="truncate font-display text-[1.55rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
                     harmoni<span className="text-[var(--color-gold)]">zing</span>
                   </p>
                   <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">
-                    Academia musical
+                    {brandSubtitle}
                   </p>
                 </div>
               </Link>

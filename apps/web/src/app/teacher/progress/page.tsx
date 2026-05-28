@@ -37,7 +37,7 @@ export default async function TeacherProgressPage({ searchParams }: PageProps) {
             <Card key={item.assignmentId}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <Avatar src={item.student.user.image} alt={item.student.user.name} fallback={item.student.user.name.slice(0, 1)} />
+                  <Avatar src={item.student.user.image} alt={item.student.user.name} fallback={item.student.user.name.slice(0, 1)} locale={viewer.locale} />
                   <div>
                     <CardTitle>{item.student.user.name}</CardTitle>
                     <CardDescription>{instrumentLabel(item.student.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")}</CardDescription>
@@ -76,7 +76,7 @@ function SelectedStudentProgress({
           <Card className="overflow-hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar src={data.selected.user.image} alt={data.selected.user.name} fallback={data.selected.user.name.slice(0, 1)} />
+                <Avatar src={data.selected.user.image} alt={data.selected.user.name} fallback={data.selected.user.name.slice(0, 1)} locale={viewer.locale} />
                 <div className="min-w-0">
                   <CardTitle>{data.selected.user.name}</CardTitle>
                   <CardDescription>{instrumentLabel(data.selected.preferredInstrument, viewer.locale) || (isSpanish ? "Música" : "Music")} · {data.selected.user.timezone}</CardDescription>

@@ -13,7 +13,7 @@ services:
       NEXTAUTH_URL: http://localhost:3010
       NEXT_PUBLIC_MEDIA_BASE_URL: ${NEXT_PUBLIC_MEDIA_BASE_URL:-http://localhost:9010/harmonizing-media}
       S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
-      NODE_OPTIONS: --max-old-space-size=768
+      NODE_OPTIONS: --max-old-space-size=${WEB_NODE_MAX_OLD_SPACE_SIZE:-2048}
       SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
       APP_RUNTIME: ${APP_RUNTIME:-dev}
       WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}

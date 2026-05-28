@@ -108,10 +108,30 @@ export async function getTeacherDashboardData(viewer: AppViewer, options: { stud
     noShow: classesToday.filter((item) => item.status === SessionStatus.NO_SHOW).length,
     pending: classesToday.filter((item) => item.status === SessionStatus.RESCHEDULE_PENDING).length,
   };
+  let prepSessions = classesToday.filter((item) => item.status === SessionStatus.SCHEDULED);
+
+  if (!prepSessions.length) {
+    prepSessions = await db.classSession.findMany({
+      where: {
+        teacherId: teacherProfileId,
+        ...studentFilter,
+        status: SessionStatus.SCHEDULED,
+        startsAtUtc: { gt: now },
+      },
+      include: {
+        student: {
+          include: { user: true },
+        },
+      },
+      orderBy: { startsAtUtc: "asc" },
+      take: 1,
+    });
+  }
 
   return {
     teacher,
     classesToday,
+    prepSessions,
     students,
     pendingRequests,
     pendingVideos,

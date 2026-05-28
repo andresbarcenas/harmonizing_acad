@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { assertRepertoireForTeacherStudent, assertTeacherCanAccessStudent, getProgressErrorResponse } from "@/lib/data/progress";
 import { upsertRepertoireSchema } from "@/lib/validators/progress";
 
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para editar repertorio." : "You do not have permission to edit repertoire." }, { status: 403 });
 
   const parsed = upsertRepertoireSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   const input = parsed.data;
   try {
     await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);

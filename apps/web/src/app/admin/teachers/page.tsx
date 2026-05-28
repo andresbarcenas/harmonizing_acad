@@ -57,6 +57,7 @@ export default async function AdminTeachersPage() {
                   alt={teacher.user.name}
                   fallback={teacher.user.name.slice(0, 1).toUpperCase()}
                   className="h-10 w-10 text-xs"
+                  locale={viewer.locale}
                 />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{teacher.user.name}</p>

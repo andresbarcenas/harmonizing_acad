@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const parsed = magicLinkRequestSchema.safeParse(body);
   if (!parsed.success) {
     const locale = await getRequestLocale();
-    return NextResponse.json({ error: locale === "es" ? "Email inválido." : "Invalid email." }, { status: 400 });
+    return NextResponse.json({ error: locale === "es" ? "Correo inválido." : "Invalid email." }, { status: 400 });
   }
 
   const email = normalizeMagicLinkEmail(parsed.data.email);
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   });
 
   // Security-sensitive: return the same successful shape for missing/admin accounts to avoid account enumeration.
-  if (!user || (user.role !== Role.STUDENT && user.role !== Role.TEACHER)) {
+  if (!user || (user.role !== Role.STUDENT && user.role !== Role.TEACHER && user.role !== Role.PARENT)) {
     return genericResponse();
   }
 

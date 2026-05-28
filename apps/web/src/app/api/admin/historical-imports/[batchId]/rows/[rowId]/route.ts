@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { applyHistoricalImportRow, markHistoricalImportRow } from "@/lib/historical-imports/apply";
 
 const historicalImportRowActionSchema = z.object({
@@ -24,7 +25,7 @@ export async function PATCH(req: Request, { params }: Params) {
   const { batchId, rowId } = await params;
   const parsed = historicalImportRowActionSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const row = await db.historicalImportRow.findFirst({ where: { id: rowId, batchId } });

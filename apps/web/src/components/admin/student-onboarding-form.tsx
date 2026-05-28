@@ -21,8 +21,9 @@ type CreatedStudentSummary = {
   name: string;
   email: string;
   teacherName: string;
-  planName: string;
   planLabel: string;
+  guardianName?: string | null;
+  guardianEmail?: string | null;
 };
 
 export function StudentOnboardingForm({
@@ -46,17 +47,31 @@ export function StudentOnboardingForm({
     setError(null);
     setCreated(null);
 
+    const guardianName = String(formData.get("guardianName") ?? "").trim();
+    const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
+    const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
+    const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
+    const guardian = guardianName || guardianEmail || guardianRelationship || guardianPhone
+      ? {
+          name: guardianName,
+          email: guardianEmail,
+          relationship: guardianRelationship,
+          phone: guardianPhone || undefined,
+          primaryContact: formData.get("guardianPrimaryContact") === "on",
+        }
+      : undefined;
+
     const payload = {
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       temporaryPassword: String(formData.get("temporaryPassword") ?? ""),
       teacherId: String(formData.get("teacherId") ?? ""),
       monthlyClassCount: Number(formData.get("monthlyClassCount") ?? 4),
-      priceUsd: Number(formData.get("priceUsd") ?? Number.NaN),
       profileImage: profileImage.trim() || undefined,
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
+      guardian,
     };
 
     const response = await fetch("/api/admin/students", {
@@ -178,7 +193,7 @@ export function StudentOnboardingForm({
           {dictionary.forms.profilePhotoOptional}
         </label>
         <div className="flex items-center gap-3">
-          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewStudent} fallback="E" className="h-10 w-10 text-xs" />
+          <Avatar src={profileImage || undefined} alt={dictionary.forms.profileImagePreviewStudent} fallback="E" className="h-10 w-10 text-xs" locale={locale} />
           <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.forms.imageCreateApplyStudent}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -208,7 +223,7 @@ export function StudentOnboardingForm({
           <p className="text-xs font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.manualPlanTitle}</p>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.admin.manualPlanDescription}</p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-1">
           <div className="space-y-1.5">
             <label htmlFor="monthlyClassCount" className="text-sm font-semibold text-[var(--color-ink-soft)]">
               {dictionary.forms.monthlyClasses}
@@ -224,12 +239,43 @@ export function StudentOnboardingForm({
               <option value="8">{dictionary.forms.eightClasses}</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-[1.35rem] border border-[var(--color-border)] bg-white/72 p-4 shadow-[0_12px_30px_rgba(78,55,30,0.04)]">
+        <div className="mb-3">
+          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.guardianEyebrow}</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.admin.guardianManagementDescription}</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1.5">
-            <label htmlFor="priceUsd" className="text-sm font-semibold text-[var(--color-ink-soft)]">
-              {dictionary.forms.monthlyAmountUsd}
+            <label htmlFor="guardianName" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.admin.guardianName}
             </label>
-            <Input id="priceUsd" name="priceUsd" type="number" inputMode="numeric" min={0} step={1} defaultValue={90} required />
+            <Input id="guardianName" name="guardianName" placeholder={locale === "es" ? "María Rodríguez" : "Maria Rodriguez"} />
           </div>
+          <div className="space-y-1.5">
+            <label htmlFor="guardianEmail" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.admin.guardianEmail}
+            </label>
+            <Input id="guardianEmail" name="guardianEmail" type="email" placeholder="parent@email.com" />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="guardianRelationship" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.admin.guardianRelationship}
+            </label>
+            <Input id="guardianRelationship" name="guardianRelationship" placeholder={locale === "es" ? "Madre, padre, tutor" : "Mother, father, guardian"} />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="guardianPhone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+              {dictionary.admin.guardianPhone}
+            </label>
+            <Input id="guardianPhone" name="guardianPhone" placeholder="+1 555 123 4567" />
+          </div>
+          <label className="flex items-center gap-2 rounded-[1rem] border border-[var(--color-border)] bg-white/66 px-3 py-3 text-sm font-semibold text-[var(--color-ink-soft)] md:col-span-2">
+            <input name="guardianPrimaryContact" type="checkbox" defaultChecked className="h-4 w-4 accent-[var(--color-gold)]" />
+            <span>{dictionary.admin.guardianPrimaryContact}</span>
+          </label>
         </div>
       </div>
 
@@ -248,8 +294,13 @@ export function StudentOnboardingForm({
             {created.name} ({created.email}) · {dictionary.common.teacher}: {created.teacherName}
           </p>
           <p className="mt-1">
-            {dictionary.admin.activePlan}: {created.planName} ({created.planLabel})
+            {dictionary.admin.activePlan}: {created.planLabel}
           </p>
+          {created.guardianName ? (
+            <p className="mt-1">
+              {dictionary.shell.nav.guardians}: {created.guardianName} ({created.guardianEmail})
+            </p>
+          ) : null}
         </div>
       ) : null}
     </form>

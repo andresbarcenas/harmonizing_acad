@@ -3,6 +3,7 @@ import { PracticeAssignmentStatus, Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import {
   assertActiveSkillCategories,
   assertClassSessionForTeacherStudent,
@@ -12,6 +13,7 @@ import {
   assertTeacherCanAccessStudent,
   getProgressErrorResponse,
 } from "@/lib/data/progress";
+import { parentCanAccessStudent } from "@/lib/parents";
 import { practiceAssignmentStatusSchema, upsertPracticeAssignmentSchema } from "@/lib/validators/progress";
 
 export async function POST(req: Request) {
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
   if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para asignar práctica." : "You do not have permission to assign practice." }, { status: 403 });
 
   const parsed = upsertPracticeAssignmentSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   const input = parsed.data;
   try {
     await assertTeacherCanAccessStudent(auth.user.teacherProfile.id, input.studentId);
@@ -61,18 +63,21 @@ export async function PATCH(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
   const parsed = practiceAssignmentStatusSchema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
 
   const assignment = await db.practiceAssignment.findUnique({ where: { id: parsed.data.assignmentId } });
   if (!assignment) return NextResponse.json({ error: auth.user.locale === "es" ? "Asignación no encontrada." : "Assignment not found." }, { status: 404 });
-  const canEdit = (auth.user.role === Role.STUDENT && auth.user.studentProfile?.id === assignment.studentId) || (auth.user.role === Role.TEACHER && auth.user.teacherProfile?.id === assignment.teacherId);
+  const canEdit =
+    (auth.user.role === Role.STUDENT && auth.user.studentProfile?.id === assignment.studentId) ||
+    (auth.user.role === Role.PARENT && await parentCanAccessStudent(auth.user.parentGuardianProfile?.id, assignment.studentId)) ||
+    (auth.user.role === Role.TEACHER && auth.user.teacherProfile?.id === assignment.teacherId);
   if (!canEdit) return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para editar esta tarea." : "You cannot edit this assignment." }, { status: 403 });
 
   const updated = await db.practiceAssignment.update({
     where: { id: assignment.id },
     data: {
       status: parsed.data.status,
-      studentCompletionNote: auth.user.role === Role.STUDENT ? parsed.data.completionNote : undefined,
+      studentCompletionNote: auth.user.role === Role.STUDENT || auth.user.role === Role.PARENT ? parsed.data.completionNote : undefined,
       studentCompletedAt: parsed.data.status === PracticeAssignmentStatus.COMPLETED ? new Date() : undefined,
     },
   });

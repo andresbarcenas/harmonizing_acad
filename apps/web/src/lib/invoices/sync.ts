@@ -1,7 +1,7 @@
 import { InvoiceContactLinkStrategy, InvoiceSyncScope, InvoiceSyncStatus, Prisma } from "@prisma/client";
 import { format, subMonths } from "date-fns";
 
-import { AlegraApiError, alegraClient, canUseAlegra } from "@/lib/alegra/client";
+import { AlegraApiError, alegraClient, canUseAlegra, type AlegraContact } from "@/lib/alegra/client";
 import { db } from "@/lib/db";
 
 type NormalizedInvoice = {
@@ -154,7 +154,17 @@ async function resolveAlegraContactId(studentProfileId: string, studentEmail: st
     return { contactId: link.alegraContactId, link };
   }
 
-  const contact = await alegraClient.findContactByEmail(studentEmail);
+  const parentLinks = await db.parentStudentLink.findMany({
+    where: { studentId: studentProfileId },
+    include: { parent: { include: { user: true } } },
+    orderBy: [{ primaryContact: "desc" }, { createdAt: "asc" }],
+  });
+  const emailsToTry = Array.from(new Set([studentEmail, ...parentLinks.map((link) => link.parent.user.email)].map((email) => email.toLowerCase().trim()).filter(Boolean)));
+  let contact: AlegraContact | null = null;
+  for (const email of emailsToTry) {
+    contact = await alegraClient.findContactByEmail(email);
+    if (contact) break;
+  }
 
   if (!contact) {
     await db.invoiceContactLink.upsert({
@@ -163,14 +173,14 @@ async function resolveAlegraContactId(studentProfileId: string, studentEmail: st
         strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
         alegraContactId: null,
         lastResolvedAt: new Date(),
-        lastError: "No se encontró contacto en Alegra con email exacto.",
+        lastError: "No se encontró contacto en Alegra con email exacto para estudiante o acudientes vinculados.",
       },
       create: {
         studentId: studentProfileId,
         strategy: InvoiceContactLinkStrategy.EMAIL_AUTO,
         alegraContactId: null,
         lastResolvedAt: new Date(),
-        lastError: "No se encontró contacto en Alegra con email exacto.",
+        lastError: "No se encontró contacto en Alegra con email exacto para estudiante o acudientes vinculados.",
       },
     });
 

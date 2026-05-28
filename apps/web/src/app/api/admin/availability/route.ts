@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = createAvailabilitySchema.safeParse(await req.json());
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     include: { user: { select: { timezone: true } } },
   });
   if (!teacher) {
-    return NextResponse.json({ error: "Docente no encontrado." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
   }
 
   const timezone = normalizeIanaTimezone(teacher.user.timezone);
@@ -46,7 +46,7 @@ export async function PATCH(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = updateAvailabilitySchema.safeParse(await req.json());
@@ -59,7 +59,7 @@ export async function PATCH(req: Request) {
     include: { user: { select: { timezone: true } } },
   });
   if (!teacher) {
-    return NextResponse.json({ error: "Docente no encontrado." }, { status: 404 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "Docente no encontrado." : "Teacher not found." }, { status: 404 });
   }
 
   const timezone = normalizeIanaTimezone(teacher.user.timezone);
@@ -82,7 +82,7 @@ export async function DELETE(req: Request) {
   if ("error" in auth) return auth.error;
 
   if (auth.user.role !== Role.ADMIN) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
   const parsed = deleteAvailabilitySchema.safeParse(await req.json());

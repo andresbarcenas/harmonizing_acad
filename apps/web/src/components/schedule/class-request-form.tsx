@@ -16,7 +16,7 @@ import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 const requestTypes = [ClassSessionType.MAKEUP, ClassSessionType.EXTRA, ClassSessionType.EVALUATION] as const;
 const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
 
-export function ClassRequestForm({ timezone, teacherTimezone, locale = "en" }: { timezone: string; teacherTimezone?: string | null; locale?: AppLocale }) {
+export function ClassRequestForm({ timezone, teacherTimezone, locale = "en", studentId }: { timezone: string; teacherTimezone?: string | null; locale?: AppLocale; studentId?: string }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ kind: "success" | "error"; message: string } | null>(null);
@@ -50,6 +50,7 @@ export function ClassRequestForm({ timezone, teacherTimezone, locale = "en" }: {
       durationMin: Number(formData.get("durationMin") ?? 60),
       timezone: studentTimezone,
       studentMessage: String(formData.get("studentMessage") ?? "").trim() || undefined,
+      studentId,
     };
 
     const response = await fetch("/api/classes/requests", {

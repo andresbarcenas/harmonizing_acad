@@ -5,6 +5,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n";
+import { localizeNotificationCopy } from "@/lib/notification-copy";
 
 export default async function NotificationsPage() {
   const viewer = await requireViewer();
@@ -27,14 +28,17 @@ export default async function NotificationsPage() {
         <CardTitle>{dictionary.notifications.center}</CardTitle>
       </Card>
       <NotificationList
-        initial={notifications.map((notification) => ({
-          id: notification.id,
-          title: notification.title,
-          body: notification.body,
-          createdAt: notification.createdAt.toISOString(),
-          readAt: notification.readAt?.toISOString() ?? null,
-          actionUrl: notification.actionUrl,
-        }))}
+        initial={notifications.map((notification) => {
+          const copy = localizeNotificationCopy(notification, viewer.locale);
+          return {
+            id: notification.id,
+            title: copy.title,
+            body: copy.body,
+            createdAt: notification.createdAt.toISOString(),
+            readAt: notification.readAt?.toISOString() ?? null,
+            actionUrl: notification.actionUrl,
+          };
+        })}
         locale={viewer.locale}
       />
     </AppShell>

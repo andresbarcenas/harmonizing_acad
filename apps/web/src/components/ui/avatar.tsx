@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
+import type { AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
 type AvatarProps = {
@@ -12,11 +13,23 @@ type AvatarProps = {
   fallback: string;
   className?: string;
   zoomable?: boolean;
+  locale?: AppLocale;
 };
 
-export function Avatar({ src, alt, fallback, className, zoomable = true }: AvatarProps) {
+export function Avatar({ src, alt, fallback, className, zoomable = true, locale = "en" }: AvatarProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const labels = locale === "es"
+    ? {
+        zoom: `Ampliar foto de ${alt}`,
+        dialog: `Vista ampliada: ${alt}`,
+        close: "Cerrar vista ampliada",
+      }
+    : {
+        zoom: `Enlarge photo of ${alt}`,
+        dialog: `Enlarged view: ${alt}`,
+        close: "Close enlarged view",
+      };
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +59,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true }: Avata
             ref={triggerRef}
             type="button"
             onClick={() => setOpen(true)}
-            aria-label={`Ampliar foto de ${alt}`}
+            aria-label={labels.zoom}
             className={cn(
               "relative h-12 w-12 cursor-zoom-in overflow-hidden rounded-full border border-white/80 shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)] outline-none transition hover:brightness-[1.02] focus-visible:ring-2 focus-visible:ring-[var(--color-gold)] focus-visible:ring-offset-2",
               className,
@@ -72,7 +85,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true }: Avata
               <div
                 role="dialog"
                 aria-modal="true"
-                aria-label={`Vista ampliada: ${alt}`}
+                aria-label={labels.dialog}
                 className="fixed inset-0 z-[120] flex items-center justify-center bg-black/82 p-4 sm:p-6"
                 onClick={() => {
                   setOpen(false);
@@ -81,7 +94,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true }: Avata
               >
                 <button
                   type="button"
-                  aria-label="Cerrar vista ampliada"
+                  aria-label={labels.close}
                   onClick={() => {
                     setOpen(false);
                     triggerRef.current?.focus();

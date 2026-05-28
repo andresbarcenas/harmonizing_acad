@@ -5,18 +5,26 @@ import { requireApiUser } from "@/lib/api-auth";
 import { getStudentInvoicesView } from "@/features/invoices/data";
 import { canUseAlegra } from "@/lib/alegra/client";
 import { getRecentStudentSyncCooldownHit, syncStudentInvoices } from "@/lib/invoices/sync";
+import { ParentAccessError, resolveStudentIdForStudentOrParent } from "@/lib/parents";
 
 const STUDENT_SYNC_COOLDOWN_SECONDS = 60;
 
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile?.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
+  }
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, new URL(req.url).searchParams.get("studentId"));
+  } catch (error) {
+    if (error instanceof ParentAccessError) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    throw error;
   }
 
-  const data = await getStudentInvoicesView(auth.user.studentProfile.id);
+  const data = await getStudentInvoicesView(studentId);
 
   return NextResponse.json({
     invoices: data.invoices,
@@ -29,12 +37,20 @@ export async function GET() {
   });
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile?.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
+  }
+  const body = await req.json().catch(() => ({})) as { studentId?: string };
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, body.studentId);
+  } catch (error) {
+    if (error instanceof ParentAccessError) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    throw error;
   }
 
   if (!canUseAlegra()) {
@@ -45,7 +61,7 @@ export async function POST() {
   }
 
   const cooldownHit = await getRecentStudentSyncCooldownHit(
-    auth.user.studentProfile.id,
+    studentId,
     STUDENT_SYNC_COOLDOWN_SECONDS,
   );
 
@@ -56,6 +72,6 @@ export async function POST() {
     );
   }
 
-  const run = await syncStudentInvoices(auth.user.studentProfile.id, auth.user.id);
+  const run = await syncStudentInvoices(studentId, auth.user.id);
   return NextResponse.json({ run });
 }

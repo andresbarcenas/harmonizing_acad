@@ -74,6 +74,7 @@ export const singleClassBookingSchema = z.object({
 });
 
 export const createClassRequestSchema = z.object({
+  studentId: optionalString(100),
   teacherId: optionalString(100),
   type: z.enum(studentClassRequestTypes),
   date: dateSchema,

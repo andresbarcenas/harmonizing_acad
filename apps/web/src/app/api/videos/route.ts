@@ -11,16 +11,34 @@ import {
 } from "@/lib/data/progress";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { ParentAccessError, resolveStudentIdForStudentOrParent } from "@/lib/parents";
 import { ALLOWED_VIDEO_MIME_TYPES, MAX_VIDEO_SIZE_BYTES, isAllowedVideoType, storePracticeVideo } from "@/lib/storage";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { reviewVideoSchema } from "@/lib/validators/videos";
 
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
   if (auth.user.role === Role.STUDENT && auth.user.studentProfile) {
     const videos = await db.practiceVideo.findMany({
       where: { studentId: auth.user.studentProfile.id },
+      include: { feedback: true },
+      orderBy: { submittedAt: "desc" },
+    });
+    return NextResponse.json({ videos });
+  }
+
+  if (auth.user.role === Role.PARENT && auth.user.parentGuardianProfile) {
+    const studentId = new URL(req.url).searchParams.get("studentId");
+    let resolvedStudentId: string;
+    try {
+      resolvedStudentId = await resolveStudentIdForStudentOrParent(auth.user, studentId);
+    } catch {
+      return NextResponse.json({ videos: [] });
+    }
+    const videos = await db.practiceVideo.findMany({
+      where: { studentId: resolvedStudentId },
       include: { feedback: true },
       orderBy: { submittedAt: "desc" },
     });
@@ -46,12 +64,19 @@ export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile) {
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No tienes permisos para subir videos." : "You do not have permission to upload videos." }, { status: 403 });
   }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, optionalFormId(formData.get("studentId")));
+  } catch (error) {
+    if (error instanceof ParentAccessError) return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    throw error;
+  }
 
   if (!file) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Archivo requerido" : "File is required." }, { status: 400 });
@@ -67,7 +92,7 @@ export async function POST(req: Request) {
   }
 
   const assignment = await db.teacherAssignment.findUnique({
-    where: { studentId: auth.user.studentProfile.id },
+    where: { studentId },
     include: { teacher: true },
   });
 
@@ -82,19 +107,19 @@ export async function POST(req: Request) {
   const skillCategoryId = optionalFormId(formData.get("skillCategoryId"));
 
   try {
-    await assertPracticeAssignmentForStudent(auth.user.studentProfile.id, practiceAssignmentId);
-    await assertRepertoireForStudent(auth.user.studentProfile.id, repertoireItemId);
+    await assertPracticeAssignmentForStudent(studentId, practiceAssignmentId);
+    await assertRepertoireForStudent(studentId, repertoireItemId);
     await assertActiveSkillCategories([skillCategoryId]);
   } catch (error) {
     const progressError = getProgressErrorResponse(error, auth.user.locale);
     if (progressError) return NextResponse.json({ error: progressError.message }, { status: progressError.status });
     throw error;
   }
-  const stored = await storePracticeVideo(file, auth.user.studentProfile.id);
+  const stored = await storePracticeVideo(file, studentId);
 
   const video = await db.practiceVideo.create({
     data: {
-      studentId: auth.user.studentProfile.id,
+      studentId,
       teacherId: assignment.teacherId,
       practiceAssignmentId,
       repertoireItemId,
@@ -129,7 +154,7 @@ export async function PATCH(req: Request) {
   const parsed = reviewVideoSchema.safeParse(await req.json());
 
   if (!parsed.success) {
-    const firstIssue = parsed.error.issues[0]?.message ?? (auth.user.locale === "es" ? "Datos inválidos para registrar feedback." : "Invalid data for saving feedback.");
+    const firstIssue = validationErrorMessage(parsed.error, auth.user.locale, auth.user.locale === "es" ? "Datos inválidos para registrar comentarios." : "Invalid data for saving feedback.");
     return NextResponse.json({ error: firstIssue }, { status: 400 });
   }
 

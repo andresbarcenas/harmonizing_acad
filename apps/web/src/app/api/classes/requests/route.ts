@@ -3,7 +3,9 @@ import { NotificationType, Role, SessionStatus } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
+import { validationErrorMessage } from "@/lib/validation-errors";
 import { createNotifications } from "@/lib/notifications";
+import { ParentAccessError, resolveStudentIdForStudentOrParent } from "@/lib/parents";
 import { buildUtcClassWindow, isTeacherBlackoutDate } from "@/lib/scheduling";
 import { createClassRequestSchema } from "@/lib/validators/class-scheduling";
 
@@ -11,18 +13,27 @@ export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.STUDENT || !auth.user.studentProfile) {
+  if (auth.user.role !== Role.STUDENT && auth.user.role !== Role.PARENT) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "Solo estudiantes pueden solicitar clases." : "Only students can request classes." }, { status: 403 });
   }
 
   const parsed = createClassRequestSchema.safeParse(await req.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" }, { status: 400 });
+    return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale) }, { status: 400 });
   }
 
   const payload = parsed.data;
+  let studentId: string;
+  try {
+    studentId = await resolveStudentIdForStudentOrParent(auth.user, payload.studentId);
+  } catch (error) {
+    if (error instanceof ParentAccessError) {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: error.status });
+    }
+    throw error;
+  }
   const assignment = await db.teacherAssignment.findUnique({
-    where: { studentId: auth.user.studentProfile.id },
+    where: { studentId },
     include: { teacher: { include: { user: true, blackoutDates: true } }, student: { include: { user: true } } },
   });
 
@@ -58,7 +69,7 @@ export async function POST(req: Request) {
 
   const studentOverlap = await db.classSession.findFirst({
     where: {
-      studentId: auth.user.studentProfile.id,
+      studentId,
       status: { not: SessionStatus.CANCELLED },
       startsAtUtc: { lt: window.endsAtUtc },
       endsAtUtc: { gt: window.startsAtUtc },
@@ -72,7 +83,7 @@ export async function POST(req: Request) {
 
   const classRequest = await db.classRequest.create({
     data: {
-      studentId: auth.user.studentProfile.id,
+      studentId,
       teacherId: assignment.teacherId,
       requestedByUserId: auth.user.id,
       type: payload.type,
