@@ -1,44 +1,20 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
-import {
-  Archive,
-  Bell,
-  CalendarDays,
-  ClipboardList,
-  Clock3,
-  FileSignature,
-  GraduationCap,
-  House,
-  KeyRound,
-  LayoutDashboard,
-  Mail,
-  Megaphone,
-  Music2,
-  ReceiptText,
-  RefreshCcw,
-  ScrollText,
-  Settings,
-  TrendingUp,
-  UsersRound,
-  Video,
-} from "lucide-react";
 
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AppAnnouncementBanner } from "@/components/announcements/app-announcement-banner";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { ParentStudentSelector } from "@/components/parent/student-selector";
-import { TimezoneSync } from "@/components/system/timezone-sync";
 import { TeacherStudentSelector } from "@/components/teacher/student-context-selector";
-import { MobileNavDrawer, type AppShellNavGroup, type AppShellNavLink, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
+import { DesktopAppShellFrame } from "@/components/ui/desktop-app-shell-frame";
+import { MobileNavDrawer, type AppShellNavGroup, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
 import { getActiveAnnouncementForViewer, type ShellAnnouncement } from "@/lib/announcements";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { normalizeLocale, type AppLocale } from "@/lib/i18n/locales";
 import { APP_VERSION } from "@/lib/release";
-import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
@@ -262,8 +238,8 @@ export async function AppShell({
   }
 
   const navGroups: AppShellNavGroup[] = groups.map((group) => ({
-      label: group.label,
-      items: group.items.map((item) => ({
+    label: group.label,
+    items: group.items.map((item) => ({
       href: withParentStudentContext(withTeacherStudentContext(item.href, role, validTeacherStudentId), role, validParentStudentId),
       label: item.label,
       icon: item.icon,
@@ -271,33 +247,21 @@ export async function AppShell({
       badgeCount: item.href === "/notifications" && unreadCount > 0 ? unreadCount : undefined,
     })),
   }));
+  const homeHref = homeHrefForRole(role, validTeacherStudentId, validParentStudentId);
 
   return (
-    <div className="mx-auto grid min-h-screen w-full max-w-[96rem] grid-cols-1 gap-4 px-3 pb-10 pt-3 sm:px-4 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-6 lg:pt-5">
-      <TimezoneSync />
-      <aside className="hidden h-[calc(100vh-2.5rem)] min-h-[38rem] flex-col overflow-y-auto rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(160deg,var(--color-paper-elevated),var(--color-surface-sidebar))] p-3.5 shadow-[var(--shadow-card)] backdrop-blur-[18px] lg:sticky lg:top-5 lg:flex">
-        <Link href={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)} className="rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-white/62 focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
-          <BrandLogo compact={false} subtitle={dictionary.shell.brandSubtitle} />
-        </Link>
-
-        <div className="mt-4 grid gap-2.5">
-          <UserBadge userName={userName} />
-        </div>
-
-        <nav className="mt-5 space-y-4" aria-label={mobileNavLabels.primaryNavigation}>
-          {navGroups.map((group) => (
-            <ShellNavGroup key={group.label} group={group} />
-          ))}
-        </nav>
-
-        <div className="mt-auto grid gap-3 pt-6">
-          <SignOutButton compact label={dictionary.common.signOut} />
-          <p className="pb-1 text-center text-[10px] tracking-[0.16em] text-[var(--color-ink-muted)] uppercase">
-            Harmonizing {APP_VERSION}
-          </p>
-        </div>
-      </aside>
-
+    <DesktopAppShellFrame
+      navGroups={navGroups}
+      userName={userName}
+      signOutLabel={dictionary.common.signOut}
+      version={APP_VERSION}
+      homeHref={homeHref}
+      brandSubtitle={dictionary.shell.brandSubtitle}
+      primaryNavigationLabel={mobileNavLabels.primaryNavigation}
+      collapsible={role === Role.ADMIN}
+      collapseLabel={dictionary.shell.collapseMenu}
+      expandLabel={dictionary.shell.expandMenu}
+    >
       <div className="flex min-w-0 flex-col">
         <header className="mb-4 rounded-[var(--radius-3xl)] border border-[var(--color-border)] bg-[linear-gradient(145deg,var(--color-paper-elevated),var(--color-surface-glass))] px-3 py-3 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:px-4 md:mb-5 md:px-5 md:py-3.5 lg:sticky lg:top-5 lg:z-20">
           <div className="flex min-w-0 items-center justify-between gap-3 lg:hidden">
@@ -306,13 +270,13 @@ export async function AppShell({
               locale={activeLocale}
               signOutLabel={dictionary.common.signOut}
               version={APP_VERSION}
-              homeHref={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)}
+              homeHref={homeHref}
               brandSubtitle={dictionary.shell.brandSubtitle}
               labels={mobileNavLabels}
               settingsHref="/settings"
               groups={navGroups}
             />
-            <Link href={homeHrefForRole(role, validTeacherStudentId, validParentStudentId)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
+            <Link href={homeHref} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
               <BrandLogo compact subtitle={dictionary.shell.brandSubtitle} />
               <div className="min-w-0">
                 <p className="truncate font-display text-[1.45rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
@@ -380,7 +344,7 @@ export async function AppShell({
           Harmonizing {APP_VERSION}
         </footer>
       </div>
-    </div>
+    </DesktopAppShellFrame>
   );
 }
 
@@ -400,84 +364,6 @@ function UserBadge({ userName, href }: { userName: string; href?: string }) {
   ) : (
     <div className={className}>{content}</div>
   );
-}
-
-function ShellNavGroup({ group }: { group: AppShellNavGroup }) {
-  return (
-    <div className="space-y-1.5">
-      <p className="px-3 text-[0.62rem] font-semibold tracking-[0.22em] text-[var(--color-ink-muted)] uppercase">
-        {group.label}
-      </p>
-      <div className="grid gap-1">
-        {group.items.map((item) => (
-          <ShellNavLink key={item.href} item={item} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ShellNavLink({ item }: { item: AppShellNavLink }) {
-  return (
-    <Link
-      href={item.href}
-      aria-current={item.active ? "page" : undefined}
-      className={cn(
-        "relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
-        item.active
-          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),var(--color-gold-soft))] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
-          : "border-transparent bg-transparent text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
-      )}
-    >
-      <span className={cn("absolute inset-y-2 left-1 w-1 rounded-full transition-opacity", item.active ? "bg-[var(--color-gold)] opacity-100" : "opacity-0")} />
-      <span className="flex min-w-0 items-center gap-3">
-        <span
-          className={cn(
-            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ease-out",
-            item.active
-              ? "border-[color-mix(in_srgb,var(--color-gold)_28%,white)] bg-white/86 text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]"
-              : "border-[var(--color-border)] bg-white/64 text-[var(--color-ink-soft)]",
-          )}
-        >
-          <NavIcon icon={item.icon} className="h-4 w-4" />
-        </span>
-        <span className="truncate">{item.label}</span>
-      </span>
-      {item.badgeCount ? (
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-bold",
-            item.active ? "bg-white/90 text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
-          )}
-        >
-          {item.badgeCount > 99 ? "99+" : item.badgeCount}
-        </span>
-      ) : null}
-    </Link>
-  );
-}
-
-function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) {
-  if (icon === "archive") return <Archive className={className} aria-hidden="true" />;
-  if (icon === "bell") return <Bell className={className} aria-hidden="true" />;
-  if (icon === "calendar") return <CalendarDays className={className} aria-hidden="true" />;
-  if (icon === "clipboard") return <ClipboardList className={className} aria-hidden="true" />;
-  if (icon === "clock") return <Clock3 className={className} aria-hidden="true" />;
-  if (icon === "dashboard") return <LayoutDashboard className={className} aria-hidden="true" />;
-  if (icon === "graduation") return <GraduationCap className={className} aria-hidden="true" />;
-  if (icon === "house") return <House className={className} aria-hidden="true" />;
-  if (icon === "key") return <KeyRound className={className} aria-hidden="true" />;
-  if (icon === "mail") return <Mail className={className} aria-hidden="true" />;
-  if (icon === "megaphone") return <Megaphone className={className} aria-hidden="true" />;
-  if (icon === "music") return <Music2 className={className} aria-hidden="true" />;
-  if (icon === "receipt") return <ReceiptText className={className} aria-hidden="true" />;
-  if (icon === "refresh") return <RefreshCcw className={className} aria-hidden="true" />;
-  if (icon === "scroll") return <ScrollText className={className} aria-hidden="true" />;
-  if (icon === "settings") return <Settings className={className} aria-hidden="true" />;
-  if (icon === "signature") return <FileSignature className={className} aria-hidden="true" />;
-  if (icon === "trending") return <TrendingUp className={className} aria-hidden="true" />;
-  if (icon === "users") return <UsersRound className={className} aria-hidden="true" />;
-  return <Video className={className} aria-hidden="true" />;
 }
 
 function homeHrefForRole(role: Role, teacherStudentId?: string | null, parentStudentId?: string | null) {

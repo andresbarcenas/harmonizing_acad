@@ -89,12 +89,25 @@ Current placeholders / known simplifications:
 - Some stored historical notifications may retain the language used when they were created
 - No production CDN, background jobs, rate limiting, or observability package yet
 
-## Alegra Invoicing (v1)
+## Billing And Invoicing
+- Primary billing UI: `/admin/invoices`
+- Native invoice flow: create monthly Harmonizing invoices, generate private PDFs, email invoices through Resend, notify the recipient in-app, and manually manage status.
+- Student and parent UI: `/invoices` and `/parent/invoices` show native Harmonizing invoices first.
+- Payment provider integration is intentionally a placeholder for a future pass.
+
+Native invoice PDF environment variables:
+- `BILLING_BUSINESS_NAME`
+- `BILLING_TAX_ID` (optional)
+- `BILLING_ADDRESS` (optional)
+- `BILLING_EMAIL` (optional)
+- `BILLING_LEGAL_FOOTER` (optional)
+
+## Alegra Invoicing (external reference)
 - Student UI: `/invoices`
-- Admin monitor: `/admin/invoices`
+- Admin monitor: `/admin/invoices` secondary section and `/admin/alegra`
 - Sync strategy: cached snapshots in DB, daily Vercel cron in production plus manual sync from admin/student views
 - Mapping default: exact email match from Harmonizing student email to Alegra contact
-- Production fallback: if Alegra credentials are missing, invoice pages stay available but show a simple “Invoices are not configured yet.” message and do not display cached/sample invoice data.
+- Production fallback: if Alegra credentials are missing, native invoices still work and external Alegra records simply stay hidden.
 
 Required environment variables:
 - `ALEGRA_API_BASE_URL` (default `https://api.alegra.com/api/v1`)
@@ -131,6 +144,7 @@ Pilot behavior before Alegra is configured:
 - Deployment: `docs/deployment.md`
 - Phases: `docs/phases.md`
 - Roadmap: [`docs/roadmap.md`](./docs/roadmap.md)
+- Invoicing roadmap + security: [`docs/invoicing-roadmap-security.md`](./docs/invoicing-roadmap-security.md)
 - Responsive QA: `docs/responsive-qa.md`
 - Progress reports: `docs/progress-reports.md`
 - Historical imports: `docs/historical-imports.md`

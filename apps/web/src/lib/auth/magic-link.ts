@@ -1,8 +1,9 @@
 import "server-only";
 
 import { createHash, randomBytes } from "crypto";
-import { Role } from "@prisma/client";
+import { Role, UserLoginActivityStatus, UserLoginAuthMethod } from "@prisma/client";
 
+import { recordLoginActivity } from "@/lib/auth/login-activity";
 import { db } from "@/lib/db";
 import { getRequestLocale } from "@/lib/i18n/request";
 
@@ -49,26 +50,69 @@ export async function createMagicLinkToken(email: string, options: { maxAgeSecon
   return { token, expires };
 }
 
-export async function consumeMagicLinkToken(input: { email: string; token: string }) {
+export async function consumeMagicLinkToken(input: {
+  email: string;
+  token: string;
+  headers?: Headers | Record<string, string | string[] | undefined>;
+}) {
   const email = normalizeMagicLinkEmail(input.email);
   const tokenHash = hashToken(input.token);
   const identifier = identifierForEmail(email);
 
   const storedToken = await db.verificationToken.findUnique({ where: { token: tokenHash } });
-  if (!storedToken || storedToken.identifier !== identifier) return null;
+  if (!storedToken || storedToken.identifier !== identifier) {
+    const user = await db.user.findUnique({ where: { email }, select: { id: true, role: true } });
+    await recordLoginActivity({
+      status: UserLoginActivityStatus.FAILED,
+      authMethod: UserLoginAuthMethod.MAGIC_LINK,
+      emailAttempted: email,
+      userId: user?.id,
+      roleSnapshot: user?.role,
+      failureReason: "INVALID_MAGIC_LINK",
+      headers: input.headers,
+    });
+    return null;
+  }
 
   if (storedToken.expires < new Date()) {
     await db.verificationToken.deleteMany({ where: { token: tokenHash } });
+    const user = await db.user.findUnique({ where: { email }, select: { id: true, role: true } });
+    await recordLoginActivity({
+      status: UserLoginActivityStatus.FAILED,
+      authMethod: UserLoginAuthMethod.MAGIC_LINK,
+      emailAttempted: email,
+      userId: user?.id,
+      roleSnapshot: user?.role,
+      failureReason: "EXPIRED_MAGIC_LINK",
+      headers: input.headers,
+    });
     return null;
   }
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user || (user.role !== Role.STUDENT && user.role !== Role.TEACHER && user.role !== Role.PARENT)) {
     await db.verificationToken.deleteMany({ where: { token: tokenHash } });
+    await recordLoginActivity({
+      status: UserLoginActivityStatus.FAILED,
+      authMethod: UserLoginAuthMethod.MAGIC_LINK,
+      emailAttempted: email,
+      userId: user?.id,
+      roleSnapshot: user?.role,
+      failureReason: "MAGIC_LINK_NOT_ALLOWED",
+      headers: input.headers,
+    });
     return null;
   }
 
   await db.verificationToken.deleteMany({ where: { token: tokenHash } });
+  await recordLoginActivity({
+    status: UserLoginActivityStatus.SUCCESS,
+    authMethod: UserLoginAuthMethod.MAGIC_LINK,
+    emailAttempted: email,
+    userId: user.id,
+    roleSnapshot: user.role,
+    headers: input.headers,
+  });
 
   return {
     id: user.id,

@@ -15,6 +15,7 @@ export const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
 export const ALLOWED_VIDEO_MIME_TYPES = ["video/mp4", "video/quicktime", "video/webm"] as const;
 export const MAX_REPERTOIRE_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024;
 export const MAX_CLASS_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024;
+export const MAX_PAYMENT_RECEIPT_SIZE_BYTES = 20 * 1024 * 1024;
 export const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 export const ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES = [
   "application/pdf",
@@ -23,8 +24,10 @@ export const ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES = [
   "image/webp",
 ] as const;
 export const ALLOWED_CLASS_ATTACHMENT_MIME_TYPES = ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES;
+export const ALLOWED_PAYMENT_RECEIPT_MIME_TYPES = ALLOWED_REPERTOIRE_ATTACHMENT_MIME_TYPES;
 
 type StorageProvider = "s3" | "local" | "vercel-blob";
+type ProtectedMediaType = "video" | "repertoire" | "class" | "payment-receipt";
 
 function getStorageProvider(): StorageProvider {
   if (process.env.STORAGE_PROVIDER === "local") return "local";
@@ -64,6 +67,10 @@ export function isAllowedRepertoireAttachmentType(mimeType: string) {
 
 export function isAllowedClassAttachmentType(mimeType: string) {
   return ALLOWED_CLASS_ATTACHMENT_MIME_TYPES.includes(mimeType as (typeof ALLOWED_CLASS_ATTACHMENT_MIME_TYPES)[number]);
+}
+
+export function isAllowedPaymentReceiptType(mimeType: string) {
+  return ALLOWED_PAYMENT_RECEIPT_MIME_TYPES.includes(mimeType as (typeof ALLOWED_PAYMENT_RECEIPT_MIME_TYPES)[number]);
 }
 
 export function isAllowedProfileImageType(mimeType: string) {
@@ -209,6 +216,44 @@ export async function storeClassSessionAttachment(file: File, classSessionId: st
   return { storageKey: key };
 }
 
+export async function storeNativeInvoicePaymentReceipt(file: File, paymentId: string) {
+  const safeName = sanitizeFilename(file.name);
+  const key = `payment-receipts/${paymentId}/${Date.now()}-${randomUUID()}-${safeName}`;
+
+  if (getStorageProvider() === "local") {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const localRoot = process.env.LOCAL_PAYMENT_RECEIPT_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "payment-receipts");
+    const localKey = key.replace(/^payment-receipts\//, "");
+    const targetPath = path.join(localRoot, localKey);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, buffer);
+    return { storageKey: localKey };
+  }
+
+  if (getStorageProvider() === "vercel-blob") {
+    const blob = await put(`private-media/payment-receipts/${paymentId}/${Date.now()}-${randomUUID()}-${safeName}`, file, {
+      access: "private",
+      contentType: file.type || "application/octet-stream",
+      token: requireBlobToken("protected media"),
+    });
+
+    return { storageKey: blob.pathname };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await minioClient.send(
+    new PutObjectCommand({
+      Bucket: mediaBucket,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type || "application/octet-stream",
+    }),
+  );
+
+  return { storageKey: key };
+}
+
 export async function storePrivatePracticeVideoBuffer(input: {
   buffer: Buffer;
   contentType: string;
@@ -272,7 +317,7 @@ export async function storePrivateRepertoireAttachmentBuffer(input: {
 
 export async function readProtectedMedia(input: {
   storageKey: string;
-  mediaType: "video" | "repertoire" | "class";
+  mediaType: ProtectedMediaType;
   range?: string | null;
   fallbackContentType?: string;
 }) {
@@ -310,11 +355,7 @@ export async function readProtectedMedia(input: {
   }
 
   if (provider === "local") {
-    const localRoot = input.mediaType === "video"
-      ? process.env.LOCAL_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "videos")
-      : input.mediaType === "class"
-        ? process.env.LOCAL_CLASS_ATTACHMENT_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "class-attachments")
-        : process.env.LOCAL_REPERTOIRE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "repertoire");
+    const localRoot = getLocalProtectedMediaRoot(input.mediaType);
     const targetPath = path.join(localRoot, storageKey);
     const fileStat = await stat(targetPath).catch(() => null);
     if (!fileStat) return null;
@@ -351,7 +392,7 @@ export async function readProtectedMedia(input: {
 
 export async function protectedMediaToBuffer(input: {
   storageKey: string;
-  mediaType: "video" | "repertoire" | "class";
+  mediaType: ProtectedMediaType;
   fallbackContentType?: string;
 }) {
   const media = await readProtectedMedia(input);
@@ -407,7 +448,7 @@ export async function readPrivateProfileImage(input: {
   return null;
 }
 
-export async function deleteProtectedMedia(storageKey: string, mediaType: "video" | "repertoire" | "class") {
+export async function deleteProtectedMedia(storageKey: string, mediaType: ProtectedMediaType) {
   if (!storageKey || storageKey.startsWith("http://") || storageKey.startsWith("https://")) return;
   const provider = getStorageProvider();
   if (provider === "vercel-blob" && isPrivateMediaStorageKey(storageKey)) {
@@ -415,15 +456,24 @@ export async function deleteProtectedMedia(storageKey: string, mediaType: "video
     return;
   }
   if (provider === "local") {
-    const localRoot = mediaType === "video"
-      ? process.env.LOCAL_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "videos")
-      : mediaType === "class"
-        ? process.env.LOCAL_CLASS_ATTACHMENT_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "class-attachments")
-        : process.env.LOCAL_REPERTOIRE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "repertoire");
+    const localRoot = getLocalProtectedMediaRoot(mediaType);
     await unlink(path.join(localRoot, storageKey)).catch(() => undefined);
     return;
   }
   await minioClient.send(new DeleteObjectCommand({ Bucket: mediaBucket, Key: storageKey })).catch(() => undefined);
+}
+
+function getLocalProtectedMediaRoot(mediaType: ProtectedMediaType) {
+  if (mediaType === "video") {
+    return process.env.LOCAL_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "videos");
+  }
+  if (mediaType === "class") {
+    return process.env.LOCAL_CLASS_ATTACHMENT_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "class-attachments");
+  }
+  if (mediaType === "payment-receipt") {
+    return process.env.LOCAL_PAYMENT_RECEIPT_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "payment-receipts");
+  }
+  return process.env.LOCAL_REPERTOIRE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "repertoire");
 }
 
 function parseRange(rangeHeader: string | null | undefined, size: number) {

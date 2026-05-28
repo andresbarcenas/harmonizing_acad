@@ -11,6 +11,33 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.0",
+    date: "2026-05-28",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Native Harmonizing invoicing with admin invoice creation, monthly drafts, next-month generation, branded PDF downloads, open/send workflow, email logging, and in-app invoice notifications.",
+          "Student billing profiles with configurable class allowance and COP price-per-class defaults for native invoice generation.",
+          "Payment tracking ledger with manual payments, partial balances, paid/open recalculation, voiding, and protected receipt attachments.",
+          "Class credit ledger that grants credits from opened invoices, consumes billable completed/no-show classes, supports reversals, and allows admin manual adjustments.",
+          "Admin account creation from Access with temporary passwords while keeping admin accounts password-only.",
+          "Login activity audit trail for successful and failed credentials/magic-link sign-ins with device, browser, IP, and country metadata.",
+          "Collapsible admin desktop sidebar with a persisted icon rail preference per browser.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Student and parent invoice pages now prioritize native Harmonizing invoices, payment history, balances, credit summaries, and protected invoice/receipt downloads.",
+          "Class completion and session update flows now update class credits idempotently for billable class outcomes.",
+          "Admin invoice workspace now focuses on native billing while keeping Alegra as a secondary external reference.",
+          "Development and deployment docs now include native invoicing, payment and credit ledger, login activity retention, and billing security roadmap updates.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-05-28",
     sections: [

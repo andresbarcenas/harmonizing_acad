@@ -73,12 +73,11 @@ Core entities:
 - Teachers and admins are not blocked by the student consent gate.
 - See [privacy-consent.md](./privacy-consent.md) for the workflow, RBAC rules, email/PDF handling, and manual QA.
 
-## Invoicing Model (Alegra v1)
-- Invoice source of truth is Alegra; Harmonizing stores cached snapshots for fast reads.
-- Student-contact mapping defaults to exact email match and can be manually overridden by admin.
-- Sync runs are tracked for observability (`STUDENT` and `ALL` scope) with status and counters.
-- Student invoice UI is read-only (`/invoices`) with view/PDF actions when links exist.
-- Admin operations include sync-all, sync-per-student, and manual contact relink (`/admin/invoices`).
+## Invoicing Model
+- Native Harmonizing invoices are the primary billing workspace: admins create monthly drafts, generate private PDFs, open/send invoices through Resend, notify recipients in-app, and manually manage status.
+- Student and parent invoice pages show native Harmonizing invoices first, with authenticated PDF downloads.
+- Alegra remains an external/reference cache through `Invoice`, `InvoiceContactLink`, and `InvoiceSyncRun`; `/admin/alegra` helps admins look up contacts, invoices, and payments while the transition continues.
+- Future billing work should follow the [invoicing roadmap and security hardening plan](./invoicing-roadmap-security.md).
 
 ## Production Considerations
 - Replace public/local object URL assumptions with signed URLs + CDN

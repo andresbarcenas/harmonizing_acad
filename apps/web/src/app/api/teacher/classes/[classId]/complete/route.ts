@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { assertRepertoireForTeacherStudent, getProgressErrorResponse, inferLessonInstrument, skillInstrumentsForLesson } from "@/lib/data/progress";
 import { assignCatalogItemToStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
 import { skillInstrumentToInstrument } from "@/lib/instruments";
+import { syncClassSessionCreditConsumption } from "@/lib/native-invoices/ledger";
 import { createNotification } from "@/lib/notifications";
 import { validationErrorMessage } from "@/lib/validation-errors";
 import { completeClassWorkflowSchema } from "@/lib/validators/progress";
@@ -133,6 +134,7 @@ export async function POST(req: Request, { params }: Params) {
           lastClassNotes: completed ? (lessonNote?.studentVisibleNote || lessonNote?.summary || session.lastClassNotes) : session.lastClassNotes,
         },
       });
+      await syncClassSessionCreditConsumption(session.id, auth.user.id, tx);
 
     let savedLessonNote = session.lessonNote;
     const createdRepertoire = [];

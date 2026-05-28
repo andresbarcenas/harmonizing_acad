@@ -116,6 +116,22 @@ export const createTeacherSchema = z.object({
   availability: z.array(teacherAvailabilityBlockSchema).max(21).optional(),
 });
 
+export const createAdminSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email().max(180).transform((value) => value.toLowerCase().trim()),
+  temporaryPassword: z
+    .string()
+    .min(8, passwordStrengthMessage)
+    .max(72)
+    .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, passwordStrengthMessage),
+  confirmPassword: z.string().min(1),
+  timezone: optionalTimezoneSchema,
+  locale: z.enum(["browser", "en", "es"]).optional(),
+}).refine((value) => value.temporaryPassword === value.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Las contraseñas no coinciden.",
+});
+
 export const updateStudentSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email().max(180).transform((value) => value.toLowerCase().trim()),

@@ -8,6 +8,7 @@ import { requireApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { normalizeInstrument } from "@/lib/instruments";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
+import { syncClassSessionCreditConsumption } from "@/lib/native-invoices/ledger";
 import { createNotification } from "@/lib/notifications";
 import { isSlotWithinAvailability, isTeacherBlackoutDate } from "@/lib/scheduling";
 import { createRecurringSessionsSchema } from "@/lib/validators/sessions";
@@ -49,6 +50,7 @@ export async function PATCH(req: Request) {
       lastClassNotes: notes,
     },
   });
+  await syncClassSessionCreditConsumption(session.id, auth.user.id);
 
   const student = await db.studentProfile.findUnique({
     where: { id: session.studentId },

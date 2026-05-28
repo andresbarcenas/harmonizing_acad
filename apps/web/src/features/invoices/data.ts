@@ -1,47 +1,59 @@
-import { InvoiceSyncScope } from "@prisma/client";
+import { InvoiceSyncScope, NativeInvoicePaymentStatus, NativeInvoiceStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { isInvoiceDataStale } from "@/lib/invoices/sync";
 import { canUseAlegra } from "@/lib/alegra/client";
+import { getStudentClassCreditSummary } from "@/lib/native-invoices/ledger";
 
 export async function getStudentInvoicesView(studentProfileId: string) {
   const isConfigured = canUseAlegra();
-  if (!isConfigured) {
-    return {
-      invoices: [],
-      link: null,
-      latestRun: null,
-      totalInvoices: 0,
-      lastSyncedAt: null,
-      isStale: false,
-      isConfigured,
-    };
-  }
 
-  const [invoices, link, latestRun, aggregates] = await Promise.all([
-    db.invoice.findMany({
-      where: { studentId: studentProfileId },
+  const [nativeInvoices, creditSummary, invoices, link, latestRun, aggregates] = await Promise.all([
+    db.nativeInvoice.findMany({
+      where: { studentId: studentProfileId, status: { in: [NativeInvoiceStatus.OPEN, NativeInvoiceStatus.PAID, NativeInvoiceStatus.CLOSED] } },
+      include: {
+        lineItems: { orderBy: { sortOrder: "asc" } },
+        payments: {
+          where: { status: NativeInvoicePaymentStatus.ACTIVE },
+          include: { attachments: { orderBy: { createdAt: "desc" } } },
+          orderBy: { paymentDate: "desc" },
+        },
+      },
       orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
       take: 60,
     }),
-    db.invoiceContactLink.findUnique({ where: { studentId: studentProfileId } }),
-    db.invoiceSyncRun.findFirst({
-      where: {
-        scope: InvoiceSyncScope.STUDENT,
-        studentId: studentProfileId,
-      },
-      orderBy: { startedAt: "desc" },
-    }),
-    db.invoice.aggregate({
-      where: { studentId: studentProfileId },
-      _max: { lastSyncedAt: true },
-      _count: { id: true },
-    }),
+    getStudentClassCreditSummary(studentProfileId, 12),
+    isConfigured
+      ? db.invoice.findMany({
+          where: { studentId: studentProfileId },
+          orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
+          take: 60,
+        })
+      : Promise.resolve([]),
+    isConfigured ? db.invoiceContactLink.findUnique({ where: { studentId: studentProfileId } }) : Promise.resolve(null),
+    isConfigured
+      ? db.invoiceSyncRun.findFirst({
+          where: {
+            scope: InvoiceSyncScope.STUDENT,
+            studentId: studentProfileId,
+          },
+          orderBy: { startedAt: "desc" },
+        })
+      : Promise.resolve(null),
+    isConfigured
+      ? db.invoice.aggregate({
+          where: { studentId: studentProfileId },
+          _max: { lastSyncedAt: true },
+          _count: { id: true },
+        })
+      : Promise.resolve({ _max: { lastSyncedAt: null }, _count: { id: 0 } }),
   ]);
 
   const lastSyncedAt = aggregates._max.lastSyncedAt;
 
   return {
+    nativeInvoices,
+    creditSummary,
     invoices,
     link,
     latestRun,

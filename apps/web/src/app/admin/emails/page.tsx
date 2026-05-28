@@ -196,8 +196,8 @@ function statusLabel(status: EmailDeliveryStatus, locale: AppLocale) {
 
 function typeLabel(type: EmailDeliveryType, locale: AppLocale) {
   const labels = {
-    en: { MAGIC_LINK: "Magic link", WELCOME: "Welcome", CONSENT_COPY: "Consent copy", CLASS_REMINDER: "Class reminder" },
-    es: { MAGIC_LINK: "Enlace mágico", WELCOME: "Bienvenida", CONSENT_COPY: "Copia consentimiento", CLASS_REMINDER: "Recordatorio clase" },
+    en: { MAGIC_LINK: "Magic link", WELCOME: "Welcome", CONSENT_COPY: "Consent copy", CLASS_REMINDER: "Class reminder", INVOICE: "Invoice" },
+    es: { MAGIC_LINK: "Enlace mágico", WELCOME: "Bienvenida", CONSENT_COPY: "Copia consentimiento", CLASS_REMINDER: "Recordatorio clase", INVOICE: "Factura" },
   } as const;
   return labels[locale][type];
 }

@@ -226,6 +226,14 @@ const titleTranslations: Record<string, { en: string; es: string }> = {
     en: "Reminder: your class starts soon",
     es: "Recordatorio: tu clase empieza pronto",
   },
+  "New invoice available": {
+    en: "New invoice available",
+    es: "Nueva factura disponible",
+  },
+  "Nueva factura disponible": {
+    en: "New invoice available",
+    es: "Nueva factura disponible",
+  },
 };
 
 const exactBodyTranslations: Record<string, { en: string; es: string }> = {

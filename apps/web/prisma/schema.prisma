@@ -121,6 +121,7 @@ enum EmailDeliveryType {
   WELCOME
   CONSENT_COPY
   CLASS_REMINDER
+  INVOICE
 }
 
 enum EmailProvider {
@@ -230,6 +231,54 @@ enum InvoiceSyncStatus {
   FAILED
 }
 
+enum NativeInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  CLOSED
+  VOID
+}
+
+enum NativeInvoicePaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  WOMPI
+  MERCADO_PAGO
+  OTHER
+}
+
+enum NativeInvoicePaymentStatus {
+  ACTIVE
+  VOID
+}
+
+enum ClassCreditLedgerEntryType {
+  INVOICE_GRANT
+  CLASS_COMPLETED
+  CLASS_NO_SHOW
+  MANUAL_ADJUSTMENT
+  REVERSAL
+}
+
+enum UserLoginActivityStatus {
+  SUCCESS
+  FAILED
+}
+
+enum UserLoginAuthMethod {
+  CREDENTIALS
+  MAGIC_LINK
+}
+
+enum UserLoginDeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  BOT
+  UNKNOWN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -252,6 +301,13 @@ model User {
   notifications            Notification[]
   progressUpdates          ProgressRecord[]  @relation("ProgressUpdatedBy")
   triggeredInvoiceSyncRuns InvoiceSyncRun[]  @relation("InvoiceSyncTriggeredBy")
+  nativeInvoiceRecipients   NativeInvoice[]  @relation("NativeInvoiceRecipient")
+  createdNativeInvoices     NativeInvoice[]  @relation("NativeInvoiceCreatedBy")
+  updatedNativeInvoices     NativeInvoice[]  @relation("NativeInvoiceUpdatedBy")
+  createdNativeInvoicePayments NativeInvoicePayment[] @relation("NativeInvoicePaymentCreatedBy")
+  voidedNativeInvoicePayments  NativeInvoicePayment[] @relation("NativeInvoicePaymentVoidedBy")
+  uploadedNativeInvoicePaymentAttachments NativeInvoicePaymentAttachment[] @relation("NativeInvoicePaymentAttachmentUploadedBy")
+  createdClassCreditLedgerEntries ClassCreditLedgerEntry[] @relation("ClassCreditLedgerCreatedBy")
   studentLogEntries        StudentLogEntry[] @relation("StudentLogAuthor")
   sentInvitations          Invitation[]      @relation("InvitationSender")
   acceptedInvitations      Invitation[]      @relation("InvitationAcceptedBy")
@@ -270,6 +326,7 @@ model User {
   createdAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementCreatedBy")
   updatedAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementUpdatedBy")
   appAnnouncementDismissals     AppAnnouncementDismissal[]
+  loginActivities               UserLoginActivity[]
 
   @@index([role])
 }
@@ -293,6 +350,10 @@ model StudentProfile {
   studentThreads      MessageThread[]        @relation("ThreadStudent")
   recurringSeries     RecurringClassSeries[]
   invoices            Invoice[]
+  nativeInvoices      NativeInvoice[]
+  nativeInvoicePayments NativeInvoicePayment[]
+  billingProfile      StudentBillingProfile?
+  classCreditLedgerEntries ClassCreditLedgerEntry[]
   invoiceContactLink  InvoiceContactLink?
   invoiceSyncRuns     InvoiceSyncRun[]
   logEntries          StudentLogEntry[]
@@ -440,6 +501,7 @@ model ClassSession {
   reminderDeliveries  ClassReminderDelivery[]
   emailDeliveryLogs    EmailDeliveryLog[]
   attachments         ClassSessionAttachment[]
+  classCreditLedgerEntries ClassCreditLedgerEntry[]
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
@@ -1249,6 +1311,195 @@ model Invoice {
 
   @@index([studentId, issueDate])
   @@index([studentId, status, updatedAt])
+}
+
+model StudentBillingProfile {
+  id                      String   @id @default(cuid())
+  studentId               String   @unique
+  defaultSessionCount     Int      @default(4)
+  pricePerClassCop        Int      @default(70834)
+  notes                   String?
+  autoGenerateEnabled     Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([autoGenerateEnabled])
+}
+
+model NativeInvoiceSequence {
+  id         String   @id @default(cuid())
+  year       Int      @unique
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+model NativeInvoice {
+  id                    String              @id @default(cuid())
+  invoiceNumber         String              @unique
+  studentId             String
+  recipientUserId       String?
+  createdByUserId       String?
+  updatedByUserId       String?
+  recipientName         String
+  recipientEmail        String
+  recipientRole         String?
+  studentNameSnapshot   String
+  status                NativeInvoiceStatus @default(DRAFT)
+  currency              String              @default("COP")
+  issueDate             DateTime
+  dueDate               DateTime
+  periodStart           DateTime
+  periodEnd             DateTime
+  sessionCount          Int
+  cadenceLabel          String
+  pricePerClassCop      Int
+  subtotalCop           Int
+  taxCop                Int                 @default(0)
+  totalCop              Int
+  balanceCop            Int
+  pdfBytes              Bytes?
+  pdfSha256             String?
+  pdfGeneratedAt        DateTime?
+  emailedAt             DateTime?
+  emailStatus           EmailDeliveryStatus?
+  emailError            String?
+  paymentProvider       String?
+  paymentUrl            String?
+  paymentProviderStatus String?
+  legalFooter           String?
+  notes                 String?
+  openedAt              DateTime?
+  paidAt                DateTime?
+  closedAt              DateTime?
+  voidedAt              DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recipient   User?          @relation("NativeInvoiceRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  createdBy   User?          @relation("NativeInvoiceCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedBy   User?          @relation("NativeInvoiceUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  lineItems   NativeInvoiceLineItem[]
+  payments    NativeInvoicePayment[]
+  creditLedgerEntries ClassCreditLedgerEntry[]
+
+  @@index([studentId, issueDate])
+  @@index([status, dueDate])
+  @@index([recipientUserId, issueDate])
+}
+
+model NativeInvoiceLineItem {
+  id           String   @id @default(cuid())
+  invoiceId    String
+  description  String
+  quantity     Int
+  unitPriceCop Int
+  totalCop     Int
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoice NativeInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, sortOrder])
+}
+
+model NativeInvoicePayment {
+  id              String                     @id @default(cuid())
+  invoiceId       String
+  studentId       String
+  amountCop       Int
+  method          NativeInvoicePaymentMethod
+  paymentDate     DateTime
+  reference       String?
+  notes           String?
+  status          NativeInvoicePaymentStatus @default(ACTIVE)
+  createdByUserId String
+  voidedByUserId  String?
+  voidedAt        DateTime?
+  voidReason      String?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  invoice     NativeInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy   User           @relation("NativeInvoicePaymentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  voidedBy    User?          @relation("NativeInvoicePaymentVoidedBy", fields: [voidedByUserId], references: [id], onDelete: SetNull)
+  attachments NativeInvoicePaymentAttachment[]
+
+  @@index([invoiceId, status, paymentDate])
+  @@index([studentId, paymentDate])
+  @@index([createdByUserId, createdAt])
+}
+
+model NativeInvoicePaymentAttachment {
+  id               String   @id @default(cuid())
+  paymentId        String
+  uploadedByUserId String
+  storageKey       String
+  originalName     String
+  mimeType         String
+  sizeBytes        Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  payment    NativeInvoicePayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  uploadedBy User                 @relation("NativeInvoicePaymentAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId, createdAt])
+  @@index([uploadedByUserId, createdAt])
+}
+
+model ClassCreditLedgerEntry {
+  id              String                     @id @default(cuid())
+  studentId       String
+  invoiceId       String?
+  classSessionId  String?
+  type            ClassCreditLedgerEntryType
+  delta           Int
+  reason          String?
+  note            String?
+  createdByUserId String?
+  effectiveAt     DateTime                   @default(now())
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  invoice      NativeInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  classSession ClassSession?  @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
+  createdBy    User?          @relation("ClassCreditLedgerCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, effectiveAt])
+  @@index([invoiceId])
+  @@index([classSessionId])
+  @@index([type, createdAt])
+}
+
+model UserLoginActivity {
+  id             String                  @id @default(cuid())
+  status         UserLoginActivityStatus
+  authMethod     UserLoginAuthMethod
+  userId         String?
+  emailAttempted String
+  roleSnapshot   Role?
+  failureReason  String?
+  ipAddress      String?
+  countryCode    String?
+  userAgent      String?
+  deviceType     UserLoginDeviceType     @default(UNKNOWN)
+  browserName    String?
+  browserVersion String?
+  osName         String?
+  createdAt      DateTime                @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([emailAttempted, createdAt])
+  @@index([status, createdAt])
 }
 
 model InvoiceContactLink {

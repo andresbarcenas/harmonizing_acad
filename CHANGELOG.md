@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.0] - 2026-05-28
+
+### Added
+- Native Harmonizing invoicing with admin invoice creation, monthly drafts, next-month generation, branded PDF downloads, open/send workflow, email logging, and in-app invoice notifications.
+- Student billing profiles with configurable class allowance and COP price-per-class defaults for native invoice generation.
+- Payment tracking ledger with manual payments, partial balances, paid/open recalculation, voiding, and protected receipt attachments.
+- Class credit ledger that grants credits from opened invoices, consumes billable completed/no-show classes, supports reversals, and allows admin manual adjustments.
+- Admin account creation from `/admin/access` with temporary passwords while keeping admin accounts password-only.
+- Login activity audit trail for successful and failed credentials/magic-link sign-ins with device, browser, IP, and country metadata.
+- Collapsible admin desktop sidebar with a persisted icon rail preference per browser.
+
+### Changed
+- Student and parent invoice pages now prioritize native Harmonizing invoices, payment history, balances, credit summaries, and protected invoice/receipt downloads.
+- Class completion and session update flows now update class credits idempotently for billable class outcomes.
+- Admin invoice workspace now focuses on native billing while keeping Alegra as a secondary external reference.
+- Development and deployment docs now include native invoicing, payment/credit ledger, login activity retention, and billing security roadmap updates.
+
 ## [0.9.0] - 2026-05-28
 
 ### Added

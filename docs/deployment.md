@@ -21,6 +21,11 @@ Configure these variables in the `apps/web` Vercel project for Production:
 - `ALEGRA_API_EMAIL`
 - `ALEGRA_API_TOKEN`
 - `INVOICE_SYNC_HOURS=24`
+- `BILLING_BUSINESS_NAME=Harmonizing Academy`
+- `BILLING_TAX_ID` (optional)
+- `BILLING_ADDRESS` (optional)
+- `BILLING_EMAIL` (optional)
+- `BILLING_LEGAL_FOOTER` (optional legal/tax footer for native invoice PDFs)
 
 Generate long random secrets locally when needed:
 
@@ -38,17 +43,23 @@ npx vercel@latest blob create-store harmonizing --access private --yes --environ
 
 Neon injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Resend injects `RESEND_API_KEY`; configure `RESEND_FROM_EMAIL` with a verified sender/domain. Magic-link sign-in emails, consent receipt emails, and class reminder emails all use this sender. Vercel Blob injects `BLOB_READ_WRITE_TOKEN`; production must point that variable at the private `harmonizing` Blob store.
 
+Native Harmonizing invoices use the billing identity variables above to render private PDF attachments. Alegra credentials remain optional and are used only for the external/reference sync and admin explorer.
+
 Profile images, practice videos, and repertoire/sheet attachments are uploaded to the private production Blob store. Avatars are served through authenticated app routes so profile uploads work with a private-only store while existing public avatar URLs continue to render.
 
 - `/api/media/profile-images/[userId]`
 - `/api/media/videos/[videoId]`
 - `/api/media/repertoire-attachments/[attachmentId]`
+- `/api/media/class-attachments/[attachmentId]`
+- `/api/invoices/native/payments/attachments/[attachmentId]`
 
 Current upload surfaces that must remain private-store compatible:
 
 - Profile photos through `/api/uploads/profile-image`.
 - Student practice videos through `/api/videos`.
 - Repertoire and sheet music files through `/api/progress/repertoire/[repertoireItemId]/attachments`.
+- Class materials through teacher class-completion attachments.
+- Native invoice payment receipts through the admin invoice payment ledger.
 
 Do not add `access: "public"` for production uploads while `BLOB_READ_WRITE_TOKEN` points to the private `harmonizing` store. New file-upload features should write private blobs and expose files through authenticated app routes with role checks.
 
@@ -135,5 +146,6 @@ It intentionally does not run `bootstrap:prod`; admin bootstrap stays manual bec
 - If `NEXTAUTH_URL` changes, redeploy so the new environment value applies.
 - Student consent signing stores the generated PDF privately in Postgres and sends a copy by Resend. If Resend is unavailable, the signature remains valid and `/admin/consents` shows the skipped/failed email state.
 - Student practice videos and repertoire/sheet attachments are protected media. Admins can access all, teachers can access assigned students only, and students can access only their own media. Manual QA should verify that a student cannot open another student's `/api/media/videos/...` or `/api/media/repertoire-attachments/...` URL.
+- Login activity records successful and failed sign-in attempts with IP, country header, browser, OS, and device metadata. Retain 180 days by default and run `npm run cleanup:login-activity` from `apps/web` when manual cleanup is needed.
 - The daily invoice cron is Hobby-safe. Class reminder email code remains available at `/api/cron/class-reminders`, but it is not scheduled on Vercel yet because Hobby accounts reject more-than-daily cron schedules.
 - Disable Vercel's native Git auto-deploy if this GitHub Actions workflow is the production deploy source, otherwise `main` pushes can create duplicate deployments.
