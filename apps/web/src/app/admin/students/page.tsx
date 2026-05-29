@@ -114,6 +114,9 @@ export default async function AdminStudentsPage() {
                   {dictionary.common.plan}: {student.subscriptions[0] ? planLabel(student.subscriptions[0].plan, viewer.locale) : dictionary.admin.noActivePlan}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
+                  {dictionary.settings.schedulingTimezone}: {student.user.timezone}
+                </p>
+                <p className="text-xs text-[var(--color-ink-soft)]">
                   {dictionary.student.currentLevel}: {studentLevelLabel(student.progressRecords[0]?.level, viewer.locale)}
                 </p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
@@ -132,6 +135,7 @@ export default async function AdminStudentsPage() {
                     userId: student.user.id,
                     name: student.user.name,
                     email: student.user.email,
+                    timezone: student.user.timezone,
                     teacherId: student.assignment?.teacher.id,
                     phone: student.phone,
                     preferredInstrument: student.preferredInstrument,

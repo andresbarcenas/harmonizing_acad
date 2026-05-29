@@ -22,7 +22,7 @@ export async function getAdminScheduleData(viewer: AppViewer) {
   }
 
   const now = new Date();
-  const [students, teachers, sessions, classRequests] = await Promise.all([
+  const [students, teachers, sessions, classRequests, recurringSeries] = await Promise.all([
     db.studentProfile.findMany({
       include: {
         user: true,
@@ -65,9 +65,24 @@ export async function getAdminScheduleData(viewer: AppViewer) {
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 30,
     }),
+    db.recurringClassSeries.findMany({
+      include: {
+        student: { include: { user: true } },
+        teacher: { include: { user: true } },
+        sessions: {
+          where: {
+            startsAtUtc: { gte: now },
+            status: { not: SessionStatus.CANCELLED },
+          },
+          select: { id: true },
+        },
+      },
+      orderBy: [{ active: "desc" }, { createdAt: "desc" }],
+      take: 40,
+    }),
   ]);
 
-  return { students, teachers, sessions, classRequests };
+  return { students, teachers, sessions, classRequests, recurringSeries };
 }
 
 export async function getTeacherScheduleData(viewer: AppViewer, options: { studentId?: string | null } = {}) {

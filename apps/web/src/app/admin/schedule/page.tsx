@@ -3,6 +3,7 @@ import { ClassRequestStatus, Role } from "@prisma/client";
 import { ClassRequestActions } from "@/components/schedule/class-request-actions";
 import { ClassSessionDayList } from "@/components/schedule/class-session-day-list";
 import { SingleClassBookingForm } from "@/components/schedule/single-class-booking-form";
+import { SeriesActions } from "@/components/teacher/series-actions";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,11 @@ import { requireViewer } from "@/features/auth/server";
 import { getAdminScheduleData } from "@/lib/data";
 import { formatDateTimeInZone } from "@/lib/i18n";
 import { classRequestStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
+
+const dayNames = {
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+} as const;
 
 export default async function AdminSchedulePage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -51,6 +57,71 @@ export default async function AdminSchedulePage() {
             defaultTimezone={viewer.timezone}
             locale={viewer.locale}
           />
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>{isSpanish ? "Series recurrentes" : "Recurring series"}</CardTitle>
+            <CardDescription>
+              {isSpanish
+                ? "Gestiona series activas o detenidas sin perder el historial de clases completadas."
+                : "Manage active or stopped series without losing completed class history."}
+            </CardDescription>
+          </div>
+          <Badge variant="gold">{data.recurringSeries.length}</Badge>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {data.recurringSeries.map((series) => (
+            <div key={series.id} className="rounded-[1.25rem] border border-[var(--color-border)] bg-white/70 p-4 shadow-[0_12px_30px_rgba(78,55,30,0.04)]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[var(--color-ink)]">{series.student.user.name}</p>
+                  <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                    {isSpanish ? "Docente" : "Teacher"}: <span className="font-semibold text-[var(--color-ink)]">{series.teacher.user.name}</span>
+                  </p>
+                </div>
+                <Badge variant={series.active ? "gold" : "default"}>{series.active ? (isSpanish ? "Activa" : "Active") : (isSpanish ? "Detenida" : "Stopped")}</Badge>
+              </div>
+              <div className="mt-3 grid gap-2 rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-cream)]/70 p-3 text-xs text-[var(--color-ink-soft)] sm:grid-cols-2">
+                <p>
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Días" : "Days"}:</span>{" "}
+                  {series.weekdays.map((day) => dayNames[viewer.locale][day] ?? day).join(", ")}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Hora" : "Time"}:</span> {series.startTimeLocal} · {series.durationMin} min
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Frecuencia" : "Frequency"}:</span>{" "}
+                  {isSpanish ? "cada" : "every"} {series.intervalWeeks} {isSpanish ? "semana(s)" : "week(s)"}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Próximas" : "Upcoming"}:</span> {series.sessions.length}
+                </p>
+                <p className="sm:col-span-2">
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Zona" : "Timezone"}:</span> {series.timezone} ·{" "}
+                  {recurringTimezoneModeLabel(series.timezoneMode, viewer.locale)}
+                </p>
+                <p className="sm:col-span-2">
+                  <span className="font-semibold text-[var(--color-ink)]">{isSpanish ? "Creada" : "Created"}:</span>{" "}
+                  {formatDateTimeInZone(series.createdAt, viewer.timezone, viewer.locale)}
+                  {series.stoppedAt
+                    ? ` · ${isSpanish ? "detenida" : "stopped"} ${formatDateTimeInZone(series.stoppedAt, viewer.timezone, viewer.locale)}`
+                    : ""}
+                </p>
+              </div>
+              {series.lessonFocus ? (
+                <p className="mt-3 rounded-xl border border-[var(--color-gold)]/25 bg-[var(--color-gold-soft)]/55 px-3 py-2 text-xs text-[var(--color-ink)]">
+                  <span className="font-semibold">{isSpanish ? "Enfoque" : "Focus"}:</span> {series.lessonFocus}
+                </p>
+              ) : null}
+              <SeriesActions seriesId={series.id} isActive={series.active} locale={viewer.locale} />
+            </div>
+          ))}
+          {!data.recurringSeries.length ? (
+            <p className="text-sm text-[var(--color-ink-soft)]">{isSpanish ? "No hay series recurrentes creadas." : "No recurring series created."}</p>
+          ) : null}
         </div>
       </Card>
 
@@ -116,4 +187,10 @@ export default async function AdminSchedulePage() {
       </div>
     </AppShell>
   );
+}
+
+function recurringTimezoneModeLabel(mode: string | null | undefined, locale: "en" | "es") {
+  if (mode === "TEACHER_TIME") return locale === "es" ? "Hora local docente" : "Teacher local time";
+  if (mode === "CUSTOM_TIMEZONE") return locale === "es" ? "Zona personalizada" : "Custom timezone";
+  return locale === "es" ? "Hora local del estudiante" : "Student local time";
 }

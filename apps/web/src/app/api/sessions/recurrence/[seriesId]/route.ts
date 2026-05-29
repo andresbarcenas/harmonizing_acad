@@ -11,7 +11,7 @@ export async function PATCH(_: Request, { params }: Params) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
+  if (auth.user.role !== Role.ADMIN && (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile)) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
@@ -21,7 +21,7 @@ export async function PATCH(_: Request, { params }: Params) {
   const series = await db.recurringClassSeries.findFirst({
     where: {
       id: seriesId,
-      teacherId: auth.user.teacherProfile.id,
+      ...(auth.user.role === Role.TEACHER ? { teacherId: auth.user.teacherProfile!.id } : {}),
     },
     include: {
       student: { include: { user: true } },
@@ -52,7 +52,7 @@ export async function PATCH(_: Request, { params }: Params) {
     userId: series.student.userId,
     type: NotificationType.CLASS_REMINDER,
     title: "Recurring series paused",
-    body: "Your teacher stopped the upcoming classes in this series.",
+    body: auth.user.role === Role.ADMIN ? "The academy stopped the upcoming classes in this series." : "Your teacher stopped the upcoming classes in this series.",
     actionUrl: "/schedule",
   });
 
@@ -63,7 +63,7 @@ export async function DELETE(_: Request, { params }: Params) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
-  if (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile) {
+  if (auth.user.role !== Role.ADMIN && (auth.user.role !== Role.TEACHER || !auth.user.teacherProfile)) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
 
@@ -72,7 +72,7 @@ export async function DELETE(_: Request, { params }: Params) {
   const series = await db.recurringClassSeries.findFirst({
     where: {
       id: seriesId,
-      teacherId: auth.user.teacherProfile.id,
+      ...(auth.user.role === Role.TEACHER ? { teacherId: auth.user.teacherProfile!.id } : {}),
     },
     include: {
       student: { include: { user: true } },
@@ -100,7 +100,7 @@ export async function DELETE(_: Request, { params }: Params) {
     userId: series.student.userId,
     type: NotificationType.CLASS_REMINDER,
     title: "Recurring series deleted",
-    body: "Your teacher deleted a pending class series.",
+    body: auth.user.role === Role.ADMIN ? "The academy deleted a pending class series." : "Your teacher deleted a pending class series.",
     actionUrl: "/schedule",
   });
 

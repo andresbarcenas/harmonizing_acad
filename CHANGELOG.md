@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.1] - 2026-05-29
+
+### Added
+- Searchable IANA timezone selector for scheduling timezone preferences and admin timezone fields, with browser-supported timezone lists and fallback options.
+- Admin recurring-series management on `/admin/schedule`, including series details, active/stopped state, upcoming class counts, and stop/delete actions.
+
+### Changed
+- Browser timezone detection is now only a visible suggestion; saved scheduling timezones are changed only through explicit user/admin selection.
+- Custom timezone scheduling now uses the same searchable timezone picker instead of a free-text field.
+- Recurring-series stop/delete actions now support admins for any series while keeping teachers limited to their own series.
+
 ## [0.10.0] - 2026-05-28
 
 ### Added

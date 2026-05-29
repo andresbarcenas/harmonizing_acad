@@ -29,7 +29,6 @@ import { useSyncExternalStore, type ReactNode } from "react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
-import { TimezoneSync } from "@/components/system/timezone-sync";
 import { type AppShellNavGroup, type AppShellNavLink, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
 import { cn } from "@/lib/utils";
 
@@ -83,7 +82,6 @@ export function DesktopAppShellFrame({
         collapsed ? "lg:grid-cols-[5.25rem_minmax(0,1fr)]" : "lg:grid-cols-[17rem_minmax(0,1fr)]",
       )}
     >
-      <TimezoneSync />
       <aside
         id="desktop-app-sidebar"
         className={cn(

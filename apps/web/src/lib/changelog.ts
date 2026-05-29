@@ -11,6 +11,27 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.1",
+    date: "2026-05-29",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Searchable IANA timezone selector for scheduling timezone preferences and admin timezone fields, with browser-supported timezone lists and fallback options.",
+          "Admin recurring-series management on the admin schedule page, including series details, active/stopped state, upcoming class counts, and stop/delete actions.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Browser timezone detection is now only a visible suggestion; saved scheduling timezones are changed only through explicit user/admin selection.",
+          "Custom timezone scheduling now uses the same searchable timezone picker instead of a free-text field.",
+          "Recurring-series stop/delete actions now support admins for any series while keeping teachers limited to their own series.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.0",
     date: "2026-05-28",
     sections: [

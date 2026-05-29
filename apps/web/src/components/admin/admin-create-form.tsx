@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { TimezoneSelect } from "@/components/system/timezone-select";
 import { Input } from "@/components/ui/input";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
 
@@ -76,8 +77,8 @@ export function AdminCreateForm({ locale = "en" }: { locale?: AppLocale }) {
         <Input name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required />
       </label>
       <label className="space-y-1 text-left">
-        <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.settings.detectedTimezone}</span>
-        <Input name="timezone" placeholder="America/New_York" />
+        <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.settings.schedulingTimezone}</span>
+        <TimezoneSelect name="timezone" locale={locale} />
       </label>
       <label className="space-y-1 text-left">
         <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.settings.primaryLanguage}</span>

@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { InstrumentSelect } from "@/components/instrument-select";
 import { StudentLevelForm } from "@/components/progress/progress-forms";
+import { TimezoneSelect } from "@/components/system/timezone-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -28,6 +29,7 @@ export function StudentEditForm({
     userId: string;
     name: string;
     email: string;
+    timezone: string;
     teacherId?: string | null;
     phone?: string | null;
     preferredInstrument?: string | null;
@@ -85,6 +87,7 @@ export function StudentEditForm({
     const payload = {
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
+      timezone: String(formData.get("timezone") ?? "").trim() || undefined,
       teacherId: String(formData.get("teacherId") ?? "").trim() || undefined,
       monthlyClassCount: Number(formData.get("monthlyClassCount") ?? initial.activePlan?.monthlyClassCount ?? 4),
       phone: String(formData.get("phone") ?? "").trim() || undefined,
@@ -205,6 +208,10 @@ export function StudentEditForm({
               <Input name="phone" defaultValue={initial.phone ?? ""} placeholder={dictionary.forms.phoneOptional} />
               <InstrumentSelect name="preferredInstrument" defaultValue={initial.preferredInstrument} locale={locale} compact required aria-label={dictionary.forms.preferredInstrumentOptional} />
             </div>
+            <label className="space-y-1 text-left">
+              <span className="text-xs font-semibold text-[var(--color-ink-soft)]">{dictionary.forms.timezoneOptional}</span>
+              <TimezoneSelect name="timezone" defaultValue={initial.timezone} locale={locale} />
+            </label>
             <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/72 p-3 text-left">
               <div className="mb-2">
                 <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">{dictionary.admin.currentPlanTitle}</p>

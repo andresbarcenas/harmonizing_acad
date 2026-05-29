@@ -3,6 +3,7 @@ import { PasswordChangeForm } from "@/components/auth/password-change-form";
 import { ProfileImageForm } from "@/components/auth/profile-image-form";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LanguagePreferenceForm } from "@/components/i18n/language-toggle";
+import { TimezonePreferenceForm } from "@/components/system/timezone-preference-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
@@ -30,7 +31,10 @@ export default async function SettingsPage() {
         <Card>
           <CardTitle>{dictionary.settings.profile}</CardTitle>
           <CardDescription>{viewer.email}</CardDescription>
-          <p className="mt-3 text-sm text-[var(--color-ink-soft)]">{dictionary.settings.detectedTimezone}: {viewer.timezone}</p>
+          <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
+            {dictionary.settings.schedulingTimezone}: {viewer.timezone}
+          </p>
+          <TimezonePreferenceForm currentTimezone={viewer.timezone} locale={viewer.locale} />
           <LanguagePreferenceForm locale={viewer.locale} preference={viewer.localePreference} />
           <ProfileImageForm initialImage={viewer.image} userName={viewer.name} locale={viewer.locale} />
           <div className="mt-4">

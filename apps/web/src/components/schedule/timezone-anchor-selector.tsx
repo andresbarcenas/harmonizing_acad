@@ -2,7 +2,7 @@
 
 import { RecurringTimezoneMode } from "@prisma/client";
 
-import { Input } from "@/components/ui/input";
+import { TimezoneSelect } from "@/components/system/timezone-select";
 import { getDictionary } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
 
@@ -71,12 +71,12 @@ export function TimezoneAnchorSelector({
               <label htmlFor={customTimezoneId} className="text-sm font-semibold text-[var(--color-ink-soft)]">
                 {dictionary.teacher.recurringCustomTimezone}
               </label>
-              <Input
+              <TimezoneSelect
                 id={customTimezoneId}
                 name="customTimezone"
                 value={customTimezone}
-                onChange={(event) => onCustomTimezoneChange(event.target.value)}
-                placeholder="America/New_York"
+                onChange={onCustomTimezoneChange}
+                locale={locale}
                 required
               />
             </div>

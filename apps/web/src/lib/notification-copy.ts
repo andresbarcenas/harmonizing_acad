@@ -333,6 +333,14 @@ const exactBodyTranslations: Record<string, { en: string; es: string }> = {
     en: "Your teacher stopped the upcoming classes in this series.",
     es: "Tu docente detuvo las próximas clases de esta serie.",
   },
+  "The academy stopped the upcoming classes in this series.": {
+    en: "The academy stopped the upcoming classes in this series.",
+    es: "La academia detuvo las próximas clases de esta serie.",
+  },
+  "La academia detuvo las próximas clases de esta serie.": {
+    en: "The academy stopped the upcoming classes in this series.",
+    es: "La academia detuvo las próximas clases de esta serie.",
+  },
   "Your teacher deleted a pending class series.": {
     en: "Your teacher deleted a pending class series.",
     es: "Tu docente eliminó una serie de clases pendiente.",
@@ -340,6 +348,14 @@ const exactBodyTranslations: Record<string, { en: string; es: string }> = {
   "Tu docente eliminó una serie de clases pendiente.": {
     en: "Your teacher deleted a pending class series.",
     es: "Tu docente eliminó una serie de clases pendiente.",
+  },
+  "The academy deleted a pending class series.": {
+    en: "The academy deleted a pending class series.",
+    es: "La academia eliminó una serie de clases pendiente.",
+  },
+  "La academia eliminó una serie de clases pendiente.": {
+    en: "The academy deleted a pending class series.",
+    es: "La academia eliminó una serie de clases pendiente.",
   },
   "Your teacher updated your progress.": {
     en: "Your teacher updated your progress.",

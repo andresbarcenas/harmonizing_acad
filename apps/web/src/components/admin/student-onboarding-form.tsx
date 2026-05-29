@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { displayInstrument, InstrumentSelect } from "@/components/instrument-select";
+import { TimezoneSelect } from "@/components/system/timezone-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getDictionary, type AppLocale } from "@/lib/i18n";
@@ -68,6 +69,7 @@ export function StudentOnboardingForm({
       teacherId: String(formData.get("teacherId") ?? ""),
       monthlyClassCount: Number(formData.get("monthlyClassCount") ?? 4),
       profileImage: profileImage.trim() || undefined,
+      timezone: String(formData.get("timezone") ?? "").trim() || undefined,
       phone: String(formData.get("phone") ?? "").trim() || undefined,
       preferredInstrument: String(formData.get("preferredInstrument") ?? "").trim() || undefined,
       bio: String(formData.get("bio") ?? "").trim() || undefined,
@@ -186,6 +188,14 @@ export function StudentOnboardingForm({
           </label>
           <InstrumentSelect id="preferredInstrument" name="preferredInstrument" locale={locale} required />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="timezone" className="text-sm font-semibold text-[var(--color-ink-soft)]">
+          {dictionary.forms.timezoneOptional}
+        </label>
+        <TimezoneSelect id="timezone" name="timezone" locale={locale} />
+        <p className="text-xs text-[var(--color-ink-soft)]">{dictionary.settings.timezoneDescription}</p>
       </div>
 
       <div className="space-y-1.5">
