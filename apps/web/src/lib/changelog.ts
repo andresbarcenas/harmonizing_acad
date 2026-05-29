@@ -11,6 +11,18 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.3",
+    date: "2026-05-29",
+    sections: [
+      {
+        title: "Fixed",
+        items: [
+          "Admin teacher impersonation no longer loops in production when redirecting to teacher pages; middleware now lets audited admin impersonation sessions reach teacher routes so server-side impersonation validation can resolve the effective teacher.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.2",
     date: "2026-05-29",
     sections: [

@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
 import {
-  IMPERSONATION_COOKIE_NAME,
   impersonationCookieOptions,
   startTeacherImpersonation,
 } from "@/lib/admin-impersonation";
 import { requireApiUser } from "@/lib/api-auth";
+import { IMPERSONATION_COOKIE_NAME } from "@/lib/impersonation-cookie";
 
 function message(locale: string | null | undefined, en: string, es: string) {
   return locale === "es" ? es : en;

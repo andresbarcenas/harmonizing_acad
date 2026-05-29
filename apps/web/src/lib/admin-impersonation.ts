@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import { AdminImpersonationStatus, Role, TeacherStatus, type Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { IMPERSONATION_COOKIE_NAME } from "@/lib/impersonation-cookie";
 
-export const IMPERSONATION_COOKIE_NAME = "harmonizing_impersonation";
 export const IMPERSONATION_MAX_AGE_SECONDS = 60 * 60;
 
 export type UserWithProfiles = Prisma.UserGetPayload<{

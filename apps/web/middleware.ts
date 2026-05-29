@@ -1,16 +1,25 @@
 import { withAuth } from "next-auth/middleware";
 
+import { IMPERSONATION_COOKIE_NAME } from "@/lib/impersonation-cookie";
 import { canAccessPath } from "@/lib/rbac";
+
+function isTeacherPath(pathname: string) {
+  return pathname === "/teacher" || pathname.startsWith("/teacher/");
+}
 
 export default withAuth(
   function middleware(req) {
     const role = req.nextauth.token?.role;
+    const pathname = req.nextUrl.pathname;
 
     if (typeof role !== "string") {
       return Response.redirect(new URL("/sign-in", req.url));
     }
 
-    if (!canAccessPath(role as never, req.nextUrl.pathname)) {
+    const hasImpersonationCookie = Boolean(req.cookies.get(IMPERSONATION_COOKIE_NAME)?.value);
+    const allowAdminTeacherImpersonation = role === "ADMIN" && hasImpersonationCookie && isTeacherPath(pathname);
+
+    if (!allowAdminTeacherImpersonation && !canAccessPath(role as never, pathname)) {
       return Response.redirect(new URL("/", req.url));
     }
 

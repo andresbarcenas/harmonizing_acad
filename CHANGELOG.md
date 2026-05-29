@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.3] - 2026-05-29
+
+### Fixed
+- Admin teacher impersonation no longer loops in production when redirecting to teacher pages; middleware now lets audited admin impersonation sessions reach `/teacher/*` so server-side impersonation validation can resolve the effective teacher.
+
 ## [0.10.2] - 2026-05-29
 
 ### Added
