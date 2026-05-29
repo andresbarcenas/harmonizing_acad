@@ -1,4 +1,4 @@
-import { ClassRequestStatus, Role } from "@prisma/client";
+import { ClassRequestStatus, Role, SessionStatus } from "@prisma/client";
 
 import { ClassRequestActions } from "@/components/schedule/class-request-actions";
 import { ClassSessionDayList } from "@/components/schedule/class-session-day-list";
@@ -78,7 +78,8 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                 lessonFocus: session.lessonFocus,
                 attachmentCount: session._count.attachments,
                 detailHref: `/classes/${session.id}`,
-                completeHref: `/teacher/classes/${session.id}/complete`,
+                completeHref: session.status === SessionStatus.RESCHEDULE_PENDING ? undefined : `/teacher/classes/${session.id}/complete`,
+                rescheduleHref: session.status === SessionStatus.RESCHEDULE_PENDING ? `/teacher/classes/${session.id}/reschedule` : undefined,
               }))}
             />
           </div>

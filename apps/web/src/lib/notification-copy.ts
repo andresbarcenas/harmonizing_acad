@@ -62,6 +62,14 @@ const titleTranslations: Record<string, { en: string; es: string }> = {
     en: "Class change rejected",
     es: "Cambio de clase rechazado",
   },
+  "Class rescheduled": {
+    en: "Class rescheduled",
+    es: "Clase reagendada",
+  },
+  "Clase reagendada": {
+    en: "Class rescheduled",
+    es: "Clase reagendada",
+  },
   "New weekly video": {
     en: "New weekly video",
     es: "Nuevo video semanal",
@@ -260,6 +268,14 @@ const exactBodyTranslations: Record<string, { en: string; es: string }> = {
   "Tu nuevo horario está confirmado.": {
     en: "Your new time is confirmed.",
     es: "Tu nuevo horario está confirmado.",
+  },
+  "Your teacher confirmed the new class time.": {
+    en: "Your teacher confirmed the new class time.",
+    es: "Tu docente confirmó el nuevo horario de clase.",
+  },
+  "Tu docente confirmó el nuevo horario de clase.": {
+    en: "Your teacher confirmed the new class time.",
+    es: "Tu docente confirmó el nuevo horario de clase.",
   },
   "We kept your original time.": {
     en: "We kept your original time.",

@@ -24,6 +24,7 @@ export type ClassSessionListItem = {
   attachmentCount?: number;
   detailHref: string;
   completeHref?: string;
+  rescheduleHref?: string;
 };
 
 type DayGroup = {
@@ -153,6 +154,7 @@ function ClassSessionRow({
 
         <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
           <Link href={session.detailHref}><Button size="sm" variant="outline">{locale === "es" ? "Detalle" : "Detail"}</Button></Link>
+          {session.rescheduleHref ? <Link href={session.rescheduleHref}><Button size="sm" variant="gold">{locale === "es" ? "Reagendar" : "Reschedule"}</Button></Link> : null}
           {session.completeHref ? <Link href={session.completeHref}><Button size="sm" variant="gold">{locale === "es" ? "Completar" : "Complete"}</Button></Link> : null}
         </div>
       </div>

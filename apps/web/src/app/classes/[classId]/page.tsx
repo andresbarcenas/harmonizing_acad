@@ -26,7 +26,8 @@ export default async function ClassDetailPage({ params }: PageProps) {
 
   const isSpanish = viewer.locale === "es";
   const activePath = viewer.role === Role.ADMIN ? "/admin/schedule" : viewer.role === Role.TEACHER ? "/teacher/schedule" : viewer.role === Role.PARENT ? "/parent/schedule" : "/schedule";
-  const canComplete = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId;
+  const canComplete = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status !== SessionStatus.RESCHEDULE_PENDING;
+  const canDirectReschedule = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status === SessionStatus.RESCHEDULE_PENDING;
 
   return (
     <AppShell
@@ -72,6 +73,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
 
           <div className="mt-5 flex flex-wrap gap-2">
             <a href={session.meetingUrl} target="_blank" rel="noreferrer"><Button variant="gold" size="sm">{isSpanish ? "Entrar a clase" : "Join class"}</Button></a>
+            {canDirectReschedule ? <Link href={`/teacher/classes/${session.id}/reschedule`}><Button variant="gold" size="sm">{isSpanish ? "Reagendar" : "Reschedule"}</Button></Link> : null}
             {canComplete ? <Link href={`/teacher/classes/${session.id}/complete`}><Button variant="outline" size="sm">{isSpanish ? "Completar / actualizar" : "Complete / update"}</Button></Link> : null}
           </div>
         </Card>

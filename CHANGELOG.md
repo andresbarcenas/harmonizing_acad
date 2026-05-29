@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.4] - 2026-05-29
+
+### Added
+- Teachers can now directly choose the final new date/time for their own `RESCHEDULE_PENDING` classes from teacher schedule rows and class detail.
+- Added a teacher reschedule form with student/teacher timezone anchoring, original-time context, duration control, and optional visible response.
+
+### Changed
+- Direct teacher rescheduling validates future time, duration, teacher availability, blackout dates, and teacher/student conflicts before returning the class to `SCHEDULED`.
+- Pending student/parent reschedule requests for the class are closed as accepted with an audit-friendly confirmed-time note, and the student/requesting parent are notified.
+
 ## [0.10.3] - 2026-05-29
 
 ### Fixed

@@ -91,6 +91,15 @@ export const reviewClassRequestSchema = z.object({
   internalNote: optionalString(1000),
 });
 
+export const teacherDirectRescheduleSchema = z.object({
+  date: dateSchema,
+  startTimeLocal: timeSchema,
+  durationMin: durationSchema,
+  timezoneMode: z.enum(["STUDENT_TIME", "TEACHER_TIME"]).default("TEACHER_TIME"),
+  teacherResponse: optionalString(1000),
+});
+
 export type SingleClassBookingInput = z.infer<typeof singleClassBookingSchema>;
 export type CreateClassRequestInput = z.infer<typeof createClassRequestSchema>;
 export type ReviewClassRequestInput = z.infer<typeof reviewClassRequestSchema>;
+export type TeacherDirectRescheduleInput = z.infer<typeof teacherDirectRescheduleSchema>;

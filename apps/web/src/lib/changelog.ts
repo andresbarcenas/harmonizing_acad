@@ -11,6 +11,26 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.4",
+    date: "2026-05-29",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Teachers can now directly choose the final new date and time for their own reschedule-pending classes from teacher schedule rows and class detail.",
+          "Added a teacher reschedule form with student/teacher timezone anchoring, original-time context, duration control, and an optional visible response.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Direct teacher rescheduling validates future time, duration, teacher availability, blackout dates, and teacher/student conflicts before returning the class to scheduled.",
+          "Pending student or parent reschedule requests for the class are closed as accepted with an audit-friendly confirmed-time note, and the student/requesting parent are notified.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.3",
     date: "2026-05-29",
     sections: [
