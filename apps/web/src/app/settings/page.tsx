@@ -18,6 +18,7 @@ export default async function SettingsPage() {
   const consentStatus = viewer.role === "STUDENT" ? await getConsentStatusForUser(viewer.id) : null;
   const isSpanish = viewer.locale === "es";
   const canSetPasswordFromMagicLink = viewer.authMethod === "magic-link";
+  const accountChangesDisabled = viewer.isImpersonating;
 
   return (
     <AppShell role={viewer.role} activePath="/settings" userName={viewer.name} locale={viewer.locale}>
@@ -34,9 +35,19 @@ export default async function SettingsPage() {
           <p className="mt-3 text-sm text-[var(--color-ink-soft)]">
             {dictionary.settings.schedulingTimezone}: {viewer.timezone}
           </p>
-          <TimezonePreferenceForm currentTimezone={viewer.timezone} locale={viewer.locale} />
-          <LanguagePreferenceForm locale={viewer.locale} preference={viewer.localePreference} />
-          <ProfileImageForm initialImage={viewer.image} userName={viewer.name} locale={viewer.locale} />
+          {accountChangesDisabled ? (
+            <div className="mt-4 rounded-[1rem] border border-amber-200/80 bg-amber-50/72 p-3 text-sm text-amber-900">
+              {isSpanish
+                ? "Los cambios de perfil, idioma y zona horaria están desactivados mientras ves la cuenta como docente."
+                : "Profile, language, and timezone changes are disabled while viewing as a teacher."}
+            </div>
+          ) : (
+            <>
+              <TimezonePreferenceForm currentTimezone={viewer.timezone} locale={viewer.locale} />
+              <LanguagePreferenceForm locale={viewer.locale} preference={viewer.localePreference} />
+              <ProfileImageForm initialImage={viewer.image} userName={viewer.name} locale={viewer.locale} />
+            </>
+          )}
           <div className="mt-4">
             <SignOutButton label={dictionary.common.signOut} />
           </div>
@@ -59,7 +70,15 @@ export default async function SettingsPage() {
               ? dictionary.settings.setPasswordDescription
               : dictionary.settings.passwordSecurityDescription}
           </CardDescription>
-          <PasswordChangeForm locale={viewer.locale} allowPasswordSetupWithoutCurrent={canSetPasswordFromMagicLink} />
+          {accountChangesDisabled ? (
+            <div className="mt-4 rounded-[1rem] border border-amber-200/80 bg-amber-50/72 p-3 text-sm text-amber-900">
+              {isSpanish
+                ? "Los cambios de contraseña están desactivados durante la suplantación docente."
+                : "Password changes are disabled during teacher impersonation."}
+            </div>
+          ) : (
+            <PasswordChangeForm locale={viewer.locale} allowPasswordSetupWithoutCurrent={canSetPasswordFromMagicLink} />
+          )}
         </Card>
 
         {consentStatus?.signature ? (

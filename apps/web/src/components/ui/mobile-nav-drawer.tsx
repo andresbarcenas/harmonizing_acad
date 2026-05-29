@@ -85,9 +85,10 @@ type MobileNavDrawerProps = {
     primaryNavigation: string;
   };
   settingsHref?: string;
+  showLanguageToggle?: boolean;
 };
 
-export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, brandSubtitle, labels, settingsHref }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, brandSubtitle, labels, settingsHref, showLanguageToggle = true }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(() => defaultOpenGroups(groups));
 
@@ -158,7 +159,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
                 <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
                 <span className="truncate">{userName}</span>
               </Link>
-              <LanguageToggle locale={locale} authenticated compact />
+              {showLanguageToggle ? <LanguageToggle locale={locale} authenticated compact /> : null}
             </div>
 
             <nav className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-label={labels.primaryNavigation}>

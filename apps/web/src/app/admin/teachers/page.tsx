@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client";
 
 import { TeacherEditForm } from "@/components/admin/teacher-edit-form";
+import { TeacherImpersonationForm } from "@/components/admin/teacher-impersonation-form";
 import { TeacherOnboardingForm } from "@/components/admin/teacher-onboarding-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
@@ -82,6 +83,9 @@ export default async function AdminTeachersPage() {
                   }}
                   locale={viewer.locale}
                 />
+                <div className="mt-2 text-left">
+                  <TeacherImpersonationForm teacherUserId={teacher.user.id} teacherName={teacher.user.name} locale={viewer.locale} />
+                </div>
               </div>
             </div>
           ))}

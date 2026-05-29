@@ -257,7 +257,7 @@ export const en = {
     usedThisMonth: "used this month",
     currentLevel: "Current level",
     updatedByTeacher: "Updated by your teacher",
-    planSubtitle: "Invoice totals come from Alegra",
+    planSubtitle: "Monthly class allowance",
     personalizedSession: "Personalized session",
     noClassWeek: "You do not have a class scheduled this week.",
     noTeacher: "No teacher assigned yet.",
@@ -267,7 +267,7 @@ export const en = {
     upcomingGoals: "Upcoming goals",
     goal: "Goal",
     noGoals: "You do not have goals defined yet.",
-    planHelp: "Your class allowance stays in Harmonizing. Invoice amounts will come from Alegra when billing is configured.",
+    planHelp: "Your class allowance is managed in Harmonizing. Billing documents and payment status appear in Invoices when available.",
   },
   videos: {
     studentEyebrow: "Weekly practice",

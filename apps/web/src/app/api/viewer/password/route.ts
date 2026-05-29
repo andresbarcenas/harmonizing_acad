@@ -13,6 +13,13 @@ export async function PATCH(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
+  if (auth.user.isImpersonating) {
+    return NextResponse.json(
+      { error: message(auth.user.locale, "Password changes are disabled while impersonating a teacher.", "Los cambios de contraseña están desactivados durante la suplantación docente.") },
+      { status: 403 },
+    );
+  }
+
   const parsed = passwordChangeSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

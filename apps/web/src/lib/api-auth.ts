@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { resolveActiveImpersonation } from "@/lib/admin-impersonation";
 import { authOptions } from "@/lib/auth";
 import { ConsentRequiredError, consentRequiredResponse, ensureStudentConsent } from "@/lib/consent/service";
 import { db } from "@/lib/db";
@@ -9,6 +10,7 @@ import { getRequestLocale } from "@/lib/i18n/request";
 
 type RequireApiUserOptions = {
   skipConsent?: boolean;
+  ignoreImpersonation?: boolean;
 };
 
 export async function requireApiUser(options?: RequireApiUserOptions) {
@@ -30,12 +32,19 @@ export async function requireApiUser(options?: RequireApiUserOptions) {
     return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) } as const;
   }
 
-  const locale = await getRequestLocale(user.locale);
+  const impersonation = options?.ignoreImpersonation ? null : await resolveActiveImpersonation(user);
+  const effectiveUser = impersonation?.targetUser ?? user;
+  const locale = await getRequestLocale(effectiveUser.locale);
   const resolvedUser = {
-    ...user,
+    ...effectiveUser,
     locale,
-    localePreference: normalizeLocalePreference(user.locale),
+    localePreference: normalizeLocalePreference(effectiveUser.locale),
     authMethod: session.user.authMethod,
+    isImpersonating: Boolean(impersonation),
+    impersonatedByAdminId: impersonation?.adminUserId,
+    impersonatedByAdminName: impersonation?.adminName,
+    impersonationSessionId: impersonation?.sessionId,
+    impersonationExpiresAt: impersonation?.expiresAt,
   };
 
   if (!options?.skipConsent) {

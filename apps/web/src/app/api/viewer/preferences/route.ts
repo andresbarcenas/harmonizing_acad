@@ -17,6 +17,17 @@ async function updatePreferences(req: Request) {
   const auth = await requireApiUser({ skipConsent: true });
   if ("error" in auth) return auth.error;
 
+  if (auth.user.isImpersonating) {
+    return NextResponse.json(
+      {
+        error: auth.user.locale === "es"
+          ? "Los cambios de idioma están desactivados durante la suplantación docente."
+          : "Language preference changes are disabled while impersonating a teacher.",
+      },
+      { status: 403 },
+    );
+  }
+
   const body = (await req.json().catch(() => ({}))) as { locale?: string | null };
   const requestedLocale = body.locale === "browser" ? null : body.locale;
   if (requestedLocale !== null && requestedLocale !== undefined && !isSupportedLocale(requestedLocale)) {

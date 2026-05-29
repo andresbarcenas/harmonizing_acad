@@ -1,7 +1,8 @@
-import { Role, UserLoginActivityStatus, UserLoginAuthMethod } from "@prisma/client";
+import { AdminImpersonationStatus, Role, UserLoginActivityStatus, UserLoginAuthMethod } from "@prisma/client";
 
 import { AdminCreateForm } from "@/components/admin/admin-create-form";
 import { AdminPasswordResetForm } from "@/components/admin/password-reset-form";
+import { TeacherImpersonationForm } from "@/components/admin/teacher-impersonation-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,12 @@ function loginStatusVariant(status: UserLoginActivityStatus) {
   return status === UserLoginActivityStatus.SUCCESS ? "success" as const : "danger" as const;
 }
 
+function impersonationStatusVariant(status: AdminImpersonationStatus) {
+  if (status === AdminImpersonationStatus.ACTIVE) return "gold" as const;
+  if (status === AdminImpersonationStatus.EXPIRED) return "warning" as const;
+  return "default" as const;
+}
+
 export default async function AdminAccessPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const viewer = await requireViewer([Role.ADMIN]);
   const dictionary = getDictionary(viewer.locale);
@@ -69,7 +76,7 @@ export default async function AdminAccessPage({ searchParams }: { searchParams?:
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
-  const [recentSuccesses, loginActivity] = await Promise.all([
+  const [recentSuccesses, loginActivity, impersonationSessions] = await Promise.all([
     db.userLoginActivity.findMany({
       where: {
         userId: { in: users.map((user) => user.id) },
@@ -93,6 +100,14 @@ export default async function AdminAccessPage({ searchParams }: { searchParams?:
       include: { user: { select: { name: true, email: true, role: true } } },
       orderBy: { createdAt: "desc" },
       take: filters.limit,
+    }),
+    db.adminImpersonationSession.findMany({
+      include: {
+        adminUser: { select: { name: true, email: true } },
+        targetUser: { select: { name: true, email: true, role: true } },
+      },
+      orderBy: { startedAt: "desc" },
+      take: 30,
     }),
   ]);
   const lastLoginByUserId = new Map<string, Date>();
@@ -148,10 +163,52 @@ export default async function AdminAccessPage({ searchParams }: { searchParams?:
                   </p>
                 </div>
               </div>
-              <AdminPasswordResetForm userId={user.id} disabled={user.id === viewer.id} locale={viewer.locale} />
+              <div className="grid gap-3">
+                <AdminPasswordResetForm userId={user.id} disabled={user.id === viewer.id} locale={viewer.locale} />
+                {user.role === Role.TEACHER ? (
+                  <TeacherImpersonationForm teacherUserId={user.id} teacherName={user.name} locale={viewer.locale} />
+                ) : null}
+              </div>
             </div>
           ))}
           {!users.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.common.noItems}</p> : null}
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{viewer.locale === "es" ? "Historial de suplantación" : "Impersonation history"}</CardTitle>
+        <CardDescription>
+          {viewer.locale === "es"
+            ? "Registro de sesiones donde un admin entró temporalmente como docente para soporte."
+            : "Audit trail of admin sessions temporarily viewing as a teacher for support."}
+        </CardDescription>
+        <div className="mt-4 space-y-3">
+          {impersonationSessions.map((session) => (
+            <div key={session.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={impersonationStatusVariant(session.status)}>{session.status}</Badge>
+                    <Badge>{roleLabel(session.targetRole, viewer.locale)}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-[var(--color-ink)]">
+                    {viewer.locale === "es" ? "Docente" : "Teacher"}: {session.targetUser.name}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                    {viewer.locale === "es" ? "Admin" : "Admin"}: {session.adminUser.name} · {session.adminUser.email}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{session.reason}</p>
+                </div>
+                <div className="grid gap-1 text-xs text-[var(--color-ink-soft)] lg:min-w-[22rem] lg:text-right">
+                  <p>{viewer.locale === "es" ? "Inicio" : "Started"}: {formatDateTime(session.startedAt, viewer.locale)}</p>
+                  <p>{viewer.locale === "es" ? "Vence" : "Expires"}: {formatDateTime(session.expiresAt, viewer.locale)}</p>
+                  <p>{viewer.locale === "es" ? "Fin" : "Ended"}: {formatDateTime(session.endedAt, viewer.locale)}</p>
+                  <p>IP: {session.ipAddress ?? "—"}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!impersonationSessions.length ? <p className="text-sm text-[var(--color-ink-soft)]">{dictionary.common.noItems}</p> : null}
         </div>
       </Card>
 

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.2] - 2026-05-29
+
+### Added
+- Admin-only teacher impersonation for production troubleshooting, with audited start/stop/expiry sessions, reason capture, IP/user-agent metadata, and a secure short-lived cookie.
+- Impersonation controls on admin teacher/access surfaces plus recent impersonation history in `/admin/access`.
+- Persistent high-contrast impersonation banner with original admin context, teacher context, expiry time, and a safe exit action.
+
+### Changed
+- Teacher routes and APIs can now resolve an active admin impersonation session as the effective teacher while preserving the real admin session for stop/current controls.
+- Sensitive account settings are blocked while impersonating, including password, profile image, language, and timezone changes.
+- Family dashboard plan copy now emphasizes Harmonizing monthly class allowance instead of Alegra invoice totals.
+
+### Fixed
+- Native invoice PDF downloads now regenerate stale PDFs after status changes so open/paid/void invoices show the current status instead of an older draft label.
+
 ## [0.10.1] - 2026-05-29
 
 ### Added

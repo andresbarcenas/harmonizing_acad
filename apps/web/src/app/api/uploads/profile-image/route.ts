@@ -9,6 +9,17 @@ export async function POST(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
+  if (auth.user.isImpersonating) {
+    return NextResponse.json(
+      {
+        error: auth.user.locale === "es"
+          ? "La carga de fotos de perfil está desactivada durante la suplantación docente."
+          : "Profile image uploads are disabled while impersonating a teacher.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await req.formData();
   const file = formData.get("file");
   const targetUserIdRaw = formData.get("targetUserId");

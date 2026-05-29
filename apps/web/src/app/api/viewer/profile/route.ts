@@ -8,6 +8,17 @@ export async function PATCH(req: Request) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
 
+  if (auth.user.isImpersonating) {
+    return NextResponse.json(
+      {
+        error: auth.user.locale === "es"
+          ? "Los cambios de perfil están desactivados durante la suplantación docente."
+          : "Profile changes are disabled while impersonating a teacher.",
+      },
+      { status: 403 },
+    );
+  }
+
   const parsed = viewerProfileSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

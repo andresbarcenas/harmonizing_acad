@@ -259,7 +259,7 @@ export const es: typeof en = {
     usedThisMonth: "usadas este mes",
     currentLevel: "Nivel actual",
     updatedByTeacher: "Actualizado por tu profesora",
-    planSubtitle: "Los totales de factura vienen de Alegra",
+    planSubtitle: "Clases incluidas al mes",
     personalizedSession: "Sesión personalizada",
     noClassWeek: "No tienes clase agendada esta semana.",
     noTeacher: "Aún no hay docente asignado.",
@@ -269,7 +269,7 @@ export const es: typeof en = {
     upcomingGoals: "Objetivos próximos",
     goal: "Meta",
     noGoals: "Aún no tienes objetivos definidos.",
-    planHelp: "La cantidad de clases se mantiene en Harmonizing. Los montos de factura vendrán de Alegra cuando la facturación esté configurada.",
+    planHelp: "La cantidad de clases se gestiona en Harmonizing. Las facturas y el estado de pago aparecen en Facturas cuando estén disponibles.",
   },
   videos: {
     studentEyebrow: "Práctica semanal",

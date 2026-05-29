@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 
+import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import { AppAnnouncementBanner } from "@/components/announcements/app-announcement-banner";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
@@ -10,6 +11,7 @@ import { TeacherStudentSelector } from "@/components/teacher/student-context-sel
 import { DesktopAppShellFrame } from "@/components/ui/desktop-app-shell-frame";
 import { MobileNavDrawer, type AppShellNavGroup, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
 import { getActiveAnnouncementForViewer, type ShellAnnouncement } from "@/lib/announcements";
+import { resolveActiveImpersonation } from "@/lib/admin-impersonation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -180,6 +182,14 @@ export async function AppShell({
   const activeLocale = normalizeLocale(locale ?? session?.user?.locale);
   const dictionary = getDictionary(activeLocale);
   const groups = navGroupsByRole(role, dictionary.shell);
+  const realShellUser = session?.user?.id
+    ? await db.user.findUnique({
+        where: { id: session.user.id },
+        include: { studentProfile: true, teacherProfile: true, parentGuardianProfile: true },
+      })
+    : null;
+  const impersonation = realShellUser ? await resolveActiveImpersonation(realShellUser) : null;
+  const effectiveUserId = impersonation?.targetUserId ?? session?.user?.id;
   const mobileNavLabels = activeLocale === "es"
     ? {
         openMenu: "Abrir menú de navegación",
@@ -193,9 +203,9 @@ export async function AppShell({
         navigationMenu: "Navigation menu",
         primaryNavigation: "Primary navigation",
       };
-  const teacherContextStudents = role === Role.TEACHER && session?.user?.id
+  const teacherContextStudents = role === Role.TEACHER && effectiveUserId
     ? await db.teacherProfile.findUnique({
-        where: { userId: session.user.id },
+        where: { userId: effectiveUserId },
         include: {
           students: {
             include: { student: { include: { user: true } } },
@@ -207,9 +217,9 @@ export async function AppShell({
   const validTeacherStudentId = teacherContextStudents?.students.some((assignment) => assignment.studentId === selectedTeacherStudentId)
     ? selectedTeacherStudentId
     : null;
-  const parentContextStudents = role === Role.PARENT && session?.user?.id
+  const parentContextStudents = role === Role.PARENT && effectiveUserId
     ? await db.parentGuardianProfile.findUnique({
-        where: { userId: session.user.id },
+        where: { userId: effectiveUserId },
         include: {
           students: {
             include: { student: { include: { user: true } } },
@@ -224,13 +234,13 @@ export async function AppShell({
 
   let unreadCount = 0;
   let announcement: ShellAnnouncement | null = null;
-  if (session?.user?.id) {
+  if (effectiveUserId) {
     [unreadCount, announcement] = await Promise.all([
       db.notification.count({
-        where: { userId: session.user.id, readAt: null },
+        where: { userId: effectiveUserId, readAt: null },
       }),
       getActiveAnnouncementForViewer({
-        userId: session.user.id,
+        userId: effectiveUserId,
         role,
         locale: activeLocale,
       }),
@@ -275,6 +285,7 @@ export async function AppShell({
               labels={mobileNavLabels}
               settingsHref="/settings"
               groups={navGroups}
+              showLanguageToggle={!impersonation}
             />
             <Link href={homeHref} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
               <BrandLogo compact subtitle={dictionary.shell.brandSubtitle} />
@@ -299,7 +310,7 @@ export async function AppShell({
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.shell.brandSubtitle}</p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-              <LanguageToggle locale={activeLocale} authenticated compact />
+              {!impersonation ? <LanguageToggle locale={activeLocale} authenticated compact /> : null}
               <UserBadge userName={userName} href="/settings" />
             </div>
           </div>
@@ -334,6 +345,15 @@ export async function AppShell({
             </div>
           ) : null}
         </header>
+
+        {impersonation ? (
+          <ImpersonationBanner
+            targetName={impersonation.targetName}
+            adminName={impersonation.adminName}
+            expiresAt={impersonation.expiresAt.toISOString()}
+            locale={activeLocale}
+          />
+        ) : null}
 
         {announcement ? (
           <AppAnnouncementBanner announcement={announcement} dismissLabel={dictionary.shell.dismissAnnouncement} />

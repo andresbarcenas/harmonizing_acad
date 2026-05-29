@@ -279,6 +279,12 @@ enum UserLoginDeviceType {
   UNKNOWN
 }
 
+enum AdminImpersonationStatus {
+  ACTIVE
+  ENDED
+  EXPIRED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -327,6 +333,8 @@ model User {
   updatedAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementUpdatedBy")
   appAnnouncementDismissals     AppAnnouncementDismissal[]
   loginActivities               UserLoginActivity[]
+  adminImpersonationSessions    AdminImpersonationSession[] @relation("AdminImpersonationAdmin")
+  teacherImpersonationSessions  AdminImpersonationSession[] @relation("AdminImpersonationTarget")
 
   @@index([role])
 }
@@ -1500,6 +1508,30 @@ model UserLoginActivity {
   @@index([userId, createdAt])
   @@index([emailAttempted, createdAt])
   @@index([status, createdAt])
+}
+
+model AdminImpersonationSession {
+  id           String                     @id @default(cuid())
+  adminUserId  String
+  targetUserId String
+  targetRole   Role
+  reason       String
+  status       AdminImpersonationStatus   @default(ACTIVE)
+  tokenHash    String                     @unique
+  startedAt    DateTime                   @default(now())
+  expiresAt    DateTime
+  endedAt      DateTime?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+
+  adminUser  User @relation("AdminImpersonationAdmin", fields: [adminUserId], references: [id], onDelete: Cascade)
+  targetUser User @relation("AdminImpersonationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, startedAt])
+  @@index([targetUserId, startedAt])
+  @@index([status, expiresAt])
 }
 
 model InvoiceContactLink {

@@ -15,7 +15,9 @@ export async function ensureNativeInvoicePdf(invoiceId: string) {
     include: nativeInvoiceInclude(),
   });
   if (!invoice) throw new Error("INVOICE_NOT_FOUND");
-  if (invoice.pdfBytes) return { invoice, pdfBytes: Buffer.from(invoice.pdfBytes), pdfSha256: invoice.pdfSha256 };
+  if (!isNativeInvoicePdfStale(invoice)) {
+    return { invoice, pdfBytes: Buffer.from(invoice.pdfBytes!), pdfSha256: invoice.pdfSha256 };
+  }
 
   const generated = await generateNativeInvoicePdf(invoice);
   const updated = await markNativeInvoicePdf(invoice.id, generated.bytes, generated.sha256);
@@ -69,4 +71,16 @@ export async function openAndSendNativeInvoice(invoiceId: string, adminUserId: s
     emailError: emailResult.error,
     sent: emailResult.status === EmailDeliveryStatus.SENT,
   };
+}
+
+function isNativeInvoicePdfStale(invoice: {
+  pdfBytes: Uint8Array | Buffer | null;
+  pdfGeneratedAt: Date | null;
+  updatedAt: Date;
+}) {
+  if (!invoice.pdfBytes || !invoice.pdfGeneratedAt) return true;
+
+  // Saving regenerated PDF bytes also touches `updatedAt`; allow a small
+  // tolerance so the PDF write itself does not make the cache stale forever.
+  return invoice.updatedAt.getTime() > invoice.pdfGeneratedAt.getTime() + 1000;
 }
