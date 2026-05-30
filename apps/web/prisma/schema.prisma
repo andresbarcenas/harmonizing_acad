@@ -214,6 +214,18 @@ enum HistoricalImportSuggestionType {
   UNKNOWN
 }
 
+enum StudentProvisioningImportBatchStatus {
+  APPLIED
+  PARTIAL
+  FAILED
+}
+
+enum StudentProvisioningImportRowStatus {
+  APPLIED
+  SKIPPED
+  FAILED
+}
+
 enum InvoiceContactLinkStrategy {
   EMAIL_AUTO
   MANUAL
@@ -322,6 +334,7 @@ model User {
   requestedClassRequests   ClassRequest[]    @relation("ClassRequestRequestedBy")
   reviewedClassRequests    ClassRequest[]    @relation("ClassRequestReviewedBy")
   historicalImportBatches  HistoricalImportBatch[] @relation("HistoricalImportCreatedBy")
+  studentProvisioningImportBatches StudentProvisioningImportBatch[] @relation("StudentProvisioningImportCreatedBy")
   reviewedImportRows       HistoricalImportRow[]   @relation("HistoricalImportRowReviewedBy")
   uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
   uploadedClassSessionAttachments ClassSessionAttachment[] @relation("ClassSessionAttachmentUploadedBy")
@@ -1084,6 +1097,49 @@ model HistoricalImportRow {
   @@index([batchId, status, sourcePage])
   @@index([studentId, status, createdAt])
   @@index([suggestedType, confidence])
+}
+
+model StudentProvisioningImportBatch {
+  id               String                              @id @default(cuid())
+  filename         String?
+  status           StudentProvisioningImportBatchStatus @default(APPLIED)
+  totalRows        Int
+  validRows        Int
+  errorRows        Int
+  appliedRows      Int                                 @default(0)
+  skippedRows      Int                                 @default(0)
+  failedRows       Int                                 @default(0)
+  emailsSuppressed Boolean                             @default(true)
+  createdByUserId  String?
+  createdAt        DateTime                            @default(now())
+
+  createdBy User?                          @relation("StudentProvisioningImportCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  rows      StudentProvisioningImportRow[]
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+model StudentProvisioningImportRow {
+  id             String                            @id @default(cuid())
+  batchId        String
+  rowNumber      Int
+  status         StudentProvisioningImportRowStatus
+  studentEmail   String
+  studentName    String?
+  teacherEmail   String?
+  teacherName    String?
+  guardianEmails String[]                          @default([])
+  errors         Json?
+  warnings       Json?
+  normalized     Json?
+  studentId      String?
+  createdAt      DateTime                          @default(now())
+
+  batch StudentProvisioningImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, status])
+  @@index([studentEmail])
 }
 
 model Invitation {

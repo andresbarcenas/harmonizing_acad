@@ -1,5 +1,6 @@
 import { Role } from "@prisma/client";
 
+import { StudentProvisioningImportPanel } from "@/components/admin/student-provisioning-import-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { AppShell } from "@/components/ui/app-shell";
@@ -12,15 +13,25 @@ import { cn } from "@/lib/utils";
 export default async function AdminHistoricalImportsPage() {
   const viewer = await requireViewer([Role.ADMIN]);
   const isSpanish = viewer.locale === "es";
-  const batches = await db.historicalImportBatch.findMany({
-    include: {
-      student: { include: { user: true } },
-      createdBy: true,
-      _count: { select: { rows: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
+  const [batches, provisioningBatches] = await Promise.all([
+    db.historicalImportBatch.findMany({
+      include: {
+        student: { include: { user: true } },
+        createdBy: true,
+        _count: { select: { rows: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    db.studentProvisioningImportBatch.findMany({
+      include: {
+        createdBy: true,
+        _count: { select: { rows: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+  ]);
 
   return (
     <AppShell role={viewer.role} activePath="/admin/imports" userName={viewer.name} locale={viewer.locale}>
@@ -31,6 +42,43 @@ export default async function AdminHistoricalImportsPage() {
           ? "Revisa PDFs antiguos, valida las sugerencias y aplica solo los datos confiables al progreso real del estudiante."
           : "Review old PDFs, validate suggestions, and apply only trustworthy records into student progress."}
       />
+
+      <StudentProvisioningImportPanel locale={viewer.locale} />
+
+      <Card>
+        <CardTitle>{isSpanish ? "Lotes de provisión recientes" : "Recent provisioning batches"}</CardTitle>
+        <CardDescription>
+          {isSpanish
+            ? "Resumen de importaciones CSV aplicadas. No se almacenan archivos CSV crudos ni se envían correos durante la importación."
+            : "Summary of applied CSV imports. Raw CSV files are not stored and emails are not sent during import."}
+        </CardDescription>
+        <div className="mt-4 space-y-3">
+          {provisioningBatches.map((batch) => (
+            <div key={batch.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 px-4 py-3">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-[var(--color-ink)]">{batch.filename ?? (isSpanish ? "CSV sin nombre" : "Unnamed CSV")}</p>
+                    <Badge variant={batch.status === "APPLIED" ? "success" : batch.status === "FAILED" ? "danger" : "warning"}>{batch.status}</Badge>
+                    <Badge variant="success">{isSpanish ? "Correos suprimidos" : "Emails suppressed"}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                    {batch.totalRows} {isSpanish ? "filas" : "rows"} · {batch.appliedRows} {isSpanish ? "aplicadas" : "applied"} · {batch.skippedRows} {isSpanish ? "omitidas" : "skipped"} · {batch.failedRows} {isSpanish ? "fallidas" : "failed"}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                    {isSpanish ? "Creado" : "Created"}: {formatDate(batch.createdAt, viewer.locale)} · {batch.createdBy?.name ?? "Admin"} · {batch._count.rows} {isSpanish ? "registros auditados" : "audited rows"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!provisioningBatches.length ? (
+            <p className="rounded-[1.2rem] border border-dashed border-[var(--color-border)] bg-white/50 px-4 py-5 text-sm text-[var(--color-ink-soft)]">
+              {isSpanish ? "Aún no hay importaciones CSV de estudiantes." : "No student CSV imports yet."}
+            </p>
+          ) : null}
+        </div>
+      </Card>
 
       <Card>
         <CardTitle>{isSpanish ? "Importar historial de un estudiante" : "Import a student's history"}</CardTitle>

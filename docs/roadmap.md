@@ -1,17 +1,20 @@
 # Harmonizing Next Feature Roadmap
 
-This roadmap keeps stable feature names for upcoming work. When you are ready to start one, use the name directly, for example: `Start Teacher Prep Dashboard`.
+This roadmap keeps stable feature names for product work. For the single current pending list across product, billing, operations, and security, use [Consolidated Pending Roadmap](./pending-roadmap.md).
 
 ## Recommended Order
 
 1. Timestamped Video Feedback
-2. Parent Guardian Portal
-3. Class Credit Ledger
-4. Weekly Family Digest
+2. Curriculum Map
+3. Weekly Family Digest
+4. Practice Timer And Streaks
 
 ## Completed Features
 
 - Teacher Prep Dashboard
+- Parent Guardian Portal
+- Class Credit Ledger
+- Admin Health Dashboard
 
 ## Named Feature Plans
 
@@ -23,6 +26,8 @@ A pre-class workspace that shows the teacher everything needed before a lesson: 
 
 ### 2. Parent Guardian Portal
 
+Status: Completed.
+
 Add parent/guardian accounts so families can view schedule, reports, consent, invoices, practice assignments, messages, and progress without sharing the student login.
 
 ### 3. Timestamped Video Feedback
@@ -30,6 +35,8 @@ Add parent/guardian accounts so families can view schedule, reports, consent, in
 Let teachers leave feedback tied to exact video timestamps, such as `0:32` or `1:14`, so student video review feels music-specific and premium.
 
 ### 4. Class Credit Ledger
+
+Status: Completed.
 
 Track monthly class allowance, used classes, missed classes, makeup credits, extra classes, expiration, and admin adjustments while keeping billing external.
 
@@ -54,6 +61,8 @@ Track recital/performance pieces, readiness, backing tracks, teacher notes, stud
 Allow sheet music and reference materials to live on global catalog songs, so teachers can reuse materials when assigning songs to students.
 
 ### 10. Admin Health Dashboard
+
+Status: Completed.
 
 Add an operational dashboard for missing consent, failed emails, students with no activity, missing timezones, no teacher assignment, blackout conflicts, and other admin risks.
 

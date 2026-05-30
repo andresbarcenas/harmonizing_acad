@@ -1,4 +1,4 @@
-export type ManualMonthlyClassCount = 4 | 8;
+export type ManualMonthlyClassCount = 2 | 4 | 8;
 
 export const INTERNAL_CLASS_ALLOWANCE_PRICE_USD = 0;
 
@@ -11,7 +11,7 @@ export function manualPlanName(monthlyClassCount: ManualMonthlyClassCount, local
 }
 
 export function manualPlanDescription(locale?: string) {
-  return locale === "es" ? "Cantidad de clases registrada; los montos vienen de Alegra." : "Class allowance recorded; invoice amounts come from Alegra.";
+  return locale === "es" ? "Cantidad de clases registrada; las facturas se gestionan en Harmonizing." : "Class allowance recorded; invoices are managed in Harmonizing.";
 }
 
 export function planLabel({ monthlyClassCount }: { monthlyClassCount: number }, locale?: string) {

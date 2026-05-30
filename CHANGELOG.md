@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.5] - 2026-05-30
+
+### Added
+- Admin Health Dashboard at `/admin/health` with read-only operational risk checks for teacher assignments, active consent, student inactivity, email delivery, blackout conflicts, billing setup, overdue invoices, negative class-credit balances, failed-login spikes, and timezone review.
+- Admin CSV student provisioning import from `/admin/imports`, including preview/apply validation, teacher assignment, parent/guardian linking, native billing profile setup, optional Alegra contact linking, and import batch audit records.
+- Consolidated pending roadmap document at `docs/pending-roadmap.md` for the main product, billing, scheduling, production hardening, and security backlog.
+
+### Changed
+- Student provisioning now supports `2`, `4`, and `8` monthly class allowances while continuing to suppress all welcome emails and magic links during CSV imports.
+- Roadmap docs now mark Admin Health Dashboard, Parent Guardian Portal, Payment Tracking Ledger, and Class Credit Ledger as completed where applicable.
+
 ## [0.10.4] - 2026-05-29
 
 ### Added

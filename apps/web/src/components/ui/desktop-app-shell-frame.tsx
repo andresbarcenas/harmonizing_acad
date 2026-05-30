@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   Archive,
+  Activity,
   Bell,
   CalendarDays,
   ChevronLeft,
@@ -252,6 +253,7 @@ function ShellNavLink({ item, collapsed }: { item: AppShellNavLink; collapsed: b
 }
 
 function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) {
+  if (icon === "health") return <Activity className={className} aria-hidden="true" />;
   if (icon === "archive") return <Archive className={className} aria-hidden="true" />;
   if (icon === "bell") return <Bell className={className} aria-hidden="true" />;
   if (icon === "calendar") return <CalendarDays className={className} aria-hidden="true" />;

@@ -149,6 +149,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
     {
       label: navGroups.system,
       items: [
+        { href: "/admin/health", label: nav.health, icon: "health" },
         { href: "/admin/changelog", label: nav.changelog, icon: "scroll" },
         { href: "/settings", label: nav.settings, icon: "settings" },
       ],

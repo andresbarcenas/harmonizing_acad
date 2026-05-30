@@ -245,6 +245,7 @@ export function StudentOnboardingForm({
               required
               className="h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]"
             >
+              <option value="2">{dictionary.forms.twoClasses}</option>
               <option value="4">{dictionary.forms.fourClasses}</option>
               <option value="8">{dictionary.forms.eightClasses}</option>
             </select>

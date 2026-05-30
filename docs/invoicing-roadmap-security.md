@@ -1,6 +1,6 @@
 # Harmonizing Invoicing Roadmap + Security Hardening
 
-This roadmap keeps stable names for the next invoicing and billing improvements. When ready, request one by name, for example: `Start Billing Contact Profile`.
+This roadmap keeps stable names for invoicing and billing improvements. For the single current pending list across product, billing, operations, and security, use [Consolidated Pending Roadmap](./pending-roadmap.md).
 
 Native Harmonizing invoices are now the primary billing experience. Alegra remains useful as an external reference while the app grows toward richer internal billing, payment tracking, and future payment-provider integration.
 
@@ -39,13 +39,13 @@ Show billing risks: overdue invoices, failed invoice emails, missing billing con
 ## Recommended Order
 
 1. Billing Contact Profile
-2. Payment Tracking Ledger
-3. Class Credit Ledger
-4. Monthly Billing Review Queue
-5. Invoice Aging And Statements
-6. Invoice Reminder Automation
-7. Payment Provider Integration
-8. Tax/DIAN Readiness Layer
+2. Monthly Billing Review Queue
+3. Invoice Aging And Statements
+4. Invoice Reminder Automation
+5. Payment Provider Integration
+6. WhatsApp Billing Helper
+7. Tax/DIAN Readiness Layer
+8. Billing Health Dashboard
 
 ## Security Hardening Recommendations
 

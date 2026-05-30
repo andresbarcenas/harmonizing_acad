@@ -55,8 +55,8 @@ const optionalInstrumentSchema = z.preprocess((value) => {
   return normalizeInstrument(trimmed) ?? trimmed;
 }, z.enum(["Piano", "Voice"], { message: "Selecciona Piano o Voz." }).optional());
 
-const monthlyClassCountSchema = z.coerce.number().int().refine((value) => value === 4 || value === 8, {
-  message: "Selecciona 4 u 8 clases mensuales.",
+const monthlyClassCountSchema = z.coerce.number().int().refine((value) => value === 2 || value === 4 || value === 8, {
+  message: "Selecciona 2, 4 u 8 clases mensuales.",
 });
 
 const optionalMonthlyClassCountSchema = z.preprocess((value) => {

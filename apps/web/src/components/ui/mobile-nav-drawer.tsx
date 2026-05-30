@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   Archive,
+  Activity,
   Bell,
   CalendarDays,
   ChevronDown,
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 
 export type NavIconKey =
   | "archive"
+  | "health"
   | "bell"
   | "calendar"
   | "clipboard"
@@ -263,6 +265,7 @@ function defaultOpenGroups(groups: AppShellNavGroup[]) {
 }
 
 function NavIcon({ icon, className }: { icon: NavIconKey; className?: string }) {
+  if (icon === "health") return <Activity className={className} aria-hidden="true" />;
   if (icon === "archive") return <Archive className={className} aria-hidden="true" />;
   if (icon === "bell") return <Bell className={className} aria-hidden="true" />;
   if (icon === "calendar") return <CalendarDays className={className} aria-hidden="true" />;

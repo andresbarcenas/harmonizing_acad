@@ -227,6 +227,7 @@ export function StudentEditForm({
                     defaultValue={String(initial.activePlan?.monthlyClassCount ?? 4)}
                     className="h-[3.05rem] w-full rounded-[1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
                   >
+                    <option value="2">{dictionary.forms.twoClasses}</option>
                     <option value="4">{dictionary.forms.fourClasses}</option>
                     <option value="8">{dictionary.forms.eightClasses}</option>
                   </select>
