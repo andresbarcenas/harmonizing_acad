@@ -11,6 +11,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.7",
+    date: "2026-06-01",
+    sections: [
+      {
+        title: "Changed",
+        items: [
+          "Piano exam scoring now uses half-point sliders for repertoire, Harmony, and Music Reading scores instead of manual number inputs.",
+          "Piano exam PDFs now use a more polished Spanish report layout with branded headers, summary score cards, refined section tables, score pills, cleaner comments wrapping, and footer pagination.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.6",
     date: "2026-06-01",
     sections: [

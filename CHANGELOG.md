@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.7] - 2026-06-01
+
+### Changed
+- Piano exam scoring now uses half-point sliders for repertoire, Harmony, and Music Reading scores instead of manual number inputs.
+- Piano exam PDFs now use a more polished Spanish report layout with branded headers, summary score cards, refined section tables, score pills, cleaner comments wrapping, and footer pagination.
+
 ## [0.10.6] - 2026-06-01
 
 ### Added

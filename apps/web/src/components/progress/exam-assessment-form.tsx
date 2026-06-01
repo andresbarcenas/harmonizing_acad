@@ -100,6 +100,7 @@ type AreaRow = {
 type Step = "repertoire" | "harmony" | "reading" | "review";
 
 const repertoireStatuses = ["ASSIGNED", "LEARNING", "IMPROVING", "PERFORMANCE_READY", "COMPLETED", "PAUSED"] as const;
+const DEFAULT_EXAM_SCORE = "5";
 
 function copy(locale: AppLocale) {
   return locale === "es"
@@ -237,9 +238,9 @@ function emptyRepertoireRow(): RepertoireRow {
     title: "",
     composerOrArtist: "",
     status: RepertoireStatus.PERFORMANCE_READY,
-    interpretationScore: "",
-    executionScore: "",
-    overallScore: "",
+    interpretationScore: DEFAULT_EXAM_SCORE,
+    executionScore: DEFAULT_EXAM_SCORE,
+    overallScore: DEFAULT_EXAM_SCORE,
     comments: "",
     catalogQuery: "",
     catalogResults: [],
@@ -249,7 +250,7 @@ function emptyRepertoireRow(): RepertoireRow {
 }
 
 function emptyAreaRow(): AreaRow {
-  return { key: newKey(), topic: "", objective: "", score: "", comments: "" };
+  return { key: newKey(), topic: "", objective: "", score: DEFAULT_EXAM_SCORE, comments: "" };
 }
 
 export function ExamAssessmentForm({
@@ -641,7 +642,30 @@ function StepNav({ c, step, setStep }: { c: ReturnType<typeof copy>; step: Step;
 }
 
 function ScoreInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <Input type="number" min={1} max={10} step={0.5} value={value} onChange={(event) => onChange(event.target.value)} placeholder={`${label} 1-10`} aria-label={`${label} 1-10`} />;
+  const numericValue = normalizeScoreValue(value);
+  return (
+    <label className="rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-control)] p-3 shadow-[var(--shadow-control-inset)]">
+      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--color-ink)]">
+        <span>{label}</span>
+        <Badge variant="gold">{formatScoreLabel(numericValue)}/10</Badge>
+      </span>
+      <input
+        className="mt-3 w-full accent-[var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+        type="range"
+        min={1}
+        max={10}
+        step={0.5}
+        value={numericValue}
+        onChange={(event) => onChange(event.target.value)}
+        aria-label={`${label} 1-10`}
+      />
+      <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+        <span>1</span>
+        <span>5</span>
+        <span>10</span>
+      </span>
+    </label>
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
@@ -650,8 +674,18 @@ function Info({ label, value }: { label: string; value: string }) {
 
 function cleanAreaRows(rows: AreaRow[]) {
   return rows
-    .filter((row) => row.topic.trim() || row.objective.trim() || row.score)
-    .map((row) => ({ topic: row.topic.trim(), objective: row.objective.trim(), score: Number(row.score), comments: row.comments.trim() || undefined }));
+    .filter((row) => row.topic.trim() || row.objective.trim() || row.comments.trim())
+    .map((row) => ({ topic: row.topic.trim(), objective: row.objective.trim(), score: normalizeScoreValue(row.score), comments: row.comments.trim() || undefined }));
+}
+
+function normalizeScoreValue(value: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return Number(DEFAULT_EXAM_SCORE);
+  return Math.max(1, Math.min(10, parsed));
+}
+
+function formatScoreLabel(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function toAreaRow(row: ExistingAssessment["areaScores"][number]): AreaRow {

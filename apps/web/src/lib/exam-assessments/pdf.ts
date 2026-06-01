@@ -8,27 +8,60 @@ import type { StudentExamAssessmentWithScores } from "@/lib/exam-assessments";
 
 type ExamPdfInput = StudentExamAssessmentWithScores;
 
-type Layout = { contentX: number; contentWidth: number; contentRight: number };
+type Layout = {
+  contentX: number;
+  contentWidth: number;
+  contentRight: number;
+  bottom: number;
+};
 
-const GOLD = "#ef8f00";
-const GOLD_SOFT = "#f8cfad";
-const INK = "#111111";
-const SOFT = "#555555";
-const BORDER = "#646464";
+type TableRow = {
+  values: string[];
+  scoreColumns?: number[];
+};
+
+const CANVAS = "#f6efe6";
+const PAPER = "#fffdf8";
+const PAPER_SOFT = "#fbf6ee";
+const GOLD = "#b7792c";
+const GOLD_DEEP = "#6f4219";
+const GOLD_SOFT = "#f4dfc4";
+const INK = "#211a14";
+const SOFT = "#6e645b";
+const MUTED = "#9a8b7a";
+const BORDER_LIGHT = "#eadfce";
 const WHITE = "#ffffff";
 
 export async function generateExamAssessmentPdf(input: ExamPdfInput) {
-  const doc = new PDFDocument({ size: "LETTER", margin: 52, info: { Title: input.title, Author: "Harmonizing Academy", Subject: "Examen de piano" } });
+  const doc = new PDFDocument({
+    size: "LETTER",
+    margin: 46,
+    bufferPages: true,
+    info: { Title: input.title, Author: "Harmonizing Academy", Subject: "Informe de examen de piano" },
+  });
   const chunks: Buffer[] = [];
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
   const finished = new Promise<Buffer>((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
 
   const layout = getLayout(doc);
+  drawPageBackground(doc);
   drawHeader(doc, layout, input);
+  drawSummary(doc, layout, input);
   drawRepertoire(doc, layout, input);
-  drawArea(doc, layout, "2.  Armonía:", input.areaScores.filter((row) => row.area === StudentExamArea.HARMONY));
-  drawArea(doc, layout, "3.  Lectura musical:", input.areaScores.filter((row) => row.area === StudentExamArea.MUSIC_READING));
-  drawOverall(doc, layout, input);
+  drawArea(doc, layout, {
+    number: "2",
+    title: "Armonía",
+    description: "Temas, objetivos y observaciones trabajadas durante la evaluación.",
+    rows: input.areaScores.filter((row) => row.area === StudentExamArea.HARMONY),
+  });
+  drawArea(doc, layout, {
+    number: "3",
+    title: "Lectura musical",
+    description: "Lectura, comprensión y aplicación musical observada en el examen.",
+    rows: input.areaScores.filter((row) => row.area === StudentExamArea.MUSIC_READING),
+  });
+  drawNotesAndOverall(doc, layout, input);
+  drawFooters(doc, layout);
 
   doc.end();
   return finished;
@@ -37,103 +70,218 @@ export async function generateExamAssessmentPdf(input: ExamPdfInput) {
 function getLayout(doc: PDFKit.PDFDocument): Layout {
   const contentX = doc.page.margins.left;
   const contentRight = doc.page.width - doc.page.margins.right;
-  return { contentX, contentRight, contentWidth: contentRight - contentX };
+  const bottom = doc.page.height - doc.page.margins.bottom;
+  return { contentX, contentRight, contentWidth: contentRight - contentX, bottom };
+}
+
+function drawPageBackground(doc: PDFKit.PDFDocument) {
+  doc.save();
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(CANVAS);
+  doc.restore();
 }
 
 function drawHeader(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
-  const top = doc.page.margins.top + 10;
-  const logoX = layout.contentX + 22;
-  doc.roundedRect(logoX, top + 18, 54, 54, 8).fill(GOLD);
-  doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(30).text("h", logoX + 10, top + 27, { width: 15, align: "center" });
-  doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(30).text("a", logoX + 27, top + 27, { width: 18, align: "center" });
+  const top = doc.page.margins.top;
+  const cardHeight = 124;
+  doc.roundedRect(layout.contentX, top, layout.contentWidth, cardHeight, 20).fillAndStroke(PAPER, BORDER_LIGHT);
 
-  const textX = logoX + 92;
-  doc.fillColor(INK).font("Helvetica").fontSize(11).text(`Fecha: ${formatDate(input.examDate, "es")}`, textX, top + 8, { width: layout.contentRight - textX });
-  doc.text(`Estudiante: ${input.student.user.name}`, textX, top + 34, { width: layout.contentRight - textX });
-  doc.text(input.title, textX, top + 62, { width: layout.contentRight - textX });
-  doc.fillColor(SOFT).fontSize(8).text(`Docente: ${input.teacher.user.name}`, textX, top + 86, { width: layout.contentRight - textX });
-  setY(doc, top + 150);
+  doc.circle(layout.contentX + 42, top + 42, 24).fill(GOLD);
+  doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(20).text("ha", layout.contentX + 25, top + 29, { width: 34, align: "center" });
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(9).text("HARMONIZING ACADEMY", layout.contentX + 78, top + 24, { characterSpacing: 1.6 });
+  doc.fillColor(INK).font("Helvetica-Bold").fontSize(22).text("Informe de examen de piano", layout.contentX + 78, top + 42, { width: 300 });
+  doc.fillColor(SOFT).font("Helvetica").fontSize(9.5).text("Resultados académicos internos y familiares", layout.contentX + 78, top + 72, { width: 260 });
+
+  const metaX = layout.contentRight - 160;
+  drawMetaLine(doc, metaX, top + 24, "Fecha", formatDate(input.examDate, "es"));
+  drawMetaLine(doc, metaX, top + 49, "Estudiante", input.student.user.name);
+  drawMetaLine(doc, metaX, top + 74, "Docente", input.teacher.user.name);
+
+  doc.roundedRect(layout.contentX + 18, top + 92, layout.contentWidth - 36, 22, 11).fill(PAPER_SOFT);
+  doc.fillColor(INK).font("Helvetica-Bold").fontSize(10).text(input.title, layout.contentX + 32, top + 98, { width: layout.contentWidth - 64, ellipsis: true });
+  setY(doc, top + cardHeight + 20);
 }
 
-function drawRepertoire(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
-  ensureSpace(doc, 140);
-  doc.fillColor(INK).font("Helvetica").fontSize(11).text("1.    Repertorio:", layout.contentX + 20, doc.y);
-  setY(doc, doc.y + 48);
-
-  const columns = [142, 108, 78, 78, layout.contentWidth - 406];
-  const headers = ["Canciones:", "Interpretación", "Ejecución", "Puntaje", "Comentarios"];
-  drawTableHeader(doc, layout, columns, headers);
-
-  for (const row of input.repertoireScores) {
-    const values = [row.titleSnapshot, `${formatScore(row.interpretationScore)}/10`, `${formatScore(row.executionScore)}/10`, `${formatScore(row.overallScore)}/10`, row.comments ?? ""];
-    drawTableRow(doc, layout, columns, values);
-  }
-
-  const total = average(input.repertoireScores.map((row) => row.overallScore));
-  doc.fillColor(INK).font("Helvetica").fontSize(10).text("Total:", layout.contentX, doc.y + 6, { width: 42 });
-  doc.font("Helvetica-Bold").text(total ? formatScore(total, true) : "-", layout.contentX + 50, doc.y - 11, { width: 60 });
-  setY(doc, doc.y + 30);
+function drawMetaLine(doc: PDFKit.PDFDocument, x: number, y: number, label: string, value: string) {
+  doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(6.8).text(label.toUpperCase(), x, y, { width: 150, characterSpacing: 1 });
+  doc.fillColor(INK).font("Helvetica").fontSize(9.2).text(value, x, y + 9, { width: 150, ellipsis: true });
 }
 
-function drawArea(doc: PDFKit.PDFDocument, layout: Layout, title: string, rows: ExamPdfInput["areaScores"]) {
-  ensureSpace(doc, 110);
-  doc.fillColor(INK).font("Helvetica").fontSize(11).text(title, layout.contentX + 20, doc.y + 8);
-  setY(doc, doc.y + 42);
-  const columns = [130, 170, 74, layout.contentWidth - 374];
-  drawTableHeader(doc, layout, columns, ["Tema", "Objetivo", "Puntaje", "Comentarios"]);
-  for (const row of rows) {
-    drawTableRow(doc, layout, columns, [row.topic, row.objective, `${formatScore(row.score)}/10`, row.comments ?? ""]);
-  }
-  const total = average(rows.map((row) => row.score));
-  doc.fillColor(INK).font("Helvetica").fontSize(10).text("Total:", layout.contentX, doc.y + 6, { width: 42 });
-  doc.font("Helvetica-Bold").text(total ? formatScore(total, true) : "-", layout.contentX + 50, doc.y - 11, { width: 60 });
-  setY(doc, doc.y + 30);
-}
-
-function drawOverall(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
+function drawSummary(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
   const repertoire = average(input.repertoireScores.map((row) => row.overallScore));
   const harmony = average(input.areaScores.filter((row) => row.area === StudentExamArea.HARMONY).map((row) => row.score));
   const reading = average(input.areaScores.filter((row) => row.area === StudentExamArea.MUSIC_READING).map((row) => row.score));
   const total = average([repertoire, harmony, reading].filter((value): value is number => value !== null));
-  ensureSpace(doc, 80);
-  doc.roundedRect(layout.contentX, doc.y + 8, layout.contentWidth, 52, 12).fillAndStroke("#fbf8f3", "#eadfce");
-  doc.fillColor(INK).font("Helvetica-Bold").fontSize(12).text("Total general:", layout.contentX + 18, doc.y + 26, { width: 130 });
-  doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(16).text(total ? `${formatScore(total, true)}/10` : "-", layout.contentX + 145, doc.y - 18, { width: 120 });
-  if (input.notes) doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(input.notes, layout.contentX + 260, doc.y - 18, { width: layout.contentWidth - 278, lineGap: 2 });
+  const cards = [
+    { label: "Repertorio", value: repertoire },
+    { label: "Armonía", value: harmony },
+    { label: "Lectura musical", value: reading },
+    { label: "Total general", value: total, featured: true },
+  ];
+  const gap = 10;
+  const width = (layout.contentWidth - gap * 3) / 4;
+  const y = doc.y;
+  ensureSpace(doc, 76);
+  cards.forEach((card, index) => {
+    const x = layout.contentX + index * (width + gap);
+    doc.roundedRect(x, y, width, 62, 14).fillAndStroke(card.featured ? GOLD : PAPER, card.featured ? GOLD_DEEP : BORDER_LIGHT);
+    doc.fillColor(card.featured ? WHITE : MUTED).font("Helvetica-Bold").fontSize(7).text(card.label.toUpperCase(), x + 10, y + 12, { width: width - 20, characterSpacing: 0.8 });
+    doc.fillColor(card.featured ? WHITE : INK).font("Helvetica-Bold").fontSize(18).text(card.value ? `${formatScore(card.value, true)}/10` : "-", x + 10, y + 28, { width: width - 20 });
+  });
+  setY(doc, y + 82);
+}
+
+function drawRepertoire(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
+  const rows = input.repertoireScores.map((row) => ({
+    values: [
+      [row.titleSnapshot, row.composerSnapshot].filter(Boolean).join("\n"),
+      `${formatScore(row.interpretationScore)}/10`,
+      `${formatScore(row.executionScore)}/10`,
+      `${formatScore(row.overallScore)}/10`,
+      row.comments ?? "",
+    ],
+    scoreColumns: [1, 2, 3],
+  }));
+  drawSection(doc, layout, {
+    number: "1",
+    title: "Repertorio",
+    description: "Interpretación, ejecución y resultado general por obra evaluada.",
+    columns: [156, 72, 64, 64, layout.contentWidth - 356],
+    headers: ["Canción", "Interpretación", "Ejecución", "Puntaje", "Comentarios"],
+    rows,
+    totalLabel: "Promedio repertorio",
+    total: average(input.repertoireScores.map((row) => row.overallScore)),
+  });
+}
+
+function drawArea(doc: PDFKit.PDFDocument, layout: Layout, input: { number: string; title: string; description: string; rows: ExamPdfInput["areaScores"] }) {
+  drawSection(doc, layout, {
+    number: input.number,
+    title: input.title,
+    description: input.description,
+    columns: [126, 160, 66, layout.contentWidth - 352],
+    headers: ["Tema", "Objetivo", "Puntaje", "Comentarios"],
+    rows: input.rows.map((row) => ({ values: [row.topic, row.objective, `${formatScore(row.score)}/10`, row.comments ?? ""], scoreColumns: [2] })),
+    totalLabel: `Promedio ${input.title.toLowerCase()}`,
+    total: average(input.rows.map((row) => row.score)),
+  });
+}
+
+function drawSection(doc: PDFKit.PDFDocument, layout: Layout, input: { number: string; title: string; description: string; columns: number[]; headers: string[]; rows: TableRow[]; totalLabel: string; total: number | null }) {
+  ensureSpace(doc, 118);
+  const y = doc.y;
+  doc.roundedRect(layout.contentX, y, layout.contentWidth, 54, 16).fillAndStroke(PAPER, BORDER_LIGHT);
+  doc.circle(layout.contentX + 25, y + 27, 14).fill(GOLD_SOFT);
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(11).text(input.number, layout.contentX + 20, y + 20, { width: 10, align: "center" });
+  doc.fillColor(INK).font("Helvetica-Bold").fontSize(14).text(input.title, layout.contentX + 50, y + 12, { width: 220 });
+  doc.fillColor(SOFT).font("Helvetica").fontSize(8.8).text(input.description, layout.contentX + 50, y + 31, { width: layout.contentWidth - 166 });
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(11).text(input.total ? `${formatScore(input.total, true)}/10` : "-", layout.contentRight - 84, y + 18, { width: 66, align: "right" });
+  setY(doc, y + 68);
+
+  if (!input.rows.length) {
+    drawEmptyState(doc, layout, "Sin filas registradas para esta sección.");
+    return;
+  }
+
+  drawTableHeader(doc, layout, input.columns, input.headers);
+  input.rows.forEach((row, index) => drawTableRow(doc, layout, input.columns, row, index));
+  drawSectionTotal(doc, layout, input.totalLabel, input.total);
+}
+
+function drawEmptyState(doc: PDFKit.PDFDocument, layout: Layout, text: string) {
+  ensureSpace(doc, 42);
+  const y = doc.y;
+  doc.roundedRect(layout.contentX, y, layout.contentWidth, 32, 12).fillAndStroke(PAPER_SOFT, BORDER_LIGHT);
+  doc.fillColor(SOFT).font("Helvetica").fontSize(9).text(text, layout.contentX + 14, y + 10, { width: layout.contentWidth - 28 });
+  setY(doc, y + 46);
 }
 
 function drawTableHeader(doc: PDFKit.PDFDocument, layout: Layout, columns: number[], headers: string[]) {
-  ensureSpace(doc, 34);
+  ensureSpace(doc, 38);
   const y = doc.y;
-  doc.rect(layout.contentX, y, layout.contentWidth, 20).fillAndStroke(GOLD_SOFT, BORDER);
+  doc.roundedRect(layout.contentX, y, layout.contentWidth, 24, 10).fillAndStroke(GOLD_DEEP, GOLD_DEEP);
   let x = layout.contentX;
   headers.forEach((header, index) => {
-    doc.fillColor(INK).font("Helvetica").fontSize(9).text(header, x + 4, y + 5, { width: columns[index] - 8 });
-    if (index > 0) doc.strokeColor(BORDER).lineWidth(0.6).moveTo(x, y).lineTo(x, y + 20).stroke();
+    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7.2).text(header.toUpperCase(), x + 7, y + 8, { width: columns[index] - 14, characterSpacing: 0.4 });
     x += columns[index];
   });
-  setY(doc, y + 20);
+  setY(doc, y + 24);
 }
 
-function drawTableRow(doc: PDFKit.PDFDocument, layout: Layout, columns: number[], values: string[]) {
-  const fontSize = 9.5;
-  const heights = values.map((value, index) => doc.heightOfString(value || "-", { width: columns[index] - 8, lineGap: 2 }));
-  const rowHeight = Math.max(22, Math.max(...heights) + 10);
-  ensureSpace(doc, rowHeight + 12);
+function drawTableRow(doc: PDFKit.PDFDocument, layout: Layout, columns: number[], row: TableRow, index: number) {
+  const paddingX = 7;
+  const lineGap = 2;
+  const heights = row.values.map((value, cellIndex) => doc.heightOfString(value || "-", { width: columns[cellIndex] - paddingX * 2, lineGap }));
+  const rowHeight = Math.max(34, Math.max(...heights) + 15);
+  ensureSpace(doc, rowHeight + 20);
   const y = doc.y;
-  doc.rect(layout.contentX, y, layout.contentWidth, rowHeight).fillAndStroke(WHITE, BORDER);
+  doc.rect(layout.contentX, y, layout.contentWidth, rowHeight).fillAndStroke(index % 2 === 0 ? PAPER : PAPER_SOFT, BORDER_LIGHT);
   let x = layout.contentX;
-  values.forEach((value, index) => {
-    if (index > 0) doc.strokeColor(BORDER).lineWidth(0.6).moveTo(x, y).lineTo(x, y + rowHeight).stroke();
-    doc.fillColor(INK).font("Helvetica").fontSize(fontSize).text(value || "-", x + 4, y + 6, { width: columns[index] - 8, lineGap: 2 });
-    x += columns[index];
+  row.values.forEach((value, cellIndex) => {
+    if (cellIndex > 0) doc.strokeColor(BORDER_LIGHT).lineWidth(0.45).moveTo(x, y).lineTo(x, y + rowHeight).stroke();
+    if (row.scoreColumns?.includes(cellIndex)) {
+      drawScorePill(doc, x + 8, y + 9, columns[cellIndex] - 16, value || "-");
+    } else {
+      const lines = value.split("\n");
+      doc.fillColor(INK).font("Helvetica-Bold").fontSize(8.8).text(lines[0] || "-", x + paddingX, y + 8, { width: columns[cellIndex] - paddingX * 2, lineGap });
+      if (lines.length > 1) {
+        doc.fillColor(SOFT).font("Helvetica").fontSize(8).text(lines.slice(1).join("\n"), x + paddingX, doc.y + 1, { width: columns[cellIndex] - paddingX * 2, lineGap });
+      }
+    }
+    x += columns[cellIndex];
   });
   setY(doc, y + rowHeight);
 }
 
+function drawScorePill(doc: PDFKit.PDFDocument, x: number, y: number, width: number, value: string) {
+  doc.roundedRect(x, y, width, 20, 10).fillAndStroke(GOLD_SOFT, "#e4c79d");
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(8.8).text(value, x, y + 6, { width, align: "center" });
+}
+
+function drawSectionTotal(doc: PDFKit.PDFDocument, layout: Layout, label: string, value: number | null) {
+  ensureSpace(doc, 48);
+  const y = doc.y + 8;
+  const width = 188;
+  doc.roundedRect(layout.contentRight - width, y, width, 30, 15).fillAndStroke(PAPER, BORDER_LIGHT);
+  doc.fillColor(SOFT).font("Helvetica-Bold").fontSize(7).text(label.toUpperCase(), layout.contentRight - width + 14, y + 10, { width: 110, characterSpacing: 0.4 });
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(11).text(value ? `${formatScore(value, true)}/10` : "-", layout.contentRight - 60, y + 8, { width: 46, align: "right" });
+  setY(doc, y + 48);
+}
+
+function drawNotesAndOverall(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
+  const repertoire = average(input.repertoireScores.map((row) => row.overallScore));
+  const harmony = average(input.areaScores.filter((row) => row.area === StudentExamArea.HARMONY).map((row) => row.score));
+  const reading = average(input.areaScores.filter((row) => row.area === StudentExamArea.MUSIC_READING).map((row) => row.score));
+  const total = average([repertoire, harmony, reading].filter((value): value is number => value !== null));
+  ensureSpace(doc, input.notes ? 118 : 82);
+  const y = doc.y;
+  doc.roundedRect(layout.contentX, y, layout.contentWidth, input.notes ? 104 : 68, 18).fillAndStroke(GOLD_DEEP, GOLD_DEEP);
+  doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(8).text("CIERRE DE EVALUACIÓN", layout.contentX + 18, y + 17, { characterSpacing: 1.1 });
+  doc.font("Helvetica-Bold").fontSize(22).text(total ? `${formatScore(total, true)}/10` : "-", layout.contentX + 18, y + 35, { width: 120 });
+  doc.font("Helvetica").fontSize(10).text("Total general", layout.contentX + 126, y + 42, { width: 120 });
+  if (input.notes) {
+    doc.fillColor("#fff2df").font("Helvetica-Bold").fontSize(8).text("Notas generales", layout.contentX + 262, y + 18, { width: layout.contentWidth - 284 });
+    doc.fillColor(WHITE).font("Helvetica").fontSize(8.5).text(input.notes, layout.contentX + 262, y + 32, { width: layout.contentWidth - 284, lineGap: 2 });
+  }
+  setY(doc, y + (input.notes ? 126 : 90));
+}
+
+function drawFooters(doc: PDFKit.PDFDocument, layout: Layout) {
+  const range = doc.bufferedPageRange();
+  for (let pageIndex = range.start; pageIndex < range.start + range.count; pageIndex += 1) {
+    doc.switchToPage(pageIndex);
+    const footerY = doc.page.height - 34;
+    doc.strokeColor(BORDER_LIGHT).lineWidth(0.6).moveTo(layout.contentX, footerY - 10).lineTo(layout.contentRight, footerY - 10).stroke();
+    doc.fillColor(MUTED).font("Helvetica").fontSize(7.5).text("Harmonizing Academy · Informe académico confidencial", layout.contentX, footerY, { width: 280 });
+    doc.text(`Página ${pageIndex + 1} de ${range.count}`, layout.contentRight - 90, footerY, { width: 90, align: "right" });
+  }
+}
+
 function ensureSpace(doc: PDFKit.PDFDocument, needed: number) {
-  const bottom = doc.page.height - doc.page.margins.bottom;
-  if (doc.y + needed > bottom) doc.addPage();
+  const bottom = doc.page.height - doc.page.margins.bottom - 18;
+  if (doc.y + needed <= bottom) return;
+  doc.addPage();
+  drawPageBackground(doc);
+  setY(doc, doc.page.margins.top);
 }
 
 function setY(doc: PDFKit.PDFDocument, y: number) {
