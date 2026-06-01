@@ -94,7 +94,7 @@ export function DesktopAppShellFrame({
           <Link
             href={homeHref}
             className={cn(
-              "min-w-0 rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-white/62 focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
+              "min-w-0 rounded-[1.55rem] p-1 transition duration-200 ease-out hover:bg-[var(--color-surface-hover)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
               collapsed && "flex justify-center",
             )}
             title={collapsed ? "Harmonizing" : undefined}
@@ -112,8 +112,8 @@ export function DesktopAppShellFrame({
               title={collapsed ? expandLabel : collapseLabel}
               onClick={toggleCollapsed}
               className={cn(
-                "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/76 text-[var(--color-ink-soft)] shadow-[0_10px_20px_rgba(78,55,30,0.045)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
-                collapsed && "absolute top-4 right-2 z-10 bg-white/94",
+                "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)] shadow-[0_10px_20px_rgba(78,55,30,0.045)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
+                collapsed && "absolute top-4 right-2 z-10 bg-[var(--color-control-strong)]",
               )}
             >
               {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
@@ -175,7 +175,7 @@ function SidebarUserBadge({ userName, collapsed }: { userName: string; collapsed
     return (
       <div
         title={userName}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-gold)_26%,white)] bg-white/80 font-semibold tracking-[0.08em] text-[var(--color-gold-deep)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.045)]"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-gold)_26%,var(--color-border))] bg-[var(--color-control)] font-semibold tracking-[0.08em] text-[var(--color-gold-deep)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.045)]"
       >
         {userName.trim().slice(0, 1) || "H"}
       </div>
@@ -183,7 +183,7 @@ function SidebarUserBadge({ userName, collapsed }: { userName: string; collapsed
   }
 
   return (
-    <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.035)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
+    <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.035)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
       <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
       <span className="truncate">{userName}</span>
     </div>
@@ -219,7 +219,7 @@ function ShellNavLink({ item, collapsed }: { item: AppShellNavLink; collapsed: b
         "relative flex items-center overflow-hidden rounded-2xl border text-sm font-semibold transition-all duration-200 ease-out focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
         collapsed ? "justify-center px-2 py-2.5" : "justify-between gap-3 px-3 py-2.5",
         item.active
-          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),var(--color-gold-soft))] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
+          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))] [background:var(--background-active-nav)] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
           : "border-transparent bg-transparent text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
       )}
     >
@@ -229,8 +229,8 @@ function ShellNavLink({ item, collapsed }: { item: AppShellNavLink; collapsed: b
           className={cn(
             "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ease-out",
             item.active
-              ? "border-[color-mix(in_srgb,var(--color-gold)_28%,white)] bg-white/86 text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]"
-              : "border-[var(--color-border)] bg-white/64 text-[var(--color-ink-soft)]",
+              ? "border-[color-mix(in_srgb,var(--color-gold)_28%,var(--color-border))] bg-[var(--color-control-strong)] text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]"
+              : "border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)]",
           )}
         >
           <NavIcon icon={item.icon} className="h-4 w-4" />
@@ -242,7 +242,7 @@ function ShellNavLink({ item, collapsed }: { item: AppShellNavLink; collapsed: b
           className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-bold",
             collapsed && "absolute top-1 right-1 px-1.5 py-0 text-[9px] shadow-[0_6px_14px_rgba(135,83,29,0.12)]",
-            item.active ? "bg-white/90 text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
+            item.active ? "bg-[var(--color-control-strong)] text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
           )}
         >
           {item.badgeCount > 99 ? "99+" : item.badgeCount}

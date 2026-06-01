@@ -74,7 +74,7 @@ export default async function ParentSchedulePage({ searchParams }: { searchParam
             <CardTitle>{isSpanish ? "No hay clases esta semana" : "No classes this week"}</CardTitle>
             <CardDescription>{isSpanish ? "La próxima clase está programada" : "Next class is scheduled"} {formatDateTimeInZone(data.nextUpcomingSession.startsAtUtc, studentTimezone, viewer.locale)}.</CardDescription>
           </div>
-          {nextUpcomingWeekHref ? <Link href={nextUpcomingWeekHref} className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] px-5 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-95 focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none">{isSpanish ? "Ir a esa semana" : "Go to that week"}</Link> : null}
+          {nextUpcomingWeekHref ? <Link href={nextUpcomingWeekHref} className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] px-5 text-sm font-semibold text-[var(--color-on-accent)] shadow-[var(--shadow-glow)] transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-95 focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none">{isSpanish ? "Ir a esa semana" : "Go to that week"}</Link> : null}
         </Card>
       ) : null}
 

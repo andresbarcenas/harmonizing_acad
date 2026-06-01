@@ -170,6 +170,11 @@ enum RepertoireStatus {
   PAUSED
 }
 
+enum StudentExamArea {
+  HARMONY
+  MUSIC_READING
+}
+
 enum PracticeAssignmentStatus {
   ASSIGNED
   IN_PROGRESS
@@ -340,6 +345,7 @@ model User {
   uploadedClassSessionAttachments ClassSessionAttachment[] @relation("ClassSessionAttachmentUploadedBy")
   classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
   consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
+  publishedExamAssessments      StudentExamAssessment[] @relation("StudentExamAssessmentPublishedBy")
   createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
   emailDeliveryLogs             EmailDeliveryLog[] @relation("EmailDeliveryRecipient")
   createdAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementCreatedBy")
@@ -387,6 +393,7 @@ model StudentProfile {
   classRequests       ClassRequest[]
   parentLinks         ParentStudentLink[]
   consentSignatures   ConsentSignature[]
+  examAssessments     StudentExamAssessment[]
   historicalImportBatches HistoricalImportBatch[]
   historicalImportRows    HistoricalImportRow[]
 }
@@ -446,6 +453,7 @@ model TeacherProfile {
   repertoireItems     RepertoireItem[]
   practiceAssignments PracticeAssignment[]
   progressReports     ProgressReport[]
+  examAssessments      StudentExamAssessment[]
   classRequests       ClassRequest[]
 }
 
@@ -523,6 +531,7 @@ model ClassSession {
   emailDeliveryLogs    EmailDeliveryLog[]
   attachments         ClassSessionAttachment[]
   classCreditLedgerEntries ClassCreditLedgerEntry[]
+  examAssessment      StudentExamAssessment?
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
@@ -775,6 +784,7 @@ model RepertoireItem {
   practiceLogs        PracticeLog[]
   practiceVideos      PracticeVideo[]
   attachments         RepertoireAttachment[]
+  examScores          StudentExamRepertoireScore[]
 
   @@index([studentId, status])
   @@index([teacherId, status])
@@ -822,6 +832,71 @@ model RepertoireAttachment {
 
   @@index([repertoireItemId, createdAt])
   @@index([uploadedByUserId, createdAt])
+}
+
+model StudentExamAssessment {
+  id             String   @id @default(cuid())
+  studentId      String
+  teacherId      String
+  classSessionId String?  @unique
+  examDate       DateTime
+  title          String
+  instrument     String   @default("Piano")
+  notes          String?
+  publishedAt    DateTime?
+  publishedByUserId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student          StudentProfile               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          TeacherProfile               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classSession     ClassSession?                @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
+  publishedBy      User?                         @relation("StudentExamAssessmentPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  repertoireScores StudentExamRepertoireScore[]
+  areaScores       StudentExamAreaScore[]
+
+  @@index([studentId, examDate])
+  @@index([teacherId, examDate])
+  @@index([publishedAt])
+  @@index([publishedByUserId])
+}
+
+model StudentExamRepertoireScore {
+  id                  String           @id @default(cuid())
+  assessmentId        String
+  repertoireItemId    String?
+  titleSnapshot       String
+  composerSnapshot    String?
+  interpretationScore Float
+  executionScore      Float
+  overallScore        Float
+  comments            String?
+  sortOrder           Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  assessment     StudentExamAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  repertoireItem RepertoireItem?       @relation(fields: [repertoireItemId], references: [id], onDelete: SetNull)
+
+  @@index([assessmentId, sortOrder])
+  @@index([repertoireItemId])
+}
+
+model StudentExamAreaScore {
+  id           String                @id @default(cuid())
+  assessmentId String
+  area         StudentExamArea
+  topic        String
+  objective    String
+  score        Float
+  comments     String?
+  sortOrder    Int                   @default(0)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  assessment StudentExamAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId, area, sortOrder])
 }
 
 model ClassSessionAttachment {

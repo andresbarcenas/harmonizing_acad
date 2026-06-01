@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
-import { Role } from "@prisma/client";
+import { ClassSessionType, Role } from "@prisma/client";
 
+import { ExamAssessmentForm } from "@/components/progress/exam-assessment-form";
 import { AfterClassWorkflow } from "@/components/teacher/after-class-workflow";
 import { AppShell } from "@/components/ui/app-shell";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherClassCompletionData } from "@/lib/data";
 import { ProgressDataError } from "@/lib/data/progress";
 import { formatDateTimeInZone } from "@/lib/i18n";
+import { normalizeInstrument } from "@/lib/instruments";
 
 type PageProps = { params: Promise<{ classId: string }> };
 
@@ -24,9 +26,36 @@ export default async function TeacherClassCompletionPage({ params }: PageProps) 
 
   const { session } = data;
   const classDateLabel = formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale);
+  const isPianoEvaluation = session.type === ClassSessionType.EVALUATION && normalizeInstrument(session.instrument ?? session.student.preferredInstrument) === "Piano";
 
   return (
     <AppShell role={viewer.role} activePath="/teacher/progress" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={session.studentId}>
+      {isPianoEvaluation ? (
+        <ExamAssessmentForm
+          locale={viewer.locale}
+          stepMode
+          lockedStudent
+          classSessionId={session.id}
+          classDateLabel={classDateLabel}
+          returnHref={`/classes/${session.id}`}
+          initialStudentId={session.studentId}
+          initialTeacherId={session.teacherId}
+          studentOptions={[{
+            id: session.student.id,
+            name: session.student.user.name,
+            teacherId: session.teacherId,
+            teacherName: session.teacher.user.name,
+            repertoireItems: data.repertoireItems.map((item) => ({
+              id: item.id,
+              title: item.title,
+              composerOrArtist: item.composerOrArtist,
+              status: item.status,
+              masteryPercent: item.masteryPercent,
+            })),
+          }]}
+          existingAssessments={session.examAssessment ? [toExamAssessmentFormData(session.examAssessment)] : []}
+        />
+      ) : (
       <AfterClassWorkflow
         locale={viewer.locale}
         classId={session.id}
@@ -85,6 +114,40 @@ export default async function TeacherClassCompletionPage({ params }: PageProps) 
           studentVisibleNotes: item.studentVisibleNotes,
         }))}
       />
+      )}
     </AppShell>
   );
+}
+
+function toExamAssessmentFormData(assessment: NonNullable<Awaited<ReturnType<typeof getTeacherClassCompletionData>>["session"]["examAssessment"]>) {
+  return {
+    id: assessment.id,
+    studentId: assessment.studentId,
+    teacherId: assessment.teacherId,
+    teacherName: assessment.teacher.user.name,
+    classSessionId: assessment.classSessionId,
+    examDate: assessment.examDate.toISOString(),
+    title: assessment.title,
+    notes: assessment.notes,
+    publishedAt: assessment.publishedAt?.toISOString() ?? null,
+    publishedByName: assessment.publishedBy?.name ?? null,
+    repertoireScores: assessment.repertoireScores.map((row) => ({
+      id: row.id,
+      repertoireItemId: row.repertoireItemId,
+      titleSnapshot: row.titleSnapshot,
+      composerSnapshot: row.composerSnapshot,
+      interpretationScore: row.interpretationScore,
+      executionScore: row.executionScore,
+      overallScore: row.overallScore,
+      comments: row.comments,
+    })),
+    areaScores: assessment.areaScores.map((row) => ({
+      id: row.id,
+      area: row.area,
+      topic: row.topic,
+      objective: row.objective,
+      score: row.score,
+      comments: row.comments,
+    })),
+  };
 }

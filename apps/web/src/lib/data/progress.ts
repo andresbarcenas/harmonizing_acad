@@ -1,10 +1,11 @@
 import "server-only";
 
-import { PracticeAssignmentStatus, ProgressReportStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
+import { ClassSessionType, PracticeAssignmentStatus, ProgressReportStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
 import { endOfDay, startOfDay, startOfWeek, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { examAssessmentInclude } from "@/lib/exam-assessments";
 import { instrumentToSkillInstrument, normalizeInstrument } from "@/lib/instruments";
 
 export async function resolveAssignedStudentForTeacher(teacherProfileId: string, studentId?: string | null) {
@@ -195,6 +196,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
         take: 12,
       },
       repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" } },
+      examAssessments: { where: { teacherId }, include: examAssessmentInclude, orderBy: { examDate: "desc" }, take: 8 },
       practiceAssignments: {
         where: { teacherId },
         include: { repertoireItem: true, skillCategory: true, practiceLogs: true },
@@ -240,6 +242,7 @@ export async function getTeacherClassCompletionData(viewer: AppViewer, classId: 
       teacher: { include: { user: true } },
       student: { include: { user: true } },
       attachments: { include: { uploadedBy: true }, orderBy: { createdAt: "desc" } },
+      examAssessment: { include: examAssessmentInclude },
       lessonNote: {
         include: {
           skillRatings: { include: { skillCategory: true }, orderBy: { skillCategory: { sortOrder: "asc" } } },
@@ -358,18 +361,28 @@ export async function getAdminProgressData(viewer: AppViewer) {
   }
 
   const since = subDays(new Date(), 14);
-  const [students, missingLessonNotes, recentCompletedSessions, reports, skillCategories] = await Promise.all([
+  const [students, teachers, missingLessonNotes, recentCompletedSessions, reports, skillCategories, examAssessments] = await Promise.all([
     db.studentProfile.findMany({
       include: {
         user: true,
         assignment: { include: { teacher: { include: { user: true } } } },
+        repertoireItems: { orderBy: { updatedAt: "desc" } },
+        examAssessments: { include: examAssessmentInclude, orderBy: { examDate: "desc" }, take: 3 },
         practiceLogs: { where: { practicedOn: { gte: since } } },
         progressReports: { orderBy: { createdAt: "desc" }, take: 1 },
       },
       orderBy: { user: { name: "asc" } },
     }),
+    db.teacherProfile.findMany({ include: { user: true }, orderBy: { user: { name: "asc" } } }),
     db.classSession.findMany({
-      where: { status: SessionStatus.COMPLETED, lessonNote: { is: null } },
+      where: {
+        status: SessionStatus.COMPLETED,
+        lessonNote: { is: null },
+        OR: [
+          { type: { not: ClassSessionType.EVALUATION } },
+          { examAssessment: { is: null } },
+        ],
+      },
       include: { student: { include: { user: true } }, teacher: { include: { user: true } } },
       orderBy: { startsAtUtc: "desc" },
       take: 20,
@@ -390,6 +403,11 @@ export async function getAdminProgressData(viewer: AppViewer) {
       take: 12,
     }),
     db.skillCategory.findMany({ orderBy: [{ instrument: "asc" }, { sortOrder: "asc" }] }),
+    db.studentExamAssessment.findMany({
+      include: examAssessmentInclude,
+      orderBy: { examDate: "desc" },
+      take: 12,
+    }),
   ]);
 
   const lowPracticeStudents = students
@@ -400,7 +418,7 @@ export async function getAdminProgressData(viewer: AppViewer) {
     }))
     .filter((item) => item.minutes < 30);
 
-  return { students, missingLessonNotes, recentCompletedSessions, lowPracticeStudents, reports, skillCategories };
+  return { students, teachers, missingLessonNotes, recentCompletedSessions, lowPracticeStudents, reports, skillCategories, examAssessments };
 }
 
 export async function calculateProgressReportMetrics(studentId: string, startDate: Date, endDate: Date) {

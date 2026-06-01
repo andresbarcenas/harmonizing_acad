@@ -34,7 +34,7 @@ export function LanguageToggle({ locale, authenticated = false, compact = false 
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full border border-[var(--color-border)] bg-white/76 p-1 shadow-[0_10px_20px_rgba(78,55,30,0.04)]",
+        "inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-1 shadow-[0_10px_20px_rgba(78,55,30,0.04)]",
         compact ? "gap-0.5" : "gap-1",
       )}
       aria-label={dictionary.common.language}
@@ -50,7 +50,7 @@ export function LanguageToggle({ locale, authenticated = false, compact = false 
             className={cn(
               "rounded-full text-xs font-semibold uppercase tracking-[0.08em] transition",
               compact ? "px-2 py-1" : "px-3 py-1.5",
-              active ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
+              active ? "bg-[var(--color-gold)] text-[var(--color-on-accent)] shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)] hover:text-[var(--color-gold-deep)]",
             )}
           >
             {option}
@@ -113,7 +113,7 @@ export function LanguagePreferenceForm({ locale, preference }: { locale: AppLoca
   ];
 
   return (
-    <div className="mt-4 rounded-[1.35rem] border border-[var(--color-border)] bg-white/70 p-4">
+    <div className="mt-4 rounded-[1.35rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
       <div className="space-y-3">
         <div>
           <p className="text-sm font-semibold text-[var(--color-ink)]">{dictionary.settings.primaryLanguage}</p>
@@ -131,8 +131,8 @@ export function LanguagePreferenceForm({ locale, preference }: { locale: AppLoca
                 className={cn(
                   "rounded-[1.1rem] border px-3 py-3 text-left transition",
                   active
-                    ? "border-[color-mix(in_srgb,var(--color-gold)_48%,white)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]"
-                    : "border-[var(--color-border)] bg-white/72 text-[var(--color-ink-soft)] hover:border-[color-mix(in_srgb,var(--color-gold)_30%,white)] hover:text-[var(--color-ink)]",
+                    ? "border-[color-mix(in_srgb,var(--color-gold)_48%,var(--color-border))] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]"
+                    : "border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)] hover:border-[color-mix(in_srgb,var(--color-gold)_30%,var(--color-border))] hover:text-[var(--color-ink)]",
                 )}
               >
                 <span className="block text-sm font-semibold">{option.label}</span>

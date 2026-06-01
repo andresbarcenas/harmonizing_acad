@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client";
 import Link from "next/link";
 
+import { ExamAssessmentForm } from "@/components/progress/exam-assessment-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,28 @@ export default async function AdminProgressPage() {
           <Link href="/admin/progress/reports"><Button variant="gold">{isSpanish ? "Abrir reportes" : "Open reports"}</Button></Link>
         </div>
       </Card>
+
+      <Card>
+        <ExamAssessmentForm
+          locale={viewer.locale}
+          studentOptions={data.students.map((student) => ({
+            id: student.id,
+            name: student.user.name,
+            teacherId: student.assignment?.teacherId,
+            teacherName: student.assignment?.teacher.user.name,
+            repertoireItems: student.repertoireItems.map((item) => ({
+              id: item.id,
+              title: item.title,
+              composerOrArtist: item.composerOrArtist,
+              status: item.status,
+              masteryPercent: item.masteryPercent,
+            })),
+          }))}
+          teacherOptions={data.teachers.map((teacher) => ({ id: teacher.id, name: teacher.user.name }))}
+          existingAssessments={data.examAssessments.map(toExamAssessmentFormData)}
+        />
+      </Card>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardTitle>{isSpanish ? "Notas de clase faltantes" : "Missing lesson notes"}</CardTitle>
@@ -97,4 +120,37 @@ export default async function AdminProgressPage() {
       </div>
     </AppShell>
   );
+}
+
+function toExamAssessmentFormData(assessment: Awaited<ReturnType<typeof getAdminProgressData>>["examAssessments"][number]) {
+  return {
+    id: assessment.id,
+    studentId: assessment.studentId,
+    teacherId: assessment.teacherId,
+    teacherName: assessment.teacher.user.name,
+    classSessionId: assessment.classSessionId,
+    examDate: assessment.examDate.toISOString(),
+    title: assessment.title,
+    notes: assessment.notes,
+    publishedAt: assessment.publishedAt?.toISOString() ?? null,
+    publishedByName: assessment.publishedBy?.name ?? null,
+    repertoireScores: assessment.repertoireScores.map((row) => ({
+      id: row.id,
+      repertoireItemId: row.repertoireItemId,
+      titleSnapshot: row.titleSnapshot,
+      composerSnapshot: row.composerSnapshot,
+      interpretationScore: row.interpretationScore,
+      executionScore: row.executionScore,
+      overallScore: row.overallScore,
+      comments: row.comments,
+    })),
+    areaScores: assessment.areaScores.map((row) => ({
+      id: row.id,
+      area: row.area,
+      topic: row.topic,
+      objective: row.objective,
+      score: row.score,
+      comments: row.comments,
+    })),
+  };
 }

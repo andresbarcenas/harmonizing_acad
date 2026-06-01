@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --color-canvas: #f5efe6;
   --color-paper: #fffdf8;
   --color-paper-elevated: rgba(255, 253, 248, 0.94);
@@ -29,4 +30,85 @@
   --shadow-glow: 0 18px 42px rgba(183, 121, 44, 0.15);
   --shadow-active: 0 16px 36px rgba(135, 83, 29, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72);
   --focus-ring: color-mix(in srgb, var(--color-gold) 34%, white);
+  --color-control: rgba(255, 255, 255, 0.84);
+  --color-control-strong: rgba(255, 255, 255, 0.92);
+  --color-overlay: rgba(33, 29, 26, 0.38);
+  --color-status-success-bg: rgba(236, 253, 245, 0.82);
+  --color-status-success-border: rgba(167, 243, 208, 0.8);
+  --color-status-warning-bg: rgba(255, 251, 235, 0.82);
+  --color-status-warning-border: rgba(253, 230, 138, 0.8);
+  --color-status-danger-bg: rgba(255, 241, 242, 0.82);
+  --color-status-danger-border: rgba(254, 205, 211, 0.8);
+  --color-on-accent: #fffdf8;
+  --color-button-primary: #1f1a17;
+  --color-button-primary-hover: #2b241f;
+  --color-button-primary-foreground: #fffdf8;
+  --background-body:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.9), transparent 22%),
+    radial-gradient(circle at 72% 14%, rgba(255, 248, 235, 0.95), transparent 18%),
+    radial-gradient(circle at 82% 24%, color-mix(in srgb, var(--color-gold) 11%, transparent), transparent 12%),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.82), transparent 24%),
+    linear-gradient(180deg, #fbf8f2 0%, var(--color-canvas) 38%, #f1e9dd 100%);
+  --background-hero:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(252, 247, 239, 0.78)),
+    var(--color-paper-frost);
+  --background-mobile-drawer: linear-gradient(155deg, rgba(255, 255, 255, 0.97), rgba(252, 247, 241, 0.94));
+  --background-active-nav: linear-gradient(135deg, rgba(255, 255, 255, 0.9), var(--color-gold-soft));
+  --shadow-control-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 20px rgba(90, 64, 33, 0.04);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #17120e;
+  --color-paper: #211a14;
+  --color-paper-elevated: rgba(39, 30, 22, 0.94);
+  --color-paper-strong: #332518;
+  --color-paper-frost: rgba(34, 26, 19, 0.78);
+  --color-surface-inset: rgba(19, 14, 10, 0.68);
+  --color-surface-hover: rgba(54, 40, 27, 0.82);
+  --color-surface-sidebar: rgba(29, 22, 16, 0.9);
+  --color-surface-glass: rgba(37, 28, 20, 0.76);
+  --color-ink: #f7efe5;
+  --color-ink-soft: #d0c0ad;
+  --color-ink-muted: #958576;
+  --color-muted: #31251a;
+  --color-border: rgba(226, 196, 151, 0.16);
+  --color-border-strong: rgba(226, 196, 151, 0.28);
+  --color-gold: #d49a52;
+  --color-gold-soft: rgba(107, 69, 32, 0.48);
+  --color-gold-deep: #f1c98d;
+  --color-success: #8be2b4;
+  --color-warning: #f3bc6f;
+  --color-danger: #f19a92;
+  --shadow-soft: 0 26px 70px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 18px 54px rgba(0, 0, 0, 0.24), 0 4px 18px rgba(0, 0, 0, 0.18);
+  --shadow-lift: 0 26px 74px rgba(0, 0, 0, 0.36), 0 8px 24px rgba(0, 0, 0, 0.26);
+  --shadow-glow: 0 18px 42px rgba(212, 154, 82, 0.18);
+  --shadow-active: 0 16px 36px rgba(212, 154, 82, 0.13), inset 0 1px 0 rgba(255, 238, 207, 0.12);
+  --focus-ring: color-mix(in srgb, var(--color-gold) 42%, transparent);
+  --color-control: rgba(44, 33, 24, 0.88);
+  --color-control-strong: rgba(56, 42, 29, 0.94);
+  --color-overlay: rgba(5, 4, 3, 0.62);
+  --color-status-success-bg: rgba(25, 75, 52, 0.44);
+  --color-status-success-border: rgba(139, 226, 180, 0.34);
+  --color-status-warning-bg: rgba(105, 67, 24, 0.44);
+  --color-status-warning-border: rgba(243, 188, 111, 0.34);
+  --color-status-danger-bg: rgba(101, 38, 35, 0.44);
+  --color-status-danger-border: rgba(241, 154, 146, 0.34);
+  --color-on-accent: #1b130c;
+  --color-button-primary: #f4e7d6;
+  --color-button-primary-hover: #ffefd8;
+  --color-button-primary-foreground: #1b130c;
+  --background-body:
+    radial-gradient(circle at 15% 10%, rgba(87, 61, 37, 0.34), transparent 24%),
+    radial-gradient(circle at 72% 14%, rgba(96, 63, 32, 0.25), transparent 20%),
+    radial-gradient(circle at 82% 24%, color-mix(in srgb, var(--color-gold) 13%, transparent), transparent 14%),
+    radial-gradient(circle at 48% 0%, rgba(255, 232, 190, 0.08), transparent 27%),
+    linear-gradient(180deg, #120e0b 0%, var(--color-canvas) 42%, #1f1711 100%);
+  --background-hero:
+    linear-gradient(135deg, rgba(48, 36, 25, 0.92), rgba(29, 22, 16, 0.78)),
+    var(--color-paper-frost);
+  --background-mobile-drawer: linear-gradient(155deg, rgba(35, 26, 19, 0.98), rgba(24, 18, 13, 0.96));
+  --background-active-nav: linear-gradient(135deg, rgba(65, 44, 25, 0.82), var(--color-gold-soft));
+  --shadow-control-inset: inset 0 1px 0 rgba(255, 238, 207, 0.08), 0 8px 20px rgba(0, 0, 0, 0.18);
 }

@@ -177,7 +177,7 @@ export function RescheduleWidget({
               <CardTitle>{dictionary.schedule.chooseNew}</CardTitle>
               <CardDescription>{dictionary.schedule.chooseDescription}</CardDescription>
             </div>
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/76 px-3 py-1.5 text-xs text-[var(--color-ink-soft)]">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-xs text-[var(--color-ink-soft)]">
               <Clock3 className="h-3.5 w-3.5" />
               {timezone}
             </div>
@@ -200,7 +200,7 @@ export function RescheduleWidget({
                       "min-w-0 rounded-[1rem] border px-3 py-3 text-left transition",
                       active
                         ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)] shadow-[var(--shadow-glow)]"
-                        : "border-[var(--color-border)] bg-white/72 text-[var(--color-ink-soft)] hover:bg-white",
+                        : "border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-hover)]",
                     )}
                   >
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.08em]">{labelDay(date, timezone, locale)}</p>
@@ -216,7 +216,7 @@ export function RescheduleWidget({
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="rounded-[1.15rem] border border-[var(--color-border)] bg-white/68 p-4">
+            <div className="rounded-[1.15rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-deep)]">{dictionary.schedule.currentClass}</p>
               <div className="mt-3 space-y-3">
                 {selectedDaySessions.length ? (
@@ -232,7 +232,7 @@ export function RescheduleWidget({
               </div>
             </div>
 
-            <div className="rounded-[1.15rem] border border-[var(--color-border)] bg-white/68 p-4">
+            <div className="rounded-[1.15rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-deep)]">{dictionary.schedule.availableTimes}</p>
               {selectedDaySlots.length ? (
                 <div className="mt-3 space-y-4">
@@ -248,8 +248,8 @@ export function RescheduleWidget({
                             className={cn(
                               "rounded-[0.9rem] border px-3 py-2 text-left text-sm font-semibold transition",
                               selectedStartUtc === slot.startUtc
-                                ? "border-[var(--color-gold)] bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]"
-                                : "border-[var(--color-border)] bg-white text-[var(--color-ink)] hover:border-[color-mix(in_srgb,var(--color-gold)_44%,white)]",
+                                ? "border-[var(--color-gold)] bg-[var(--color-gold)] text-[var(--color-on-accent)] shadow-[var(--shadow-glow)]"
+                                : "border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink)] hover:border-[color-mix(in_srgb,var(--color-gold)_44%,var(--color-border))]",
                             )}
                           >
                             {labelTime(slot.startDate, timezone, locale)}
@@ -260,7 +260,7 @@ export function RescheduleWidget({
                   ))}
                 </div>
               ) : (
-                <div className="mt-3 rounded-[1rem] border border-dashed border-[var(--color-border)] bg-white/58 px-4 py-6 text-sm text-[var(--color-ink-soft)]">
+                <div className="mt-3 rounded-[1rem] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-inset)] px-4 py-6 text-sm text-[var(--color-ink-soft)]">
                   {dictionary.schedule.noSpacesDay}
                 </div>
               )}
@@ -269,7 +269,7 @@ export function RescheduleWidget({
         </div>
 
         <aside className="xl:sticky xl:top-6 xl:self-start">
-          <div className="rounded-[1.25rem] border border-[var(--color-border)] bg-white/82 p-4">
+          <div className="rounded-[1.25rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-deep)]">{dictionary.schedule.request}</p>
             <div className="mt-4 rounded-[1rem] bg-[var(--color-paper)] px-4 py-4">
               {selectedSummary ? (

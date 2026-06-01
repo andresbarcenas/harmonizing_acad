@@ -61,7 +61,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true, locale 
             onClick={() => setOpen(true)}
             aria-label={labels.zoom}
             className={cn(
-              "relative h-12 w-12 cursor-zoom-in overflow-hidden rounded-full border border-white/80 shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)] outline-none transition hover:brightness-[1.02] focus-visible:ring-2 focus-visible:ring-[var(--color-gold)] focus-visible:ring-offset-2",
+              "relative h-12 w-12 cursor-zoom-in overflow-hidden rounded-full border border-[var(--color-border-strong)] shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)] outline-none transition hover:brightness-[1.02] focus-visible:ring-2 focus-visible:ring-[var(--color-gold)] focus-visible:ring-offset-2",
               className,
             )}
           >
@@ -71,7 +71,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true, locale 
         ) : (
           <div
             className={cn(
-              "relative h-12 w-12 overflow-hidden rounded-full border border-white/80 shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)]",
+              "relative h-12 w-12 overflow-hidden rounded-full border border-[var(--color-border-strong)] shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)]",
               className,
             )}
           >
@@ -123,7 +123,7 @@ export function Avatar({ src, alt, fallback, className, zoomable = true, locale 
   return (
     <div
       className={cn(
-        "flex h-12 w-12 items-center justify-center rounded-full border border-white/80 bg-[linear-gradient(145deg,#fff8f1,#f3e8d8)] text-sm font-semibold text-[var(--color-gold-deep)] shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)]",
+        "flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] [background:linear-gradient(145deg,var(--color-control-strong),var(--color-gold-soft))] text-sm font-semibold text-[var(--color-gold-deep)] shadow-[0_10px_26px_rgba(78,55,30,0.12)] ring-1 ring-[var(--color-border)]",
         className,
       )}
     >

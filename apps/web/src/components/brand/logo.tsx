@@ -13,7 +13,7 @@ export function BrandLogo({
 }) {
   return (
     <div className={cn("inline-flex items-center gap-3", stacked && "flex-col gap-4 text-center", className)}>
-      <div className="flex h-[3.35rem] w-[3.35rem] flex-col items-center justify-center rounded-[1.35rem] border border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-white/92 shadow-[var(--shadow-glow)]">
+      <div className="flex h-[3.35rem] w-[3.35rem] flex-col items-center justify-center rounded-[1.35rem] border border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))] bg-[var(--color-control-strong)] shadow-[var(--shadow-glow)]">
         <span className="font-display text-[0.65rem] uppercase tracking-[0.28em] text-[var(--color-gold-deep)]">h</span>
         <span className="-mt-1 font-display text-[1.7rem] leading-none text-[var(--color-gold)]">2</span>
       </div>

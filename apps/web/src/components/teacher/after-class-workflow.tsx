@@ -474,7 +474,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
               onClick={() => setStep(index)}
               className={cn(
                 "rounded-full border px-3.5 py-2 text-xs font-semibold transition",
-                index === step ? "border-[var(--color-gold)] bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "border-[var(--color-border)] bg-white/74 text-[var(--color-ink-soft)]",
+                index === step ? "border-[var(--color-gold)] bg-[var(--color-gold)] text-[var(--color-on-accent)] shadow-[var(--shadow-glow)]" : "border-[var(--color-border)] bg-white/74 text-[var(--color-ink-soft)]",
               )}
             >
               {index + 1}. {label}

@@ -49,7 +49,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
                 href={buildVideosFilterHref(option.key, selectedStudentId)}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-semibold transition",
-                  active ? "bg-[var(--color-gold)] text-white shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)]",
+                  active ? "bg-[var(--color-gold)] text-[var(--color-on-accent)] shadow-[var(--shadow-glow)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-gold-soft)]",
                 )}
               >
                 {option.label}

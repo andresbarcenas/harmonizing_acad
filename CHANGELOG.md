@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.6] - 2026-06-01
+
+### Added
+- App-wide dark mode with light, dark, and system theme preferences across auth pages, the authenticated shell, shared UI, dashboards, schedules, forms, messages, notifications, and billing surfaces.
+- Piano exam assessments for teacher/admin progress workflows and Piano evaluation classes, including repertoire scoring, Harmony rows, Music Reading rows, historical exam entry, and repertoire mastery updates.
+- Student and parent Repertoire and Exams sections with published Piano exam results, protected exam PDF downloads, and family-visible learning cards.
+- Teacher quick-cancel support for `RESCHEDULE_PENDING` classes, including request closure, notifications, and class-credit synchronization.
+
+### Changed
+- Teachers can manually add one-time classes outside their weekly availability while blackout dates, conflicts, and all student/parent scheduling protections remain enforced.
+- Family-facing schedule and learning surfaces now link into the new repertoire and published exam experiences.
+- Shared visual surfaces, inputs, buttons, badges, calendars, and shell chrome now use theme-aware tokens.
+
 ## [0.10.5] - 2026-05-30
 
 ### Added

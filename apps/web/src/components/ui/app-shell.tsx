@@ -7,6 +7,7 @@ import { AppAnnouncementBanner } from "@/components/announcements/app-announceme
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { ParentStudentSelector } from "@/components/parent/student-selector";
+import { ThemeToggle } from "@/components/system/theme-toggle";
 import { TeacherStudentSelector } from "@/components/teacher/student-context-selector";
 import { DesktopAppShellFrame } from "@/components/ui/desktop-app-shell-frame";
 import { MobileNavDrawer, type AppShellNavGroup, type NavIconKey } from "@/components/ui/mobile-nav-drawer";
@@ -44,6 +45,8 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       items: [
         { href: "/videos", label: nav.practice, icon: "video" },
         { href: "/progress", label: nav.progress, icon: "trending" },
+        { href: "/repertoire", label: nav.repertoire, icon: "music" },
+        { href: "/exams", label: nav.exams, icon: "clipboard" },
       ],
     },
     {
@@ -96,6 +99,8 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       items: [
         { href: "/parent/videos", label: nav.practice, icon: "video" },
         { href: "/parent/progress", label: nav.progress, icon: "trending" },
+        { href: "/parent/repertoire", label: nav.repertoire, icon: "music" },
+        { href: "/parent/exams", label: nav.exams, icon: "clipboard" },
       ],
     },
     {
@@ -287,8 +292,9 @@ export async function AppShell({
               settingsHref="/settings"
               groups={navGroups}
               showLanguageToggle={!impersonation}
+              showThemeToggle={!impersonation}
             />
-            <Link href={homeHref} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
+            <Link href={homeHref} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
               <BrandLogo compact subtitle={dictionary.shell.brandSubtitle} />
               <div className="min-w-0">
                 <p className="truncate font-display text-[1.45rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
@@ -297,7 +303,7 @@ export async function AppShell({
                 <p className="mt-0.5 truncate text-[0.52rem] tracking-[0.28em] text-[var(--color-ink-muted)] uppercase">{dictionary.shell.brandSubtitle}</p>
               </div>
             </Link>
-            <Link href="/settings" className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/75 px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none sm:inline-flex">
+            <Link href="/settings" className="hidden max-w-[8rem] items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none sm:inline-flex">
               <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
               <span className="truncate">{userName}</span>
             </Link>
@@ -311,6 +317,7 @@ export async function AppShell({
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{dictionary.shell.brandSubtitle}</p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+              {!impersonation ? <ThemeToggle locale={activeLocale} compact /> : null}
               {!impersonation ? <LanguageToggle locale={activeLocale} authenticated compact /> : null}
               <UserBadge userName={userName} href="/settings" />
             </div>
@@ -370,7 +377,7 @@ export async function AppShell({
 }
 
 function UserBadge({ userName, href }: { userName: string; href?: string }) {
-  const className = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.035)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none";
+  const className = "inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-1.5 text-[11px] font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.035)] transition duration-200 ease-out hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none";
   const content = (
     <>
       <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-gold)]" />
@@ -407,7 +414,7 @@ function withTeacherStudentContext(href: string, role: Role, studentId?: string 
 function withParentStudentContext(href: string, role: Role, studentId?: string | null) {
   if (role !== Role.PARENT || !studentId) return href;
 
-  const contextualRoutes = ["/parent/dashboard", "/parent/schedule", "/parent/videos", "/parent/progress", "/parent/invoices", "/messages", "/consent"];
+  const contextualRoutes = ["/parent/dashboard", "/parent/schedule", "/parent/videos", "/parent/progress", "/parent/repertoire", "/parent/exams", "/parent/invoices", "/messages", "/consent"];
   const pathname = href.split("?")[0];
   if (!contextualRoutes.includes(pathname)) return href;
 

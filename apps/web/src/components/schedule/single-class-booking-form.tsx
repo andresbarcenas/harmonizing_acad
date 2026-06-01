@@ -215,7 +215,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return <div className="space-y-1.5"><p className="text-sm font-semibold text-[var(--color-ink-soft)]">{label}</p><div className="h-[3.1rem] rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 py-3 text-sm text-[var(--color-ink)]">{value}</div></div>;
+  return <div className="space-y-1.5"><p className="text-sm font-semibold text-[var(--color-ink-soft)]">{label}</p><div className="h-[3.1rem] rounded-[1.1rem] control-surface px-4 py-3 text-sm">{value}</div></div>;
 }
 
-const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
+const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] control-surface px-4 text-sm focus:border-[color-mix(in_srgb,var(--color-gold)_52%,var(--color-border))] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]";

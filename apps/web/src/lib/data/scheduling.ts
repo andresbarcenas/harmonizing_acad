@@ -5,6 +5,7 @@ import { addDays, subDays } from "date-fns";
 
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
+import { examAssessmentInclude } from "@/lib/exam-assessments";
 import { parentCanAccessStudent } from "@/lib/parents";
 
 async function resolveTeacherStudentContext(teacherProfileId: string, studentId?: string | null) {
@@ -151,6 +152,7 @@ export async function getClassDetailData(viewer: AppViewer, classId: string) {
       recurrence: true,
       classRequest: { include: { requestedBy: true, reviewedBy: true } },
       lessonNote: { include: { skillRatings: { include: { skillCategory: true } } } },
+      examAssessment: { include: examAssessmentInclude },
       practiceAssignments: { include: { skillCategory: true, repertoireItem: true } },
       attachments: { include: { uploadedBy: true }, orderBy: { createdAt: "desc" } },
     },

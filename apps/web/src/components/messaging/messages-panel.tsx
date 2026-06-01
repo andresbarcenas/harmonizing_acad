@@ -79,11 +79,11 @@ export function MessagesPanel({
             <div
               key={message.id}
               className={`max-w-[85%] rounded-[1.35rem] px-4 py-3 text-sm shadow-[0_10px_26px_rgba(78,55,30,0.04)] ${
-                own ? "ml-auto bg-[var(--color-gold)] text-white" : "border border-[var(--color-border)] bg-white/76 text-[var(--color-ink)]"
+                own ? "ml-auto bg-[var(--color-gold)] text-[var(--color-on-accent)]" : "border border-[var(--color-border)] bg-[var(--color-surface-glass)] text-[var(--color-ink)]"
               }`}
             >
               <p>{message.content}</p>
-              <p className={`mt-1 text-[10px] ${own ? "text-white/72" : "text-[var(--color-ink-soft)]"}`}>
+              <p className={`mt-1 text-[10px] ${own ? "opacity-75" : "text-[var(--color-ink-soft)]"}`}>
                 {message.sender.name} · {new Date(message.createdAt).toLocaleTimeString(intlLocale(locale), { hour: "numeric", minute: "2-digit" })}
               </p>
             </div>

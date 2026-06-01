@@ -84,7 +84,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
           {nextUpcomingWeekHref ? (
             <Link
               href={nextUpcomingWeekHref}
-              className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] px-5 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-95 focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+              className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] px-5 text-sm font-semibold text-[var(--color-on-accent)] shadow-[var(--shadow-glow)] transition duration-200 ease-out hover:-translate-y-0.5 hover:brightness-95 focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
             >
               {dictionary.schedule.goNextClass}
             </Link>

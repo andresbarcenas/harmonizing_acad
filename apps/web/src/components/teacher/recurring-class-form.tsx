@@ -138,7 +138,7 @@ export function RecurringClassForm({
         {selectedStudent ? (
           <div className="space-y-1.5">
             <p className="text-sm font-semibold text-[var(--color-ink-soft)]">{dictionary.teacher.selectedStudent}</p>
-            <div className="h-[3.1rem] rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 py-3 text-sm text-[var(--color-ink)]">
+            <div className="h-[3.1rem] rounded-[1.1rem] control-surface px-4 py-3 text-sm">
               {selectedStudent.name} {selectedStudent.instrument ? `· ${displayInstrument(selectedStudent.instrument, locale)}` : ""}
             </div>
           </div>
@@ -152,7 +152,7 @@ export function RecurringClassForm({
               name="studentId"
               value={selectedStudentValue}
               onChange={(event) => setSelectedStudentValue(event.target.value)}
-              className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+              className="h-[3.1rem] w-full rounded-[1.1rem] control-surface px-4 text-sm"
               required
             >
               {students.map((student) => (
@@ -173,7 +173,7 @@ export function RecurringClassForm({
               name="teacherId"
               value={selectedTeacherId}
               onChange={(event) => setSelectedTeacherId(event.target.value)}
-              className="h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]"
+              className="h-[3.1rem] w-full rounded-[1.1rem] control-surface px-4 text-sm"
               required
             >
               {teachers.map((teacher) => (

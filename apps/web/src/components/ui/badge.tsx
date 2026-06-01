@@ -5,10 +5,10 @@ const badgeVariants = cva("inline-flex items-center rounded-full border px-2.5 p
   variants: {
     variant: {
       default: "border-[var(--color-border)] bg-[var(--color-surface-glass)] text-[var(--color-ink-soft)]",
-      gold: "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
-      success: "border-emerald-200/80 bg-emerald-50/82 text-[var(--color-success)]",
-      warning: "border-amber-200/80 bg-amber-50/82 text-[var(--color-warning)]",
-      danger: "border-rose-200/80 bg-rose-50/82 text-[var(--color-danger)]",
+      gold: "border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))] bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
+      success: "border-[var(--color-status-success-border)] bg-[var(--color-status-success-bg)] text-[var(--color-success)]",
+      warning: "border-[var(--color-status-warning-border)] bg-[var(--color-status-warning-bg)] text-[var(--color-warning)]",
+      danger: "border-[var(--color-status-danger-border)] bg-[var(--color-status-danger-bg)] text-[var(--color-danger)]",
     },
   },
   defaultVariants: {

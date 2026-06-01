@@ -4,6 +4,7 @@ import type { SessionStatus } from "@prisma/client";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CancelPendingClassButton } from "@/components/teacher/cancel-pending-class-button";
 import { classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { intlLocale, type AppLocale } from "@/lib/i18n/locales";
@@ -25,6 +26,7 @@ export type ClassSessionListItem = {
   detailHref: string;
   completeHref?: string;
   rescheduleHref?: string;
+  canCancelPending?: boolean;
 };
 
 type DayGroup = {
@@ -36,29 +38,29 @@ type DayGroup = {
 
 const dayAccents = [
   {
-    header: "border-[#e8d3b6] bg-[#fbf2e6]",
-    chip: "border-[#e4c89f] bg-[#f8ead8] text-[#3a2516]",
+    header: "border-[color-mix(in_srgb,var(--color-gold)_20%,var(--color-border))] bg-[var(--color-surface-inset)]",
+    chip: "border-[color-mix(in_srgb,var(--color-gold)_28%,var(--color-border))] bg-[var(--color-gold-soft)] text-[var(--color-ink)]",
     rail: "bg-[var(--color-gold)]",
   },
   {
-    header: "border-[#e3d2bd] bg-[#f8efe4]",
-    chip: "border-[#dbc4a8] bg-[#f3e5d2] text-[#3a2516]",
-    rail: "bg-[#c5965c]",
+    header: "border-[color-mix(in_srgb,var(--color-gold)_18%,var(--color-border))] bg-[var(--color-surface-glass)]",
+    chip: "border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))] bg-[var(--color-surface-inset)] text-[var(--color-ink)]",
+    rail: "bg-[color-mix(in_srgb,var(--color-gold)_82%,var(--color-ink-muted))]",
   },
   {
-    header: "border-[#ddd0bd] bg-[#f6efe5]",
-    chip: "border-[#d5c3aa] bg-[#efe2d0] text-[#3a2516]",
-    rail: "bg-[#a97842]",
+    header: "border-[color-mix(in_srgb,var(--color-gold)_16%,var(--color-border))] bg-[var(--color-paper-frost)]",
+    chip: "border-[color-mix(in_srgb,var(--color-gold)_20%,var(--color-border))] bg-[var(--color-control)] text-[var(--color-ink)]",
+    rail: "bg-[color-mix(in_srgb,var(--color-gold)_66%,var(--color-ink-muted))]",
   },
   {
-    header: "border-[#e7d8c4] bg-[#fbf4ea]",
-    chip: "border-[#dfccb1] bg-[#f5e9d7] text-[#3a2516]",
-    rail: "bg-[#d0a069]",
+    header: "border-[color-mix(in_srgb,var(--color-gold)_22%,var(--color-border))] bg-[var(--color-surface-inset)]",
+    chip: "border-[color-mix(in_srgb,var(--color-gold)_26%,var(--color-border))] bg-[var(--color-gold-soft)] text-[var(--color-ink)]",
+    rail: "bg-[color-mix(in_srgb,var(--color-gold)_88%,var(--color-paper))]",
   },
   {
-    header: "border-[#ded4c7] bg-[#f7f0e8]",
-    chip: "border-[#d6c8b8] bg-[#f0e8dd] text-[#3a2516]",
-    rail: "bg-[#9d7653]",
+    header: "border-[color-mix(in_srgb,var(--color-gold)_14%,var(--color-border))] bg-[var(--color-surface-glass)]",
+    chip: "border-[color-mix(in_srgb,var(--color-gold)_18%,var(--color-border))] bg-[var(--color-control)] text-[var(--color-ink)]",
+    rail: "bg-[color-mix(in_srgb,var(--color-gold)_54%,var(--color-ink-muted))]",
   },
 ] as const;
 
@@ -83,7 +85,7 @@ export function ClassSessionDayList({
     <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.key} className="space-y-2">
-          <div className={`rounded-[1.25rem] border px-4 py-3 shadow-[0_8px_22px_rgba(68,47,27,0.035)] ${group.accent.header}`}>
+          <div className={`rounded-[1.25rem] border px-4 py-3 shadow-[var(--shadow-card)] ${group.accent.header}`}>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-display text-2xl font-normal tracking-[-0.04em] text-[var(--color-ink)]">{group.label}</h3>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-soft)]">
@@ -123,7 +125,7 @@ function ClassSessionRow({
       <div className={`absolute inset-y-0 left-0 w-1.5 ${accent.rail}`} />
       <div className="flex flex-col gap-4 pl-1 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start">
-          <div className={`w-fit shrink-0 rounded-[1.05rem] border px-4 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] ${accent.chip}`}>
+          <div className={`w-fit shrink-0 rounded-[1.05rem] border px-4 py-3 text-center shadow-[var(--shadow-active)] ${accent.chip}`}>
             <p className="font-display text-3xl leading-none tracking-[-0.05em]">{viewerTime}</p>
             <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] opacity-75">{durationMinutes} min</p>
           </div>
@@ -155,6 +157,7 @@ function ClassSessionRow({
         <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
           <Link href={session.detailHref}><Button size="sm" variant="outline">{locale === "es" ? "Detalle" : "Detail"}</Button></Link>
           {session.rescheduleHref ? <Link href={session.rescheduleHref}><Button size="sm" variant="gold">{locale === "es" ? "Reagendar" : "Reschedule"}</Button></Link> : null}
+          {session.canCancelPending ? <CancelPendingClassButton classId={session.id} locale={locale} /> : null}
           {session.completeHref ? <Link href={session.completeHref}><Button size="sm" variant="gold">{locale === "es" ? "Completar" : "Complete"}</Button></Link> : null}
         </div>
       </div>

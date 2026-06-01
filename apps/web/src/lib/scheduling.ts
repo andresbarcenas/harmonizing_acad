@@ -104,6 +104,7 @@ export async function validateClassBookingWindow(input: {
   timezone: string;
   locale?: string;
   ignoreSessionId?: string;
+  skipTeacherAvailability?: boolean;
 }): Promise<ScheduleValidationResult> {
   const isSpanish = input.locale === "es";
 
@@ -196,7 +197,7 @@ export async function validateClassBookingWindow(input: {
     }
   }
 
-  if (teacher?.availability.length) {
+  if (!input.skipTeacherAvailability && teacher?.availability.length) {
     const fallbackTimezone = normalizeIanaTimezone(teacher.user.timezone || input.timezone);
     if (!isSlotWithinAvailability(input.startsAtUtc, input.endsAtUtc, teacher.availability, fallbackTimezone)) {
       return {

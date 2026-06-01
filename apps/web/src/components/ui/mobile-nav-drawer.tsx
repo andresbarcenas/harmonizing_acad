@@ -33,6 +33,7 @@ import { createPortal } from "react-dom";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { BrandLogo } from "@/components/brand/logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { ThemeToggle } from "@/components/system/theme-toggle";
 import { type AppLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
@@ -88,9 +89,10 @@ type MobileNavDrawerProps = {
   };
   settingsHref?: string;
   showLanguageToggle?: boolean;
+  showThemeToggle?: boolean;
 };
 
-export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, brandSubtitle, labels, settingsHref, showLanguageToggle = true }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ groups, userName, locale, signOutLabel, version, homeHref, brandSubtitle, labels, settingsHref, showLanguageToggle = true, showThemeToggle = true }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(() => defaultOpenGroups(groups));
 
@@ -121,17 +123,17 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
           <button
             type="button"
             aria-label={labels.closeMenu}
-            className="absolute inset-0 bg-[rgba(33,29,26,0.38)] backdrop-blur-[6px]"
+            className="absolute inset-0 bg-[var(--color-overlay)] backdrop-blur-[6px]"
             onClick={() => setOpen(false)}
           />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label={labels.navigationMenu}
-            className="relative flex h-[100svh] min-h-dvh w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[linear-gradient(155deg,rgba(255,255,255,0.97),rgba(252,247,241,0.94))] px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_32px_80px_rgba(45,34,24,0.28)] sm:w-[22rem] sm:max-w-[calc(100dvw-2rem)] sm:px-4 sm:py-4"
+            className="relative flex h-[100svh] min-h-dvh w-full flex-col overflow-hidden border-r border-[var(--color-border)] [background:var(--background-mobile-drawer)] px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_32px_80px_rgba(45,34,24,0.28)] sm:w-[22rem] sm:max-w-[calc(100dvw-2rem)] sm:px-4 sm:py-4"
           >
             <div className="flex shrink-0 items-center justify-between gap-3">
-              <Link href={homeHref} onClick={() => setOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_16%,white)] focus:outline-none">
+              <Link href={homeHref} onClick={() => setOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl transition focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none">
                 <BrandLogo compact subtitle={brandSubtitle} />
                 <div className="min-w-0">
                   <p className="truncate font-display text-[1.55rem] leading-none tracking-[-0.04em] text-[var(--color-ink)]">
@@ -146,7 +148,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
                 type="button"
                 aria-label={labels.closeMenu}
                 onClick={() => setOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/82 text-[var(--color-ink-soft)] transition hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)] transition hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -156,19 +158,22 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
               <Link
                 href={settingsHref ?? "/settings"}
                 onClick={() => setOpen(false)}
-                className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/78 px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-3 py-2 text-xs font-medium tracking-[0.08em] text-[var(--color-ink-soft)] uppercase shadow-[0_10px_20px_rgba(78,55,30,0.04)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none"
               >
                 <span className="h-2 w-2 rounded-full bg-[var(--color-gold)]" />
                 <span className="truncate">{userName}</span>
               </Link>
-              {showLanguageToggle ? <LanguageToggle locale={locale} authenticated compact /> : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {showThemeToggle ? <ThemeToggle locale={locale} compact /> : null}
+                {showLanguageToggle ? <LanguageToggle locale={locale} authenticated compact /> : null}
+              </div>
             </div>
 
             <nav className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-label={labels.primaryNavigation}>
               {groups.map((group) => {
                 const expanded = openGroups.includes(group.label);
                 return (
-                  <div key={group.label} className="rounded-[1.35rem] border border-[var(--color-border)] bg-white/58 p-2">
+                  <div key={group.label} className="rounded-[1.35rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-2">
                     <button
                       type="button"
                       aria-expanded={expanded}
@@ -209,7 +214,7 @@ export function MobileNavDrawer({ groups, userName, locale, signOutLabel, versio
         aria-label={labels.openMenu}
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/84 text-[var(--color-ink)] shadow-[0_12px_26px_rgba(78,55,30,0.08)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none lg:hidden"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink)] shadow-[0_12px_26px_rgba(78,55,30,0.08)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:text-[var(--color-gold-deep)] focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none lg:hidden"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -228,8 +233,8 @@ function MobileNavLink({ item, onNavigate }: { item: AppShellNavLink; onNavigate
       className={cn(
         "relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border px-3 py-3 text-sm font-semibold transition-all duration-200 ease-out focus:ring-4 focus:ring-[var(--focus-ring)] focus:outline-none",
         item.active
-          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,white)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),var(--color-gold-soft))] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
-          : "border-transparent bg-white/60 text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
+          ? "border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))] [background:var(--background-active-nav)] text-[var(--color-ink)] shadow-[var(--shadow-active)]"
+          : "border-transparent bg-[var(--color-surface-glass)] text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-gold-deep)]",
       )}
     >
       <span className={cn("absolute inset-y-2 left-1 w-1 rounded-full transition-opacity", item.active ? "bg-[var(--color-gold)] opacity-100" : "opacity-0")} />
@@ -237,7 +242,7 @@ function MobileNavLink({ item, onNavigate }: { item: AppShellNavLink; onNavigate
         <span
           className={cn(
             "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border",
-            item.active ? "border-[color-mix(in_srgb,var(--color-gold)_28%,white)] bg-white/86 text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]" : "border-[var(--color-border)] bg-white/70",
+            item.active ? "border-[color-mix(in_srgb,var(--color-gold)_28%,var(--color-border))] bg-[var(--color-control-strong)] text-[var(--color-gold-deep)] shadow-[0_8px_20px_rgba(135,83,29,0.12)]" : "border-[var(--color-border)] bg-[var(--color-control)]",
           )}
         >
           <NavIcon icon={item.icon} className="h-4 w-4" />
@@ -248,7 +253,7 @@ function MobileNavLink({ item, onNavigate }: { item: AppShellNavLink; onNavigate
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-bold",
-            item.active ? "bg-white/90 text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
+            item.active ? "bg-[var(--color-control-strong)] text-[var(--color-gold-deep)]" : "bg-[var(--color-gold-soft)] text-[var(--color-gold-deep)]",
           )}
         >
           {item.badgeCount > 99 ? "99+" : item.badgeCount}

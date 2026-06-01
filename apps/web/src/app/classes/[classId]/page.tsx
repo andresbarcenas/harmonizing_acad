@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PracticeAssignmentStatus, RepertoireStatus, Role, SessionStatus, VideoStatus } from "@prisma/client";
+import { PracticeAssignmentStatus, RepertoireStatus, Role, SessionStatus, StudentExamArea, VideoStatus } from "@prisma/client";
 
+import { ExamPublishButton } from "@/components/progress/exam-publish-button";
+import { CancelPendingClassButton } from "@/components/teacher/cancel-pending-class-button";
 import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
   const activePath = viewer.role === Role.ADMIN ? "/admin/schedule" : viewer.role === Role.TEACHER ? "/teacher/schedule" : viewer.role === Role.PARENT ? "/parent/schedule" : "/schedule";
   const canComplete = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status !== SessionStatus.RESCHEDULE_PENDING;
   const canDirectReschedule = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status === SessionStatus.RESCHEDULE_PENDING;
+  const canCancelPending = canDirectReschedule;
 
   return (
     <AppShell
@@ -74,6 +77,7 @@ export default async function ClassDetailPage({ params }: PageProps) {
           <div className="mt-5 flex flex-wrap gap-2">
             <a href={session.meetingUrl} target="_blank" rel="noreferrer"><Button variant="gold" size="sm">{isSpanish ? "Entrar a clase" : "Join class"}</Button></a>
             {canDirectReschedule ? <Link href={`/teacher/classes/${session.id}/reschedule`}><Button variant="gold" size="sm">{isSpanish ? "Reagendar" : "Reschedule"}</Button></Link> : null}
+            {canCancelPending ? <CancelPendingClassButton classId={session.id} locale={viewer.locale} redirectHref="/classes/[classId]" /> : null}
             {canComplete ? <Link href={`/teacher/classes/${session.id}/complete`}><Button variant="outline" size="sm">{isSpanish ? "Completar / actualizar" : "Complete / update"}</Button></Link> : null}
           </div>
         </Card>
@@ -82,8 +86,9 @@ export default async function ClassDetailPage({ params }: PageProps) {
           <CardTitle>{isSpanish ? "Progreso relacionado" : "Related progress"}</CardTitle>
           <CardDescription>{isSpanish ? "Estado de nota de clase, tareas y evidencia." : "Lesson note, assignments, and evidence status."}</CardDescription>
           <div className="mt-4 space-y-3">
-            <Info label={isSpanish ? "Nota estructurada" : "Structured note"} value={session.lessonNote ? (isSpanish ? "Creada" : "Created") : (isSpanish ? "Pendiente" : "Pending")} />
+            <Info label={isSpanish ? "Nota estructurada" : "Structured note"} value={session.lessonNote ? (isSpanish ? "Creada" : "Created") : session.examAssessment ? (isSpanish ? "Evaluación registrada" : "Exam recorded") : (isSpanish ? "Pendiente" : "Pending")} />
             {session.lessonNote?.studentVisibleNote ? <NoteBlock label={isSpanish ? "Resumen visible" : "Visible summary"} value={session.lessonNote.studentVisibleNote} /> : null}
+            {viewer.role !== Role.STUDENT && viewer.role !== Role.PARENT && session.examAssessment ? <ExamAssessmentSummary assessment={session.examAssessment} locale={viewer.locale} /> : null}
             <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{isSpanish ? "Archivos de esta clase" : "Files for this class"}</p>
               <div className="mt-2 space-y-2">
@@ -285,6 +290,43 @@ function RatingMetric({ label, value }: { label: string; value: number | null | 
     <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
       <p className="font-display text-2xl text-[var(--color-ink)]">{value ? `${value}/5` : "-"}</p>
       <p className="text-xs text-[var(--color-ink-soft)]">{label}</p>
+    </div>
+  );
+}
+
+function ExamAssessmentSummary({ assessment, locale }: { assessment: NonNullable<ClassDetailData["examAssessment"]>; locale: "en" | "es" }) {
+  const isSpanish = locale === "es";
+  const harmonyCount = assessment.areaScores.filter((row) => row.area === StudentExamArea.HARMONY).length;
+  const readingCount = assessment.areaScores.filter((row) => row.area === StudentExamArea.MUSIC_READING).length;
+
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{isSpanish ? "Evaluación de examen" : "Exam assessment"}</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--color-ink)]">{assessment.title}</p>
+          <p className="text-xs text-[var(--color-ink-soft)]">{formatDate(assessment.examDate, locale)} · {assessment.teacher.user.name}</p>
+          {assessment.publishedAt ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Publicada" : "Published"} · {formatDate(assessment.publishedAt, locale)}</p> : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={assessment.publishedAt ? "success" : "gold"}>{assessment.publishedAt ? (isSpanish ? "Publicada" : "Published") : (isSpanish ? "Interna" : "Internal")}</Badge>
+          <a href={`/api/progress/exam-assessments/${assessment.id}/pdf`} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">{isSpanish ? "PDF" : "PDF"}</Button></a>
+          <ExamPublishButton assessmentId={assessment.id} published={Boolean(assessment.publishedAt)} locale={locale} />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <Info label={isSpanish ? "Canciones" : "Songs"} value={String(assessment.repertoireScores.length)} />
+        <Info label={isSpanish ? "Armonía" : "Harmony"} value={String(harmonyCount)} />
+        <Info label={isSpanish ? "Lectura" : "Reading"} value={String(readingCount)} />
+      </div>
+      <div className="mt-3 space-y-2">
+        {assessment.repertoireScores.map((row) => (
+          <p key={row.id} className="rounded-lg border border-[var(--color-border)] bg-white/75 px-3 py-2 text-xs text-[var(--color-ink-soft)]">
+            <span className="font-semibold text-[var(--color-ink)]">{row.titleSnapshot}</span> · {isSpanish ? "Interpretación" : "Interpretation"} {row.interpretationScore}/10 · {isSpanish ? "Ejecución" : "Execution"} {row.executionScore}/10 · {isSpanish ? "General" : "Overall"} {row.overallScore}/10
+          </p>
+        ))}
+      </div>
+      {assessment.notes ? <p className="mt-3 text-sm text-[var(--color-ink-soft)]">{assessment.notes}</p> : null}
     </div>
   );
 }

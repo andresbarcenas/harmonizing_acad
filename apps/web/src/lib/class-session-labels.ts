@@ -8,7 +8,7 @@ export function classTypeLabel(type: ClassSessionType | string, locale: AppLocal
     TRIAL: { en: "Trial class", es: "Clase de prueba" },
     MAKEUP: { en: "Makeup class", es: "Clase de reposición" },
     EXTRA: { en: "Extra practice", es: "Práctica extra" },
-    EVALUATION: { en: "Evaluation", es: "Evaluación" },
+    EVALUATION: { en: "Exam / Evaluation", es: "Examen / evaluación" },
     REPLACEMENT: { en: "Replacement", es: "Reemplazo" },
   };
   return labels[type]?.[locale] ?? String(type);

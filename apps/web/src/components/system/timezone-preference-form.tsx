@@ -53,7 +53,7 @@ export function TimezonePreferenceForm({ currentTimezone, locale }: TimezonePref
   }
 
   return (
-    <div className="mt-4 rounded-[1.25rem] border border-[var(--color-border)] bg-white/70 p-4">
+    <div className="mt-4 rounded-[1.25rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
       <div className="grid gap-1">
         <p className="text-[10px] font-semibold tracking-[0.16em] text-[var(--color-gold-deep)] uppercase">
           {dictionary.settings.schedulingTimezone}
@@ -71,7 +71,7 @@ export function TimezonePreferenceForm({ currentTimezone, locale }: TimezonePref
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 rounded-[1rem] border border-[var(--color-border)] bg-white/72 px-3 py-2 text-xs text-[var(--color-ink-soft)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-2 rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-2 text-xs text-[var(--color-ink-soft)] sm:flex-row sm:items-center sm:justify-between">
         <span>
           {dictionary.settings.browserDetectedTimezone}: <span className="font-semibold text-[var(--color-ink)]">{browserTimezone ?? "-"}</span>
         </span>

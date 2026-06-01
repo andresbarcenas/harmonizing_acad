@@ -65,8 +65,8 @@ export function WeeklyCalendar({
         key={key}
         className={cn(
           "group min-w-0 rounded-[1.35rem] border px-3.5 py-3.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
-          hasActivity ? "border-[var(--color-border)] bg-[var(--color-paper-elevated)]" : "border-transparent bg-white/38",
-          isToday ? "border-[color-mix(in_srgb,var(--color-gold)_38%,white)] shadow-[0_12px_34px_rgba(135,83,29,0.08)]" : "",
+          hasActivity ? "border-[var(--color-border)] bg-[var(--color-paper-elevated)]" : "border-transparent bg-[var(--color-surface-inset)]/60",
+          isToday ? "border-[color-mix(in_srgb,var(--color-gold)_38%,var(--color-border))] shadow-[var(--shadow-glow)]" : "",
         )}
       >
         <div className="flex items-center justify-between gap-2">
@@ -101,7 +101,7 @@ export function WeeklyCalendar({
                 <Link
                   key={session.id}
                   href={`/classes/${session.id}`}
-                  className="rounded-full border border-[color-mix(in_srgb,var(--color-gold)_22%,white)] bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-gold)] hover:text-white focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
+                  className="rounded-full border border-[color-mix(in_srgb,var(--color-gold)_22%,var(--color-border))] bg-[var(--color-gold-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--color-gold-deep)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-gold)] hover:text-[var(--color-on-accent)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:outline-none"
                 >
                   {labelTime(session.startsAtUtc, timezone, locale)}
                 </Link>

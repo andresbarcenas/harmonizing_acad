@@ -14,7 +14,7 @@ import type { AppLocale } from "@/lib/i18n/locales";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 
 const requestTypes = [ClassSessionType.MAKEUP, ClassSessionType.EXTRA, ClassSessionType.EVALUATION] as const;
-const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
+const selectClassName = "h-[3.35rem] w-full rounded-[1.2rem] control-surface px-4 text-sm focus:border-[color-mix(in_srgb,var(--color-gold)_52%,var(--color-border))] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]";
 
 export function ClassRequestForm({ timezone, teacherTimezone, locale = "en", studentId }: { timezone: string; teacherTimezone?: string | null; locale?: AppLocale; studentId?: string }) {
   const router = useRouter();
@@ -101,7 +101,7 @@ export function ClassRequestForm({ timezone, teacherTimezone, locale = "en", stu
         </div>
       </div>
       {preview ? (
-        <div className="grid gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-3 text-xs text-[var(--color-ink-soft)] md:grid-cols-2">
+        <div className="grid gap-2 rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-3 text-xs text-[var(--color-ink-soft)] md:grid-cols-2">
           <p>{isSpanish ? "Estudiante" : "Student"}: <span className="font-semibold text-[var(--color-ink)]">{preview.student}</span></p>
           {preview.teacher ? <p>{isSpanish ? "Docente" : "Teacher"}: <span className="font-semibold text-[var(--color-ink)]">{preview.teacher}</span></p> : null}
         </div>

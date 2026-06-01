@@ -31,13 +31,13 @@ export function AppAnnouncementBanner({ announcement, dismissLabel }: { announce
     <section
       aria-label={announcement.typeLabel}
       className={cn(
-        "mb-4 overflow-hidden rounded-[var(--radius-2xl)] border border-[color-mix(in_srgb,var(--color-gold)_24%,white)]",
-        "bg-[linear-gradient(135deg,rgba(255,255,255,0.88),var(--color-gold-soft))] px-4 py-3 shadow-[var(--shadow-card)]",
+        "mb-4 overflow-hidden rounded-[var(--radius-2xl)] border border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))]",
+        "[background:var(--background-active-nav)] px-4 py-3 shadow-[var(--shadow-card)]",
       )}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 gap-3">
-          <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--color-gold)_30%,white)] bg-white/78 text-[var(--color-gold-deep)] shadow-[0_10px_24px_rgba(135,83,29,0.1)]">
+          <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--color-gold)_30%,var(--color-border))] bg-[var(--color-control-strong)] text-[var(--color-gold-deep)] shadow-[0_10px_24px_rgba(135,83,29,0.1)]">
             <Megaphone className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -60,7 +60,7 @@ export function AppAnnouncementBanner({ announcement, dismissLabel }: { announce
             onClick={dismiss}
             disabled={dismissing}
             aria-label={dismissLabel}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/75 text-[var(--color-ink-soft)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,white)] hover:text-[var(--color-gold-deep)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] disabled:opacity-50"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-control)] text-[var(--color-ink-soft)] transition hover:border-[color-mix(in_srgb,var(--color-gold)_35%,var(--color-border))] hover:text-[var(--color-gold-deep)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] disabled:opacity-50"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

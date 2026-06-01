@@ -48,7 +48,7 @@ export function TimezoneAnchorSelector({
         <span className="font-semibold text-[var(--color-ink)]">{studentTimezone}</span>
       </p>
 
-      <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-white/68 p-3">
+      <div className="rounded-[1.4rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-3">
         <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
           <div className="space-y-1.5">
             <label htmlFor={timezoneModeId} className="text-sm font-semibold text-[var(--color-ink-soft)]">
@@ -92,4 +92,4 @@ export function TimezoneAnchorSelector({
   );
 }
 
-const selectClassName = "h-[3.1rem] w-full rounded-[1.1rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)]";
+const selectClassName = "h-[3.1rem] w-full rounded-[1.1rem] control-surface px-4 text-sm";

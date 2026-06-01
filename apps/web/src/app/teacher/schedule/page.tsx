@@ -80,6 +80,7 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                 detailHref: `/classes/${session.id}`,
                 completeHref: session.status === SessionStatus.RESCHEDULE_PENDING ? undefined : `/teacher/classes/${session.id}/complete`,
                 rescheduleHref: session.status === SessionStatus.RESCHEDULE_PENDING ? `/teacher/classes/${session.id}/reschedule` : undefined,
+                canCancelPending: session.status === SessionStatus.RESCHEDULE_PENDING,
               }))}
             />
           </div>

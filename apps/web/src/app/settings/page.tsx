@@ -3,6 +3,7 @@ import { PasswordChangeForm } from "@/components/auth/password-change-form";
 import { ProfileImageForm } from "@/components/auth/profile-image-form";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LanguagePreferenceForm } from "@/components/i18n/language-toggle";
+import { ThemeToggle } from "@/components/system/theme-toggle";
 import { TimezonePreferenceForm } from "@/components/system/timezone-preference-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,7 @@ export default async function SettingsPage() {
             </div>
           ) : (
             <>
+              <ThemeToggle locale={viewer.locale} />
               <TimezonePreferenceForm currentTimezone={viewer.timezone} locale={viewer.locale} />
               <LanguagePreferenceForm locale={viewer.locale} preference={viewer.localePreference} />
               <ProfileImageForm initialImage={viewer.image} userName={viewer.name} locale={viewer.locale} />

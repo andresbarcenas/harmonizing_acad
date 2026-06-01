@@ -3,6 +3,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { notFound } from "next/navigation";
 import { RescheduleStatus, Role, SessionStatus } from "@prisma/client";
 
+import { CancelPendingClassButton } from "@/components/teacher/cancel-pending-class-button";
 import { DirectRescheduleForm } from "@/components/teacher/direct-reschedule-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -93,6 +94,19 @@ export default async function TeacherRescheduleClassPage({ params }: { params: P
               studentTimezone={studentTimezone}
               locale={viewer.locale}
             />
+          </div>
+          <div className="mt-5 rounded-[1.1rem] border border-rose-200/80 bg-rose-50/65 p-4">
+            <p className="text-sm font-semibold text-rose-900">
+              {isSpanish ? "Cancelar en lugar de reagendar" : "Cancel instead of rescheduling"}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-rose-900/75">
+              {isSpanish
+                ? "Usa esta opción si la clase pendiente ya no debe ocurrir. La serie recurrente no se modifica."
+                : "Use this if the pending class should no longer happen. The recurring series will not be changed."}
+            </p>
+            <div className="mt-3">
+              <CancelPendingClassButton classId={session.id} locale={viewer.locale} redirectHref="/classes/[classId]" />
+            </div>
           </div>
         </Card>
       </div>

@@ -76,6 +76,7 @@ export async function POST(req: Request) {
     durationMin: payload.durationMin,
     timezone: window.timezone,
     locale: auth.user.locale,
+    skipTeacherAvailability: auth.user.role === Role.TEACHER,
   });
 
   if (!validation.ok) {

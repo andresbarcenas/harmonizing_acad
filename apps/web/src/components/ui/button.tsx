@@ -8,10 +8,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[var(--color-ink)] text-white shadow-[0_12px_30px_rgba(31,26,23,0.13)] hover:-translate-y-0.5 hover:bg-[#2b241f]",
-        gold: "bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] text-white shadow-[var(--shadow-glow)] hover:-translate-y-0.5 hover:brightness-95",
+        default: "bg-[var(--color-button-primary)] text-[var(--color-button-primary-foreground)] shadow-[0_12px_30px_rgba(31,26,23,0.13)] hover:-translate-y-0.5 hover:bg-[var(--color-button-primary-hover)]",
+        gold: "bg-[linear-gradient(135deg,var(--color-gold),var(--color-gold-deep))] text-[var(--color-on-accent)] shadow-[var(--shadow-glow)] hover:-translate-y-0.5 hover:brightness-95",
         outline:
-          "border border-[var(--color-border-strong)] bg-[var(--color-surface-glass)] text-[var(--color-ink)] shadow-[0_8px_22px_rgba(80,58,32,0.045)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--color-gold)_38%,white)] hover:bg-[var(--color-surface-hover)]",
+          "border border-[var(--color-border-strong)] bg-[var(--color-surface-glass)] text-[var(--color-ink)] shadow-[0_8px_22px_rgba(80,58,32,0.045)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--color-gold)_38%,var(--color-border))] hover:bg-[var(--color-surface-hover)]",
         ghost: "bg-transparent text-[var(--color-gold-deep)] hover:bg-[var(--color-gold-soft)]/60",
       },
       size: {

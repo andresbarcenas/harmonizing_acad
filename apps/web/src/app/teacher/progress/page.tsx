@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
+import { ExamAssessmentForm } from "@/components/progress/exam-assessment-form";
 import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm, StudentLevelForm } from "@/components/progress/progress-forms";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
@@ -171,6 +172,29 @@ function SelectedStudentProgress({
               </Card>
 
               <Card className="overflow-hidden">
+                <ExamAssessmentForm
+                  locale={viewer.locale}
+                  lockedStudent
+                  initialStudentId={data.selected.id}
+                  initialTeacherId={data.teacher?.id}
+                  studentOptions={[{
+                    id: data.selected.id,
+                    name: data.selected.user.name,
+                    teacherId: data.teacher?.id,
+                    teacherName: data.teacher?.user.name,
+                    repertoireItems: data.selected.repertoireItems.map((item) => ({
+                      id: item.id,
+                      title: item.title,
+                      composerOrArtist: item.composerOrArtist,
+                      status: item.status,
+                      masteryPercent: item.masteryPercent,
+                    })),
+                  }]}
+                  existingAssessments={data.selected.examAssessments.map(toExamAssessmentFormData)}
+                />
+              </Card>
+
+              <Card className="overflow-hidden">
                 <CardTitle>{isSpanish ? "Configurar clases recurrentes" : "Set up recurring classes"}</CardTitle>
                 <CardDescription>{isSpanish ? "Crea una serie fija para este estudiante sin salir del contexto." : "Create a fixed series for this student without leaving the context."}</CardDescription>
                 <div className="mt-4">
@@ -224,6 +248,39 @@ function SelectedStudentProgress({
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3"><p className="font-display text-3xl">{value}</p><p className="text-xs text-[var(--color-ink-soft)]">{label}</p></div>;
+}
+
+function toExamAssessmentFormData(assessment: NonNullable<Awaited<ReturnType<typeof getTeacherProgressData>>["selected"]>["examAssessments"][number]) {
+  return {
+    id: assessment.id,
+    studentId: assessment.studentId,
+    teacherId: assessment.teacherId,
+    teacherName: assessment.teacher.user.name,
+    classSessionId: assessment.classSessionId,
+    examDate: assessment.examDate.toISOString(),
+    title: assessment.title,
+    notes: assessment.notes,
+    publishedAt: assessment.publishedAt?.toISOString() ?? null,
+    publishedByName: assessment.publishedBy?.name ?? null,
+    repertoireScores: assessment.repertoireScores.map((row) => ({
+      id: row.id,
+      repertoireItemId: row.repertoireItemId,
+      titleSnapshot: row.titleSnapshot,
+      composerSnapshot: row.composerSnapshot,
+      interpretationScore: row.interpretationScore,
+      executionScore: row.executionScore,
+      overallScore: row.overallScore,
+      comments: row.comments,
+    })),
+    areaScores: assessment.areaScores.map((row) => ({
+      id: row.id,
+      area: row.area,
+      topic: row.topic,
+      objective: row.objective,
+      score: row.score,
+      comments: row.comments,
+    })),
+  };
 }
 
 function skillCategoriesForInstrument<T extends { instrument: string }>(skills: T[], instrument?: string | null) {
