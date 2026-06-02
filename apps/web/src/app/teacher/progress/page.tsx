@@ -182,7 +182,7 @@ function SelectedStudentProgress({
                     name: data.selected.user.name,
                     teacherId: data.teacher?.id,
                     teacherName: data.teacher?.user.name,
-                    repertoireItems: data.selected.repertoireItems.map((item) => ({
+                    repertoireItems: data.examRepertoireItems.map((item) => ({
                       id: item.id,
                       title: item.title,
                       composerOrArtist: item.composerOrArtist,

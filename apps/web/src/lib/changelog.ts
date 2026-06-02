@@ -11,6 +11,20 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.8",
+    date: "2026-06-02",
+    sections: [
+      {
+        title: "Fixed",
+        items: [
+          "Admin teacher impersonation now supports assigning catalog songs and selecting the student's full assigned repertoire inside Piano exam assessments.",
+          "Piano exam PDFs now use safer header columns so the report title no longer overlaps the date, student, and teacher metadata.",
+          "Piano exam PDF table headers now use balanced columns and dynamic header heights so long Spanish labels like Interpretación remain readable.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.7",
     date: "2026-06-01",
     sections: [

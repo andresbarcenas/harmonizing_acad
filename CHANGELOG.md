@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.8] - 2026-06-02
+
+### Fixed
+- Admin teacher impersonation now supports assigning catalog songs and selecting the student's full assigned repertoire inside Piano exam assessments.
+- Piano exam PDFs now use safer header columns so the report title no longer overlaps the date, student, and teacher metadata.
+- Piano exam PDF table headers now use balanced columns and dynamic header heights so long Spanish labels like `Interpretación` remain readable.
+
 ## [0.10.7] - 2026-06-01
 
 ### Changed

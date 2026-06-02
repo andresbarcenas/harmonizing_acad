@@ -82,28 +82,46 @@ function drawPageBackground(doc: PDFKit.PDFDocument) {
 
 function drawHeader(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
   const top = doc.page.margins.top;
-  const cardHeight = 124;
+  const paddingX = 18;
+  const logoCenterX = layout.contentX + 42;
+  const logoCenterY = top + 42;
+  const brandX = layout.contentX + 78;
+  const metaWidth = 168;
+  const metaX = layout.contentRight - paddingX - metaWidth;
+  const titleWidth = Math.max(186, metaX - brandX - 24);
+  const titleY = top + 42;
+  const subtitle = "Resultados académicos internos y familiares";
+
+  doc.font("Helvetica-Bold").fontSize(20);
+  const titleHeight = doc.heightOfString("Informe de examen de piano", { width: titleWidth, lineGap: 1 });
+  doc.font("Helvetica").fontSize(9.5);
+  const subtitleHeight = doc.heightOfString(subtitle, { width: titleWidth });
+  const leftBlockBottom = titleY + titleHeight + 7 + subtitleHeight;
+  const metaBlockBottom = top + 94;
+  const pillY = Math.max(leftBlockBottom, metaBlockBottom, logoCenterY + 24) + 16;
+  const cardHeight = Math.max(124, pillY + 26 - top + 14);
+
   doc.roundedRect(layout.contentX, top, layout.contentWidth, cardHeight, 20).fillAndStroke(PAPER, BORDER_LIGHT);
 
-  doc.circle(layout.contentX + 42, top + 42, 24).fill(GOLD);
+  doc.circle(logoCenterX, logoCenterY, 24).fill(GOLD);
   doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(20).text("ha", layout.contentX + 25, top + 29, { width: 34, align: "center" });
-  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(9).text("HARMONIZING ACADEMY", layout.contentX + 78, top + 24, { characterSpacing: 1.6 });
-  doc.fillColor(INK).font("Helvetica-Bold").fontSize(22).text("Informe de examen de piano", layout.contentX + 78, top + 42, { width: 300 });
-  doc.fillColor(SOFT).font("Helvetica").fontSize(9.5).text("Resultados académicos internos y familiares", layout.contentX + 78, top + 72, { width: 260 });
+  doc.fillColor(GOLD_DEEP).font("Helvetica-Bold").fontSize(9).text("HARMONIZING ACADEMY", brandX, top + 24, { width: titleWidth, characterSpacing: 1.6 });
+  doc.fillColor(INK).font("Helvetica-Bold").fontSize(20).text("Informe de examen de piano", brandX, titleY, { width: titleWidth, lineGap: 1 });
+  doc.fillColor(SOFT).font("Helvetica").fontSize(9.5).text(subtitle, brandX, titleY + titleHeight + 7, { width: titleWidth });
 
-  const metaX = layout.contentRight - 160;
-  drawMetaLine(doc, metaX, top + 24, "Fecha", formatDate(input.examDate, "es"));
-  drawMetaLine(doc, metaX, top + 49, "Estudiante", input.student.user.name);
-  drawMetaLine(doc, metaX, top + 74, "Docente", input.teacher.user.name);
+  doc.roundedRect(metaX - 10, top + 18, metaWidth + 10, 86, 14).fill(PAPER_SOFT);
+  drawMetaLine(doc, metaX, top + 24, metaWidth, "Fecha", formatDate(input.examDate, "es"));
+  drawMetaLine(doc, metaX, top + 49, metaWidth, "Estudiante", input.student.user.name);
+  drawMetaLine(doc, metaX, top + 74, metaWidth, "Docente", input.teacher.user.name);
 
-  doc.roundedRect(layout.contentX + 18, top + 92, layout.contentWidth - 36, 22, 11).fill(PAPER_SOFT);
-  doc.fillColor(INK).font("Helvetica-Bold").fontSize(10).text(input.title, layout.contentX + 32, top + 98, { width: layout.contentWidth - 64, ellipsis: true });
+  doc.roundedRect(layout.contentX + paddingX, pillY, layout.contentWidth - paddingX * 2, 22, 11).fill(PAPER_SOFT);
+  doc.fillColor(INK).font("Helvetica-Bold").fontSize(10).text(input.title, layout.contentX + 32, pillY + 6, { width: layout.contentWidth - 64, ellipsis: true });
   setY(doc, top + cardHeight + 20);
 }
 
-function drawMetaLine(doc: PDFKit.PDFDocument, x: number, y: number, label: string, value: string) {
-  doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(6.8).text(label.toUpperCase(), x, y, { width: 150, characterSpacing: 1 });
-  doc.fillColor(INK).font("Helvetica").fontSize(9.2).text(value, x, y + 9, { width: 150, ellipsis: true });
+function drawMetaLine(doc: PDFKit.PDFDocument, x: number, y: number, width: number, label: string, value: string) {
+  doc.fillColor(MUTED).font("Helvetica-Bold").fontSize(6.8).text(label.toUpperCase(), x, y, { width, characterSpacing: 1 });
+  doc.fillColor(INK).font("Helvetica").fontSize(9.2).text(value, x, y + 9, { width, ellipsis: true });
 }
 
 function drawSummary(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfInput) {
@@ -145,7 +163,7 @@ function drawRepertoire(doc: PDFKit.PDFDocument, layout: Layout, input: ExamPdfI
     number: "1",
     title: "Repertorio",
     description: "Interpretación, ejecución y resultado general por obra evaluada.",
-    columns: [156, 72, 64, 64, layout.contentWidth - 356],
+    columns: [150, 86, 74, 72, layout.contentWidth - 382],
     headers: ["Canción", "Interpretación", "Ejecución", "Puntaje", "Comentarios"],
     rows,
     totalLabel: "Promedio repertorio",
@@ -196,15 +214,32 @@ function drawEmptyState(doc: PDFKit.PDFDocument, layout: Layout, text: string) {
 }
 
 function drawTableHeader(doc: PDFKit.PDFDocument, layout: Layout, columns: number[], headers: string[]) {
-  ensureSpace(doc, 38);
+  const paddingX = 8;
+  const fontSize = 6.7;
+  const lineGap = 1;
+  doc.font("Helvetica-Bold").fontSize(fontSize);
+  const heights = headers.map((header, index) =>
+    doc.heightOfString(header.toUpperCase(), {
+      width: columns[index] - paddingX * 2,
+      characterSpacing: 0.15,
+      lineGap,
+    }),
+  );
+  const headerHeight = Math.max(26, Math.max(...heights) + 15);
+  ensureSpace(doc, headerHeight + 14);
   const y = doc.y;
-  doc.roundedRect(layout.contentX, y, layout.contentWidth, 24, 10).fillAndStroke(GOLD_DEEP, GOLD_DEEP);
+  doc.roundedRect(layout.contentX, y, layout.contentWidth, headerHeight, 10).fillAndStroke(GOLD_DEEP, GOLD_DEEP);
   let x = layout.contentX;
   headers.forEach((header, index) => {
-    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7.2).text(header.toUpperCase(), x + 7, y + 8, { width: columns[index] - 14, characterSpacing: 0.4 });
+    const textHeight = heights[index];
+    doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(fontSize).text(header.toUpperCase(), x + paddingX, y + (headerHeight - textHeight) / 2, {
+      width: columns[index] - paddingX * 2,
+      characterSpacing: 0.15,
+      lineGap,
+    });
     x += columns[index];
   });
-  setY(doc, y + 24);
+  setY(doc, y + headerHeight);
 }
 
 function drawTableRow(doc: PDFKit.PDFDocument, layout: Layout, columns: number[], row: TableRow, index: number) {

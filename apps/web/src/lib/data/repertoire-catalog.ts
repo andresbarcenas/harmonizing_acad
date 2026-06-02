@@ -9,6 +9,7 @@ import { normalizeInstrument } from "@/lib/instruments";
 import type { RepertoireCatalogAssignInput, RepertoireCatalogItemInput } from "@/lib/validators/repertoire-catalog";
 
 type TxClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
+type RepertoireCatalogActor = AppViewer | { role: Role; teacherProfileId?: string | null; teacherProfile?: { id: string } | null };
 
 export type RepertoireCatalogSearchOptions = {
   query?: string | null;
@@ -87,10 +88,15 @@ export async function assertCanManageCatalog(viewer: AppViewer | { role: Role })
   }
 }
 
-export async function assertCanAssignCatalogToStudent(viewer: AppViewer | { role: Role; teacherProfileId?: string | null }, studentId: string) {
+function teacherProfileIdForActor(viewer: RepertoireCatalogActor) {
+  return viewer.teacherProfileId ?? ("teacherProfile" in viewer ? viewer.teacherProfile?.id : null) ?? null;
+}
+
+export async function assertCanAssignCatalogToStudent(viewer: RepertoireCatalogActor, studentId: string) {
   if (viewer.role === Role.ADMIN) return;
-  if (viewer.role !== Role.TEACHER || !viewer.teacherProfileId) throw new RepertoireCatalogError("FORBIDDEN", 403);
-  const assignment = await db.teacherAssignment.findFirst({ where: { teacherId: viewer.teacherProfileId, studentId }, select: { id: true } });
+  const teacherProfileId = teacherProfileIdForActor(viewer);
+  if (viewer.role !== Role.TEACHER || !teacherProfileId) throw new RepertoireCatalogError("FORBIDDEN", 403);
+  const assignment = await db.teacherAssignment.findFirst({ where: { teacherId: teacherProfileId, studentId }, select: { id: true } });
   if (!assignment) throw new RepertoireCatalogError("STUDENT_NOT_ASSIGNED", 403);
 }
 

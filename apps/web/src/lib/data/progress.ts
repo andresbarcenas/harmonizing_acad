@@ -180,43 +180,57 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
       skillCategories,
       teacher,
       selected: null,
+      examRepertoireItems: [],
     };
   }
 
-  const selected = await db.studentProfile.findFirst({
-    where: { id: selectedStudentId, assignment: { teacherId } },
-    include: {
-      user: true,
-      sessions: {
-        where: { teacherId },
-        include: {
-          lessonNote: { include: { skillRatings: { include: { skillCategory: true } }, practiceAssignments: true } },
+  const [selected, examRepertoireItems] = await Promise.all([
+    db.studentProfile.findFirst({
+      where: { id: selectedStudentId, assignment: { teacherId } },
+      include: {
+        user: true,
+        sessions: {
+          where: { teacherId },
+          include: {
+            lessonNote: { include: { skillRatings: { include: { skillCategory: true } }, practiceAssignments: true } },
+          },
+          orderBy: { startsAtUtc: "desc" },
+          take: 12,
         },
-        orderBy: { startsAtUtc: "desc" },
-        take: 12,
+        repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" } },
+        examAssessments: { where: { teacherId }, include: examAssessmentInclude, orderBy: { examDate: "desc" }, take: 8 },
+        practiceAssignments: {
+          where: { teacherId },
+          include: { repertoireItem: true, skillCategory: true, practiceLogs: true },
+          orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+        },
+        practiceLogs: {
+          include: { assignment: true, repertoireItem: true, skillCategory: true },
+          orderBy: { practicedOn: "desc" },
+          take: 20,
+        },
+        progressReports: { where: { teacherId }, orderBy: { createdAt: "desc" }, take: 8 },
+        progressRecords: { orderBy: { updatedAt: "desc" }, take: 1 },
+        practiceVideos: {
+          where: { teacherId },
+          include: { feedback: { include: { skillRatings: { include: { skillCategory: true } } } }, repertoireItem: true, skillCategory: true, practiceAssignment: true },
+          orderBy: { submittedAt: "desc" },
+          take: 8,
+        },
       },
-      repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" } },
-      examAssessments: { where: { teacherId }, include: examAssessmentInclude, orderBy: { examDate: "desc" }, take: 8 },
-      practiceAssignments: {
-        where: { teacherId },
-        include: { repertoireItem: true, skillCategory: true, practiceLogs: true },
-        orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+    }),
+    db.repertoireItem.findMany({
+      where: { studentId: selectedStudentId },
+      select: {
+        id: true,
+        title: true,
+        composerOrArtist: true,
+        status: true,
+        masteryPercent: true,
       },
-      practiceLogs: {
-        include: { assignment: true, repertoireItem: true, skillCategory: true },
-        orderBy: { practicedOn: "desc" },
-        take: 20,
-      },
-      progressReports: { where: { teacherId }, orderBy: { createdAt: "desc" }, take: 8 },
-      progressRecords: { orderBy: { updatedAt: "desc" }, take: 1 },
-      practiceVideos: {
-        where: { teacherId },
-        include: { feedback: { include: { skillRatings: { include: { skillCategory: true } } } }, repertoireItem: true, skillCategory: true, practiceAssignment: true },
-        orderBy: { submittedAt: "desc" },
-        take: 8,
-      },
-    },
-  });
+      orderBy: [{ status: "asc" }, { title: "asc" }],
+    }),
+  ]);
 
   return {
     selectedStudentId,
@@ -224,6 +238,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
     skillCategories,
     teacher,
     selected,
+    examRepertoireItems,
   };
 }
 
