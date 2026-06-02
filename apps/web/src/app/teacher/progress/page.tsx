@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
-import { ExamAssessmentForm } from "@/components/progress/exam-assessment-form";
 import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm, StudentLevelForm } from "@/components/progress/progress-forms";
-import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +82,8 @@ function SelectedStudentProgress({
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href={`/teacher/progress/reports/new?studentId=${data.selected.id}`}><Button variant="gold" size="sm">{isSpanish ? "Generar reporte" : "Generate report"}</Button></Link>
+                <Link href={`/teacher/progress/exams?studentId=${data.selected.id}`}><Button variant="outline" size="sm">{isSpanish ? "Evaluaciones" : "Exam assessments"}</Button></Link>
+                <Link href={`/teacher/progress/reports?studentId=${data.selected.id}`}><Button variant="gold" size="sm">{isSpanish ? "Reportes" : "Progress reports"}</Button></Link>
                 <Link href="/teacher/progress"><Button variant="outline" size="sm">{isSpanish ? "Ver todos" : "All students"}</Button></Link>
               </div>
             </div>
@@ -105,49 +104,48 @@ function SelectedStudentProgress({
             </div>
           </Card>
 
-          <div className="grid min-w-0 gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-            <Card className="min-w-0 overflow-hidden">
-              <CardTitle>{isSpanish ? "Notas de clase" : "Lesson notes"}</CardTitle>
-              <CardDescription>{isSpanish ? "Abre una clase y registra evidencia estructurada." : "Open a class and capture structured evidence."}</CardDescription>
-              <div className="mt-4 space-y-4">
-                {data.selected.sessions.map((session) => (
-                  <details key={session.id} className="min-w-0 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4" open={!session.lessonNote}>
-                    <summary className="cursor-pointer break-words text-sm font-semibold">
-                      {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {session.lessonFocus ?? (isSpanish ? "Clase" : "Lesson")}
-                      {!session.lessonNote ? <Badge className="ml-2">{isSpanish ? "Falta nota" : "Missing note"}</Badge> : null}
-                    </summary>
-                    <div className="mt-3">
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        <Link href={`/teacher/classes/${session.id}/complete`}>
-                          <Button size="sm" variant="gold">{isSpanish ? "Completar / actualizar clase" : "Complete / update class"}</Button>
-                        </Link>
-                      </div>
-                      <LessonNoteForm
-                        sessionId={session.id}
-                        initial={session.lessonNote}
-                        skillCategories={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
-                        locale={viewer.locale}
-                      />
-                      {session.lessonNote ? (
-                        <div className="mt-3">
-                          <PracticeAssignmentForm
-                            studentId={data.selected.id}
-                            lessonNoteId={session.lessonNote.id}
-                            classSessionId={session.id}
-                            repertoire={data.selected.repertoireItems}
-                            skills={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
-                            locale={viewer.locale}
-                          />
-                        </div>
-                      ) : null}
+          <Card className="min-w-0 overflow-hidden">
+            <CardTitle>{isSpanish ? "Notas de clase" : "Lesson notes"}</CardTitle>
+            <CardDescription>{isSpanish ? "Abre una clase y registra evidencia estructurada." : "Open a class and capture structured evidence."}</CardDescription>
+            <div className="mt-4 space-y-4">
+              {data.selected.sessions.map((session) => (
+                <details key={session.id} className="min-w-0 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4" open={!session.lessonNote}>
+                  <summary className="cursor-pointer break-words text-sm font-semibold">
+                    {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {session.lessonFocus ?? (isSpanish ? "Clase" : "Lesson")}
+                    {!session.lessonNote ? <Badge className="ml-2">{isSpanish ? "Falta nota" : "Missing note"}</Badge> : null}
+                  </summary>
+                  <div className="mt-3">
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <Link href={`/teacher/classes/${session.id}/complete`}>
+                        <Button size="sm" variant="gold">{isSpanish ? "Completar / actualizar clase" : "Complete / update class"}</Button>
+                      </Link>
                     </div>
-                  </details>
-                ))}
-                {!data.selected.sessions.length ? <CardDescription>{isSpanish ? "Aún no hay clases para documentar." : "No classes to document yet."}</CardDescription> : null}
-              </div>
-            </Card>
+                    <LessonNoteForm
+                      sessionId={session.id}
+                      initial={session.lessonNote}
+                      skillCategories={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
+                      locale={viewer.locale}
+                    />
+                    {session.lessonNote ? (
+                      <div className="mt-3">
+                        <PracticeAssignmentForm
+                          studentId={data.selected.id}
+                          lessonNoteId={session.lessonNote.id}
+                          classSessionId={session.id}
+                          repertoire={data.selected.repertoireItems}
+                          skills={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
+                          locale={viewer.locale}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                </details>
+              ))}
+              {!data.selected.sessions.length ? <CardDescription>{isSpanish ? "Aún no hay clases para documentar." : "No classes to document yet."}</CardDescription> : null}
+            </div>
+          </Card>
 
-            <div className="min-w-0 space-y-4">
+          <div className="grid min-w-0 gap-4 xl:grid-cols-2">
               <Card className="overflow-hidden">
                 <CardTitle>{isSpanish ? "Repertorio" : "Repertoire"}</CardTitle>
                 <div className="mt-3 space-y-2">
@@ -171,44 +169,32 @@ function SelectedStudentProgress({
                 <div className="mt-4"><RepertoireForm studentId={data.selected.id} locale={viewer.locale} /></div>
               </Card>
 
-              <Card className="overflow-hidden">
-                <ExamAssessmentForm
-                  locale={viewer.locale}
-                  lockedStudent
-                  initialStudentId={data.selected.id}
-                  initialTeacherId={data.teacher?.id}
-                  studentOptions={[{
-                    id: data.selected.id,
-                    name: data.selected.user.name,
-                    teacherId: data.teacher?.id,
-                    teacherName: data.teacher?.user.name,
-                    repertoireItems: data.examRepertoireItems.map((item) => ({
-                      id: item.id,
-                      title: item.title,
-                      composerOrArtist: item.composerOrArtist,
-                      status: item.status,
-                      masteryPercent: item.masteryPercent,
-                    })),
-                  }]}
-                  existingAssessments={data.selected.examAssessments.map(toExamAssessmentFormData)}
-                />
-              </Card>
-
-              <Card className="overflow-hidden">
-                <CardTitle>{isSpanish ? "Configurar clases recurrentes" : "Set up recurring classes"}</CardTitle>
-                <CardDescription>{isSpanish ? "Crea una serie fija para este estudiante sin salir del contexto." : "Create a fixed series for this student without leaving the context."}</CardDescription>
+              <Card>
+                <CardTitle>{isSpanish ? "Evaluaciones de examen" : "Exam assessments"}</CardTitle>
+                <CardDescription>
+                  {isSpanish
+                    ? "Registra o edita exámenes históricos desde el espacio dedicado."
+                    : "Record or edit historical exams from the dedicated workspace."}
+                </CardDescription>
+                <div className="mt-3 space-y-2">
+                  {data.selected.examAssessments.slice(0, 3).map((assessment) => (
+                    <Link
+                      key={assessment.id}
+                      href={`/teacher/progress/exams?studentId=${data.selected.id}`}
+                      className="block rounded-xl border border-[var(--color-border)] bg-white/70 p-3 text-sm transition hover:bg-white"
+                    >
+                      <p className="font-semibold">{assessment.title}</p>
+                      <p className="text-xs text-[var(--color-ink-soft)]">
+                        {formatDate(assessment.examDate, viewer.locale)} · {assessment.repertoireScores.length} {isSpanish ? "obras" : "pieces"}
+                      </p>
+                    </Link>
+                  ))}
+                  {!data.selected.examAssessments.length ? <CardDescription>{isSpanish ? "Aún no hay evaluaciones." : "No exam assessments yet."}</CardDescription> : null}
+                </div>
                 <div className="mt-4">
-                  <RecurringClassForm
-                    students={data.students.map((assignment) => ({
-                      id: assignment.student.id,
-                      name: assignment.student.user.name,
-                      instrument: assignment.student.preferredInstrument,
-                      timezone: assignment.student.user.timezone,
-                    }))}
-                    defaultTimezone={data.teacher?.user.timezone ?? viewer.timezone}
-                    locale={viewer.locale}
-                    selectedStudentId={data.selected.id}
-                  />
+                  <Link href={`/teacher/progress/exams?studentId=${data.selected.id}`}>
+                    <Button variant="outline" className="w-full">{isSpanish ? "Abrir evaluaciones" : "Open exam assessments"}</Button>
+                  </Link>
                 </div>
               </Card>
 
@@ -240,7 +226,6 @@ function SelectedStudentProgress({
                   <Link href={`/teacher/progress/reports/new?studentId=${data.selected.id}`}><Button variant="outline" className="w-full">{isSpanish ? "Crear nuevo reporte" : "Create new report"}</Button></Link>
                 </div>
               </Card>
-            </div>
           </div>
         </div>
   );
@@ -248,39 +233,6 @@ function SelectedStudentProgress({
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3"><p className="font-display text-3xl">{value}</p><p className="text-xs text-[var(--color-ink-soft)]">{label}</p></div>;
-}
-
-function toExamAssessmentFormData(assessment: NonNullable<Awaited<ReturnType<typeof getTeacherProgressData>>["selected"]>["examAssessments"][number]) {
-  return {
-    id: assessment.id,
-    studentId: assessment.studentId,
-    teacherId: assessment.teacherId,
-    teacherName: assessment.teacher.user.name,
-    classSessionId: assessment.classSessionId,
-    examDate: assessment.examDate.toISOString(),
-    title: assessment.title,
-    notes: assessment.notes,
-    publishedAt: assessment.publishedAt?.toISOString() ?? null,
-    publishedByName: assessment.publishedBy?.name ?? null,
-    repertoireScores: assessment.repertoireScores.map((row) => ({
-      id: row.id,
-      repertoireItemId: row.repertoireItemId,
-      titleSnapshot: row.titleSnapshot,
-      composerSnapshot: row.composerSnapshot,
-      interpretationScore: row.interpretationScore,
-      executionScore: row.executionScore,
-      overallScore: row.overallScore,
-      comments: row.comments,
-    })),
-    areaScores: assessment.areaScores.map((row) => ({
-      id: row.id,
-      area: row.area,
-      topic: row.topic,
-      objective: row.objective,
-      score: row.score,
-      comments: row.comments,
-    })),
-  };
 }
 
 function skillCategoriesForInstrument<T extends { instrument: string }>(skills: T[], instrument?: string | null) {

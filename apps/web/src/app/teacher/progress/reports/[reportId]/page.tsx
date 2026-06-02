@@ -20,7 +20,7 @@ export default async function TeacherReportDetailPage({ params }: { params: Prom
   const canEdit = report.status === ProgressReportStatus.DRAFT;
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/progress" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={report.studentId}>
+    <AppShell role={viewer.role} activePath="/teacher/progress/reports" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={report.studentId}>
       <PageIntro
         eyebrow={isSpanish ? "Borrador de reporte" : "Report draft"}
         title={isSpanish ? `Reporte de ${report.student.user.name}` : `${report.student.user.name}'s report`}
@@ -36,7 +36,7 @@ export default async function TeacherReportDetailPage({ params }: { params: Prom
             {canEdit ? <div className="mt-4"><ReportNarrativeForm reportId={report.id} locale={viewer.locale} initial={report} /></div> : null}
           </Card>
           <Card>
-            <Link href={`/teacher/progress?studentId=${report.studentId}`}><Button variant="outline" className="w-full">{isSpanish ? "Volver al estudiante" : "Back to student"}</Button></Link>
+            <Link href={`/teacher/progress/reports?studentId=${report.studentId}`}><Button variant="outline" className="w-full">{isSpanish ? "Volver a reportes" : "Back to reports"}</Button></Link>
           </Card>
         </div>
       </div>

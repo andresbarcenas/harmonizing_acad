@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { PracticeAssignmentStatus } from "@prisma/client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,8 @@ function copy(locale: AppLocale) {
         effort: "Esfuerzo",
         overall: "General",
         skillRatings: "Habilidades observadas",
+        skillScore: "Calificación",
+        notRated: "Sin calificación",
         chooseSkill: "Elegir habilidad",
         chooseAssignment: "Tarea",
         chooseRepertoire: "Repertorio",
@@ -114,6 +117,8 @@ function copy(locale: AppLocale) {
         effort: "Effort",
         overall: "Overall",
         skillRatings: "Observed skills",
+        skillScore: "Rating",
+        notRated: "Not rated",
         chooseSkill: "Choose skill",
         chooseAssignment: "Assignment",
         chooseRepertoire: "Repertoire",
@@ -268,10 +273,12 @@ export function LessonNoteForm({ sessionId, initial, skillCategories, locale }: 
   }
 
   return (
-    <form action={submit} className="space-y-3 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4">
-      <Textarea name="summary" required defaultValue={initial?.summary ?? ""} placeholder={c.summary} />
-      <Textarea name="taughtToday" defaultValue={initial?.taughtToday ?? ""} placeholder={c.taught} />
-      <div className="grid gap-2 md:grid-cols-2">
+    <form action={submit} className="min-w-0 space-y-4 rounded-[1.2rem] border border-[var(--color-border)] bg-white/70 p-4">
+      <div className="grid gap-3 xl:grid-cols-2">
+        <Textarea name="summary" required defaultValue={initial?.summary ?? ""} placeholder={c.summary} />
+        <Textarea name="taughtToday" defaultValue={initial?.taughtToday ?? ""} placeholder={c.taught} />
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
         <Textarea name="studentDidWell" defaultValue={initial?.studentDidWell ?? ""} placeholder={c.didWell} />
         <Textarea name="needsImprovement" defaultValue={initial?.needsImprovement ?? ""} placeholder={c.improve} />
         <Textarea name="homework" defaultValue={initial?.homework ?? ""} placeholder={c.homework} />
@@ -280,22 +287,24 @@ export function LessonNoteForm({ sessionId, initial, skillCategories, locale }: 
         <Textarea name="teacherPrivateNote" defaultValue={initial?.teacherPrivateNote ?? ""} placeholder={c.privateNote} />
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.ratings}</p>
-      <div className="grid gap-2 sm:grid-cols-4">
-        <RatingInput name="preparednessRating" label={c.prep} defaultValue={initial?.preparednessRating} />
-        <RatingInput name="focusRating" label={c.focus} defaultValue={initial?.focusRating} />
-        <RatingInput name="effortRating" label={c.effort} defaultValue={initial?.effortRating} />
-        <RatingInput name="overallLessonRating" label={c.overall} defaultValue={initial?.overallLessonRating} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <RatingInput name="preparednessRating" label={c.prep} defaultValue={initial?.preparednessRating} notRatedLabel={c.notRated} />
+        <RatingInput name="focusRating" label={c.focus} defaultValue={initial?.focusRating} notRatedLabel={c.notRated} />
+        <RatingInput name="effortRating" label={c.effort} defaultValue={initial?.effortRating} notRatedLabel={c.notRated} />
+        <RatingInput name="overallLessonRating" label={c.overall} defaultValue={initial?.overallLessonRating} notRatedLabel={c.notRated} />
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-gold-deep)]">{c.skillRatings}</p>
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="grid min-w-0 gap-3">
         {[0, 1, 2, 3, 4, 5].map((index) => (
-          <div key={index} className="grid gap-2 rounded-xl border border-[var(--color-border)] bg-white/70 p-2 sm:grid-cols-[1fr_76px]">
-            <select name={`skillCategoryId-${index}`} defaultValue={existingRatings[index]?.skillCategoryId ?? ""} className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
-              <option value="">{c.chooseSkill}</option>
-              {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
-            </select>
-            <Input name={`skillRating-${index}`} type="number" min={1} max={5} defaultValue={existingRatings[index]?.rating ?? ""} placeholder="1-5" />
-            <Input name={`skillNote-${index}`} defaultValue={existingRatings[index]?.note ?? ""} placeholder={c.note} className="sm:col-span-2" />
+          <div key={index} className="min-w-0 rounded-[1rem] border border-[var(--color-border)] bg-white/70 p-3">
+            <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)]">
+              <select name={`skillCategoryId-${index}`} defaultValue={existingRatings[index]?.skillCategoryId ?? ""} className="h-[3.05rem] min-w-0 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]">
+                <option value="">{c.chooseSkill}</option>
+                {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
+              </select>
+              <RatingInput name={`skillRating-${index}`} label={c.skillScore} defaultValue={existingRatings[index]?.rating} notRatedLabel={c.notRated} />
+              <Input name={`skillNote-${index}`} defaultValue={existingRatings[index]?.note ?? ""} placeholder={c.note} className="lg:col-span-2" />
+            </div>
           </div>
         ))}
       </div>
@@ -515,8 +524,44 @@ export function ProgressReportForm({ studentId, locale }: { studentId: string; l
   );
 }
 
-function RatingInput({ name, label, defaultValue }: { name: string; label: string; defaultValue?: number | null }) {
-  return <Input name={name} type="number" min={1} max={5} defaultValue={defaultValue ?? ""} placeholder={`${label} 1-5`} />;
+function RatingInput({
+  name,
+  label,
+  defaultValue,
+  notRatedLabel,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: number | null;
+  notRatedLabel: string;
+}) {
+  const initialValue = typeof defaultValue === "number" && defaultValue >= 1 ? defaultValue : 0;
+  const [value, setValue] = useState(initialValue);
+
+  return (
+    <label className="min-w-0 rounded-[1rem] border border-[var(--color-border)] bg-white/76 p-3 shadow-[var(--shadow-control-inset)]">
+      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--color-ink)]">
+        <span className="min-w-0 truncate">{label}</span>
+        <Badge variant={value > 0 ? "gold" : "default"}>{value > 0 ? `${value}/5` : notRatedLabel}</Badge>
+      </span>
+      <input
+        name={name}
+        className="mt-3 w-full accent-[var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+        type="range"
+        min={0}
+        max={5}
+        step={1}
+        value={value}
+        onChange={(event) => setValue(Number(event.target.value))}
+        aria-label={`${label} 0-5`}
+      />
+      <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+        <span>0</span>
+        <span>3</span>
+        <span>5</span>
+      </span>
+    </label>
+  );
 }
 
 function numberOrUndefined(value: FormDataEntryValue | null | unknown) {

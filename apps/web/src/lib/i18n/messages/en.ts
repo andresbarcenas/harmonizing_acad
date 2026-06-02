@@ -60,6 +60,8 @@ export const en = {
       reschedules: "Reschedules",
       videos: "Videos",
       overview: "Overview",
+      examAssessments: "Exam assessments",
+      progressReports: "Progress reports",
       billing: "Billing",
       alegra: "Alegra",
       announcements: "Announcements",

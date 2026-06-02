@@ -20,7 +20,7 @@ export default async function TeacherNewReportPage({ searchParams }: { searchPar
   const isSpanish = viewer.locale === "es";
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/progress" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={data.student.id}>
+    <AppShell role={viewer.role} activePath="/teacher/progress/reports" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={data.student.id}>
       <PageIntro
         eyebrow={isSpanish ? "Reporte mensual" : "Monthly report"}
         title={isSpanish ? "Genera un borrador con datos reales del progreso." : "Generate a draft from real progress data."}
@@ -37,7 +37,7 @@ export default async function TeacherNewReportPage({ searchParams }: { searchPar
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/teacher/progress?studentId=${data.student.id}`}><Button variant="outline" size="sm">{isSpanish ? "Volver al progreso" : "Back to progress"}</Button></Link>
+            <Link href={`/teacher/progress/reports?studentId=${data.student.id}`}><Button variant="outline" size="sm">{isSpanish ? "Volver a reportes" : "Back to reports"}</Button></Link>
           </div>
           <div className="mt-5 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{isSpanish ? "Reportes recientes" : "Recent reports"}</p>

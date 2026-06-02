@@ -11,6 +11,25 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.9",
+    date: "2026-06-02",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Teacher Progress now has dedicated Exam assessments and Progress reports navigation entries and pages for easier access to exam and report workflows.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Teacher lesson notes now use a full-width editor with slider ratings for quick ratings and observed skills, preventing observed skill rows from overflowing into adjacent panels.",
+          "Teacher Progress no longer shows the recurring class setup card; recurring setup remains available from teacher dashboard and schedule.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.8",
     date: "2026-06-02",
     sections: [

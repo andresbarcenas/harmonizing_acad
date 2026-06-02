@@ -62,6 +62,8 @@ export const es: typeof en = {
       reschedules: "Reagendaciones",
       videos: "Videos",
       overview: "Resumen",
+      examAssessments: "Evaluaciones de examen",
+      progressReports: "Reportes de progreso",
       billing: "Facturación",
       alegra: "Alegra",
       announcements: "Anuncios",
