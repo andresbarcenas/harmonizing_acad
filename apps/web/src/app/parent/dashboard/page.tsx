@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Role } from "@prisma/client";
+import { Role, SessionStatus } from "@prisma/client";
 
+import { ClassInProgressCard } from "@/components/classes/class-in-progress-card";
+import { JoinClassButton } from "@/components/classes/join-class-button";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -64,8 +66,24 @@ export default async function ParentDashboardPage({ searchParams }: { searchPara
             <>
               <p className="mt-3 break-words font-display text-[2rem] leading-none tracking-[-0.055em] text-[var(--color-ink)] sm:text-[2.4rem]">{formatDateTimeInZone(data.upcomingClass.startsAtUtc, studentTimezone, viewer.locale)}</p>
               <p className="mt-3 rounded-[1.15rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] px-3 py-2 text-sm leading-6 text-[var(--color-ink-soft)]">{data.upcomingClass.lessonFocus ?? dictionary.student.personalizedSession}</p>
+              {isClassInProgress(data.upcomingClass) ? (
+                <ClassInProgressCard
+                  compact
+                  startedAt={data.upcomingClass.startedAt!.toISOString()}
+                  startsAtUtc={data.upcomingClass.startsAtUtc.toISOString()}
+                  endsAtUtc={data.upcomingClass.endsAtUtc.toISOString()}
+                  locale={viewer.locale}
+                />
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
-                <a href={data.upcomingClass.meetingUrl} target="_blank" rel="noreferrer"><Button variant="gold">{dictionary.common.joinClass}</Button></a>
+                <JoinClassButton
+                  classId={data.upcomingClass.id}
+                  meetingUrl={data.upcomingClass.meetingUrl}
+                  locale={viewer.locale}
+                  label={dictionary.common.joinClass}
+                  teacherCanStart={false}
+                  variant="gold"
+                />
                 <Link href={`/parent/schedule?studentId=${selectedStudentId}`}><Button variant="outline">{dictionary.common.reschedule}</Button></Link>
               </div>
             </>
@@ -110,4 +128,8 @@ export default async function ParentDashboardPage({ searchParams }: { searchPara
       </div>
     </AppShell>
   );
+}
+
+function isClassInProgress(session: { startedAt?: Date | null; status: SessionStatus }) {
+  return Boolean(session.startedAt) && session.status !== SessionStatus.COMPLETED && session.status !== SessionStatus.NO_SHOW && session.status !== SessionStatus.CANCELLED;
 }

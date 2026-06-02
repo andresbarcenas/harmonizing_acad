@@ -76,6 +76,7 @@ export const es: typeof en = {
       consents: "Consentimientos",
       emails: "Correos",
       repertoire: "Repertorio",
+      skills: "Habilidades",
       imports: "Importaciones",
       health: "Salud operativa",
       changelog: "Cambios",

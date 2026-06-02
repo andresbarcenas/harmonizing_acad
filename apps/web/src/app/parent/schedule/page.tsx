@@ -92,6 +92,7 @@ export default async function ParentSchedulePage({ searchParams }: { searchParam
               endsAtUtc: session.endsAtUtc,
               type: session.type,
               status: session.status,
+              startedAt: session.startedAt,
               primaryName: session.teacher.user.name,
               primaryImage: session.teacher.user.image,
               viewerTimezone: studentTimezone,

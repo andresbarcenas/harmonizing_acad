@@ -178,6 +178,44 @@ export async function storeRepertoireAttachment(file: File, repertoireItemId: st
   return { storageKey: key };
 }
 
+export async function storeRepertoireCatalogAttachment(file: File, catalogItemId: string) {
+  const safeName = sanitizeFilename(file.name);
+  const key = `repertoire/catalog/${catalogItemId}/${Date.now()}-${randomUUID()}-${safeName}`;
+
+  if (getStorageProvider() === "local") {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const localRoot = process.env.LOCAL_REPERTOIRE_STORAGE_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "repertoire");
+    const localKey = key.replace(/^repertoire\//, "");
+    const targetPath = path.join(localRoot, localKey);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, buffer);
+    return { storageKey: localKey };
+  }
+
+  if (getStorageProvider() === "vercel-blob") {
+    const blob = await put(`private-media/repertoire-catalog-attachments/${catalogItemId}/${Date.now()}-${randomUUID()}-${safeName}`, file, {
+      access: "private",
+      contentType: file.type || "application/pdf",
+      token: requireBlobToken("protected media"),
+    });
+
+    return { storageKey: blob.pathname };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await minioClient.send(
+    new PutObjectCommand({
+      Bucket: mediaBucket,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type || "application/pdf",
+    }),
+  );
+
+  return { storageKey: key };
+}
+
 export async function storeClassSessionAttachment(file: File, classSessionId: string) {
   const safeName = sanitizeFilename(file.name);
   const key = `class-attachments/${classSessionId}/${Date.now()}-${randomUUID()}-${safeName}`;

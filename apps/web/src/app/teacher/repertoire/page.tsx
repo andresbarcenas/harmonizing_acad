@@ -38,12 +38,15 @@ function toCatalogItem(item: Awaited<ReturnType<typeof getRepertoireCatalogManag
     title: item.title,
     composerOrArtist: item.composerOrArtist,
     instrument: item.instrument,
-    level: item.level,
     defaultFocusSection: item.defaultFocusSection,
     defaultCurrentTempo: item.defaultCurrentTempo,
     defaultTargetTempo: item.defaultTargetTempo,
     defaultTeacherNotes: item.defaultTeacherNotes,
     defaultStudentVisibleNotes: item.defaultStudentVisibleNotes,
     tags: item.tags,
+    attachments: item.attachments.map((attachment) => ({
+      id: attachment.id,
+      originalName: attachment.originalName,
+    })),
   };
 }

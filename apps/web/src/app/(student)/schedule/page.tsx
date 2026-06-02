@@ -110,6 +110,7 @@ export default async function StudentSchedulePage({ searchParams }: StudentSched
               endsAtUtc: session.endsAtUtc,
               type: session.type,
               status: session.status,
+              startedAt: session.startedAt,
               primaryName: session.teacher.user.name,
               primaryImage: session.teacher.user.image,
               viewerTimezone: viewer.timezone,

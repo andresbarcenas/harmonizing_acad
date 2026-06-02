@@ -20,6 +20,7 @@ type RepertoireItem = {
   targetTempo: number | null;
   studentVisibleNotes: string | null;
   attachments: Array<{ id: string; originalName: string }>;
+  catalogItem: { attachments: Array<{ id: string; originalName: string }> } | null;
   practiceAssignments: Array<{ title: string; status: string }>;
   practiceVideos: Array<{ originalName: string; feedback: Array<{ comment: string }> }>;
 };
@@ -148,7 +149,9 @@ function RepertoireSection({ title, description, items, locale }: { title: strin
       <CardTitle>{title}</CardTitle>
       <CardDescription>{description}</CardDescription>
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        {items.map((item) => (
+        {items.map((item) => {
+          const catalogAttachments = item.catalogItem?.attachments ?? [];
+          return (
           <div key={item.id} className="rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -161,11 +164,17 @@ function RepertoireSection({ title, description, items, locale }: { title: strin
             <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Dominio" : "Mastery"}: {item.masteryPercent}% · {isSpanish ? "Foco" : "Focus"}: {item.currentFocusSection ?? "-"}</p>
             <p className="text-xs text-[var(--color-ink-soft)]">Tempo: {item.currentTempo ?? "-"} / {item.targetTempo ?? "-"}</p>
             {item.studentVisibleNotes ? <p className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{item.studentVisibleNotes}</p> : null}
-            {item.attachments.length ? <div className="mt-3 flex flex-wrap gap-2">{item.attachments.map((attachment) => <a key={attachment.id} href={`/api/media/repertoire-attachments/${attachment.id}`} target="_blank" rel="noreferrer" className="rounded-full border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]">{isSpanish ? "Partitura" : "Sheet"}: {attachment.originalName}</a>)}</div> : null}
+            {item.attachments.length || catalogAttachments.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {catalogAttachments.map((attachment) => <a key={`catalog-${attachment.id}`} href={`/api/media/repertoire-catalog-attachments/${attachment.id}`} target="_blank" rel="noreferrer" className="rounded-full border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]">{isSpanish ? "Partitura catálogo" : "Catalog sheet"}: {attachment.originalName}</a>)}
+                {item.attachments.map((attachment) => <a key={attachment.id} href={`/api/media/repertoire-attachments/${attachment.id}`} target="_blank" rel="noreferrer" className="rounded-full border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]">{isSpanish ? "Partitura" : "Sheet"}: {attachment.originalName}</a>)}
+              </div>
+            ) : null}
             {item.practiceAssignments[0] ? <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Última tarea" : "Latest assignment"}: {item.practiceAssignments[0].title}</p> : null}
             {item.practiceVideos[0]?.feedback[0]?.comment ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Comentario de video" : "Video feedback"}: {item.practiceVideos[0].feedback[0].comment}</p> : null}
           </div>
-        ))}
+          );
+        })}
         {!items.length ? <Empty text={isSpanish ? "Nada en esta sección todavía." : "Nothing in this section yet."} /> : null}
       </div>
     </Card>

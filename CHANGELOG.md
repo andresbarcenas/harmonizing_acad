@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.10] - 2026-06-02
+
+### Added
+- Animated class-in-progress tracking for teacher-started classes, including teacher start controls, join-class start marking, live progress cards, compact schedule/dashboard indicators, and protected teacher start API support.
+- Admin skill management at `/admin/skills`, including create/edit/deactivate/reorder controls, default-skill synchronization, and a production-safe `skills:sync` script.
+- Reusable protected catalog sheet attachments for repertoire catalog songs, with authenticated upload, delete, and download routes.
+
+### Changed
+- Repertoire catalog and student repertoire no longer use the obsolete song `Level` field; catalog search, assignment, seed/demo data, class completion, and exam selection now omit song level.
+- Student, parent, and teacher repertoire surfaces now show shared catalog sheets alongside student-specific sheet attachments.
+- Complete-class repertoire status dropdowns now use localized labels, and repertoire mastery updates now use 0-100% sliders instead of manual number inputs.
+
 ## [0.10.9] - 2026-06-02
 
 ### Added

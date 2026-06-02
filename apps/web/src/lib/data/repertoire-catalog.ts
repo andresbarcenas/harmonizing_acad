@@ -10,6 +10,9 @@ import type { RepertoireCatalogAssignInput, RepertoireCatalogItemInput } from "@
 
 type TxClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 type RepertoireCatalogActor = AppViewer | { role: Role; teacherProfileId?: string | null; teacherProfile?: { id: string } | null };
+const catalogItemInclude = {
+  attachments: { orderBy: { createdAt: "desc" } },
+} satisfies Prisma.RepertoireCatalogItemInclude;
 
 export type RepertoireCatalogSearchOptions = {
   query?: string | null;
@@ -48,7 +51,6 @@ function catalogWhere(options: RepertoireCatalogSearchOptions = {}): Prisma.Repe
         { title: { contains: query, mode: "insensitive" } },
         { composerOrArtist: { contains: query, mode: "insensitive" } },
         { tags: { contains: query, mode: "insensitive" } },
-        { level: { contains: query, mode: "insensitive" } },
         { instrument: { contains: query, mode: "insensitive" } },
       ],
     });
@@ -62,6 +64,7 @@ export async function searchRepertoireCatalog(options: RepertoireCatalogSearchOp
   const requestedLimit = Number.isFinite(options.limit) ? options.limit ?? 50 : 50;
   return db.repertoireCatalogItem.findMany({
     where: catalogWhere(options),
+    include: catalogItemInclude,
     orderBy: [{ instrument: "asc" }, { title: "asc" }],
     take: Math.min(Math.max(requestedLimit, 1), 100),
   });
@@ -101,13 +104,29 @@ export async function assertCanAssignCatalogToStudent(viewer: RepertoireCatalogA
 }
 
 export async function createCatalogItem(input: RepertoireCatalogItemInput, createdByUserId: string) {
-  return db.repertoireCatalogItem.create({ data: { ...input, createdByUserId } });
+  return db.repertoireCatalogItem.create({ data: { ...input, createdByUserId }, include: catalogItemInclude });
 }
 
 export async function updateCatalogItem(catalogItemId: string, input: RepertoireCatalogItemInput) {
   const existing = await db.repertoireCatalogItem.findUnique({ where: { id: catalogItemId }, select: { id: true } });
   if (!existing) throw new RepertoireCatalogError("NOT_FOUND", 404);
-  return db.repertoireCatalogItem.update({ where: { id: catalogItemId }, data: input });
+  return db.repertoireCatalogItem.update({ where: { id: catalogItemId }, data: input, include: catalogItemInclude });
+}
+
+export async function findActiveCatalogAssignmentForStudent(input: {
+  catalogItemId: string;
+  studentId: string;
+  tx?: TxClient;
+}) {
+  const client = input.tx ?? db;
+  return client.repertoireItem.findFirst({
+    where: {
+      studentId: input.studentId,
+      catalogItemId: input.catalogItemId,
+      status: { notIn: [RepertoireStatus.COMPLETED, RepertoireStatus.PAUSED] },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 }
 
 export async function assignCatalogItemToStudent(input: {
@@ -139,7 +158,6 @@ export async function assignCatalogItemToStudent(input: {
       title: catalogItem.title,
       composerOrArtist: catalogItem.composerOrArtist,
       instrument: catalogItem.instrument,
-      level: catalogItem.level,
       status: values.status ?? RepertoireStatus.ASSIGNED,
       startDate: new Date(),
       masteryPercent: values.masteryPercent ?? 0,

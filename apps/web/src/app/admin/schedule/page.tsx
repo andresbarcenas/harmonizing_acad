@@ -140,6 +140,7 @@ export default async function AdminSchedulePage() {
                 endsAtUtc: session.endsAtUtc,
                 type: session.type,
                 status: session.status,
+                startedAt: session.startedAt,
                 primaryName: session.student.user.name,
                 secondaryName: session.teacher.user.name,
                 viewerTimezone: viewer.timezone,

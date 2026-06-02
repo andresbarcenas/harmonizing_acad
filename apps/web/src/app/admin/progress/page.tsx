@@ -112,7 +112,13 @@ export default async function AdminProgressPage() {
         </Card>
 
         <Card>
-          <CardTitle>{isSpanish ? "Categorías de habilidad" : "Skill categories"}</CardTitle>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>{isSpanish ? "Categorías de habilidad" : "Skill categories"}</CardTitle>
+              <CardDescription>{isSpanish ? "Gestiona el catálogo completo desde la nueva sección de habilidades." : "Manage the full catalog from the new skills section."}</CardDescription>
+            </div>
+            <Link href="/admin/skills"><Button size="sm" variant="outline">{isSpanish ? "Gestionar habilidades" : "Manage skills"}</Button></Link>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {data.skillCategories.map((skill) => <Badge key={skill.id} variant={skill.active ? "gold" : "default"}>{skill.instrument} · {skill.name}</Badge>)}
           </div>

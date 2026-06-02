@@ -197,7 +197,7 @@ export async function getTeacherProgressData(viewer: AppViewer, options: { stude
           orderBy: { startsAtUtc: "desc" },
           take: 12,
         },
-        repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" } },
+        repertoireItems: { where: { teacherId }, include: { attachments: { orderBy: { createdAt: "desc" } }, catalogItem: { include: { attachments: { orderBy: { createdAt: "desc" } } } } }, orderBy: { updatedAt: "desc" } },
         examAssessments: { where: { teacherId }, include: examAssessmentInclude, orderBy: { examDate: "desc" }, take: 8 },
         practiceAssignments: {
           where: { teacherId },

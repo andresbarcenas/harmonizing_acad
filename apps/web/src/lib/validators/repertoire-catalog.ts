@@ -30,7 +30,6 @@ export const repertoireCatalogItemSchema = z.object({
   title: z.string().trim().min(2).max(180),
   composerOrArtist: optionalString(160),
   instrument: requiredInstrumentSchema,
-  level: optionalString(80),
   defaultFocusSection: optionalString(180),
   defaultCurrentTempo: optionalPositiveInt(400),
   defaultTargetTempo: optionalPositiveInt(400),

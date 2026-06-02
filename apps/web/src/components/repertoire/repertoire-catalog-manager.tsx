@@ -19,13 +19,18 @@ type CatalogItem = {
   title: string;
   composerOrArtist?: string | null;
   instrument: string;
-  level?: string | null;
   defaultFocusSection?: string | null;
   defaultCurrentTempo?: number | null;
   defaultTargetTempo?: number | null;
   defaultTeacherNotes?: string | null;
   defaultStudentVisibleNotes?: string | null;
   tags?: string | null;
+  attachments: CatalogAttachment[];
+};
+
+type CatalogAttachment = {
+  id: string;
+  originalName: string;
 };
 
 type StudentOption = {
@@ -45,15 +50,21 @@ function copy(locale: AppLocale) {
     searchButton: "Buscar",
     title: "Título",
     composer: "Compositor o artista",
-    level: "Nivel",
     tags: "Etiquetas (separadas por coma)",
     teacherNotes: "Notas docentes sugeridas",
     studentNotes: "Notas visibles sugeridas",
+    sheetMusic: "Partituras del catálogo",
+    sheetDescription: "Estas partituras se comparten con cada estudiante que tenga esta canción asignada.",
+    attachSheet: "Adjuntar partitura",
+    uploadSheet: "Subir",
+    deleteSheet: "Eliminar",
+    noSheets: "Sin partituras en el catálogo.",
     create: "Guardar en catálogo",
     save: "Guardar cambios",
     assign: "Asignar a estudiante",
     selectStudent: "Selecciona estudiante",
     assigned: "Canción asignada al estudiante.",
+    alreadyAssigned: "La canción ya está asignada al estudiante.",
     saved: "Catálogo actualizado.",
     error: "No se pudo completar la acción.",
     noItems: "No encontramos canciones con esos filtros.",
@@ -67,15 +78,21 @@ function copy(locale: AppLocale) {
     searchButton: "Search",
     title: "Title",
     composer: "Composer or artist",
-    level: "Level",
     tags: "Tags (comma-separated)",
     teacherNotes: "Suggested teacher notes",
     studentNotes: "Suggested visible notes",
+    sheetMusic: "Catalog sheet music",
+    sheetDescription: "These sheets are shared with every student assigned to this song.",
+    attachSheet: "Attach sheet music",
+    uploadSheet: "Upload",
+    deleteSheet: "Delete",
+    noSheets: "No catalog sheets attached.",
     create: "Save to catalog",
     save: "Save changes",
     assign: "Assign to student",
     selectStudent: "Select student",
     assigned: "Song assigned to student.",
+    alreadyAssigned: "Song already assigned to student.",
     saved: "Catalog updated.",
     error: "Could not complete the action.",
     noItems: "No songs found with those filters.",
@@ -98,6 +115,7 @@ export function RepertoireCatalogManager({
   const [query, setQuery] = useState("");
   const [instrument, setInstrument] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [attachmentPendingId, setAttachmentPendingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const instruments = useMemo(() => instrumentOptions(locale), [locale]);
 
@@ -162,9 +180,44 @@ export function RepertoireCatalogManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ studentId }),
     });
-    const payload = await response.json().catch(() => null) as { error?: string } | null;
-    setMessage(response.ok ? c.assigned : payload?.error ?? c.error);
+    const payload = await response.json().catch(() => null) as { alreadyAssigned?: boolean; error?: string } | null;
+    setMessage(response.ok ? (payload?.alreadyAssigned ? c.alreadyAssigned : c.assigned) : payload?.error ?? c.error);
     if (response.ok) startTransition(() => router.refresh());
+  }
+
+  async function uploadAttachment(itemId: string, formData: FormData) {
+    setMessage(null);
+    setAttachmentPendingId(itemId);
+    const response = await fetch(`/api/repertoire/catalog/${itemId}/attachments`, {
+      method: "POST",
+      body: formData,
+    });
+    const payload = await response.json().catch(() => null) as { attachment?: CatalogAttachment; error?: string } | null;
+    setAttachmentPendingId(null);
+    if (!response.ok || !payload?.attachment) {
+      setMessage(payload?.error ?? c.error);
+      return;
+    }
+    setItems((current) => current.map((item) => item.id === itemId ? { ...item, attachments: [payload.attachment!, ...item.attachments] } : item));
+    setMessage(c.saved);
+    startTransition(() => router.refresh());
+  }
+
+  async function removeAttachment(itemId: string, attachmentId: string) {
+    setMessage(null);
+    setAttachmentPendingId(itemId);
+    const response = await fetch(`/api/repertoire/catalog/${itemId}/attachments/${attachmentId}`, {
+      method: "DELETE",
+    });
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    setAttachmentPendingId(null);
+    if (!response.ok) {
+      setMessage(payload?.error ?? c.error);
+      return;
+    }
+    setItems((current) => current.map((item) => item.id === itemId ? { ...item, attachments: item.attachments.filter((attachment) => attachment.id !== attachmentId) } : item));
+    setMessage(c.saved);
+    startTransition(() => router.refresh());
   }
 
   return (
@@ -197,7 +250,7 @@ export function RepertoireCatalogManager({
                     <CardTitle className="break-words">{item.title}</CardTitle>
                     <Badge variant="gold">{displayInstrument(item.instrument, locale)}</Badge>
                   </div>
-                  <CardDescription>{[item.composerOrArtist, item.level, item.tags].filter(Boolean).join(" · ") || displayInstrument(item.instrument, locale)}</CardDescription>
+                  <CardDescription>{[item.composerOrArtist, item.tags].filter(Boolean).join(" · ") || displayInstrument(item.instrument, locale)}</CardDescription>
                 </div>
                 <form action={(formData) => assign(item.id, formData)} className="flex min-w-0 flex-col gap-2 sm:flex-row lg:min-w-[24rem]">
                   <select name="studentId" className={selectClass} defaultValue="">
@@ -207,6 +260,13 @@ export function RepertoireCatalogManager({
                   <Button type="submit" variant="outline" disabled={pending}>{c.assign}</Button>
                 </form>
               </div>
+              <CatalogAttachmentManager
+                c={c}
+                item={item}
+                pending={attachmentPendingId === item.id}
+                onUpload={(formData) => uploadAttachment(item.id, formData)}
+                onRemove={(attachmentId) => removeAttachment(item.id, attachmentId)}
+              />
               <details className="mt-4 rounded-[1.2rem] border border-[var(--color-border)] bg-white/58 p-3">
                 <summary className="cursor-pointer text-sm font-semibold text-[var(--color-gold-deep)]">{c.edit}</summary>
         <CatalogForm c={c} locale={locale} item={item} submitLabel={c.save} onSubmit={(formData) => update(item.id, formData)} />
@@ -226,7 +286,6 @@ function CatalogForm({ c, locale, item, submitLabel, onSubmit }: { c: ReturnType
       <Input name="title" required defaultValue={item?.title} placeholder={c.title} />
       <Input name="composerOrArtist" defaultValue={item?.composerOrArtist ?? ""} placeholder={c.composer} />
       <InstrumentSelect name="instrument" locale={locale} defaultValue={item?.instrument} required aria-label={c.instrument} />
-      <Input name="level" defaultValue={item?.level ?? ""} placeholder={c.level} />
       <Input name="tags" defaultValue={item?.tags ?? ""} placeholder={c.tags} className="md:col-span-2" />
       <Textarea name="defaultTeacherNotes" defaultValue={item?.defaultTeacherNotes ?? ""} placeholder={c.teacherNotes} className="md:col-span-2" />
       <Textarea name="defaultStudentVisibleNotes" defaultValue={item?.defaultStudentVisibleNotes ?? ""} placeholder={c.studentNotes} className="md:col-span-2" />
@@ -235,12 +294,49 @@ function CatalogForm({ c, locale, item, submitLabel, onSubmit }: { c: ReturnType
   );
 }
 
+function CatalogAttachmentManager({
+  c,
+  item,
+  pending,
+  onUpload,
+  onRemove,
+}: {
+  c: ReturnType<typeof copy>;
+  item: CatalogItem;
+  pending: boolean;
+  onUpload: (formData: FormData) => void;
+  onRemove: (attachmentId: string) => void;
+}) {
+  return (
+    <div className="mt-4 rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] p-3">
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{c.sheetMusic}</p>
+        <p className="text-xs text-[var(--color-ink-soft)]">{c.sheetDescription}</p>
+      </div>
+      <div className="mt-3 space-y-2">
+        {item.attachments.map((attachment) => (
+          <div key={attachment.id} className="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-control)] p-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+            <a href={`/api/media/repertoire-catalog-attachments/${attachment.id}`} target="_blank" rel="noreferrer" className="min-w-0 truncate font-semibold text-[var(--color-ink)]">
+              {attachment.originalName}
+            </a>
+            <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={() => onRemove(attachment.id)}>{c.deleteSheet}</Button>
+          </div>
+        ))}
+        {!item.attachments.length ? <p className="text-xs text-[var(--color-ink-soft)]">{c.noSheets}</p> : null}
+      </div>
+      <form action={onUpload} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" required aria-label={c.attachSheet} />
+        <Button type="submit" size="sm" variant="outline" disabled={pending}>{c.uploadSheet}</Button>
+      </form>
+    </div>
+  );
+}
+
 function catalogPayload(formData: FormData) {
   return {
     title: String(formData.get("title") ?? ""),
     composerOrArtist: String(formData.get("composerOrArtist") ?? ""),
     instrument: String(formData.get("instrument") ?? ""),
-    level: String(formData.get("level") ?? ""),
     defaultTeacherNotes: String(formData.get("defaultTeacherNotes") ?? ""),
     defaultStudentVisibleNotes: String(formData.get("defaultStudentVisibleNotes") ?? ""),
     tags: String(formData.get("tags") ?? ""),

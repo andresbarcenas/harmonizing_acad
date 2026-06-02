@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { SessionStatus } from "@prisma/client";
 
+import { ClassInProgressCard } from "@/components/classes/class-in-progress-card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CancelPendingClassButton } from "@/components/teacher/cancel-pending-class-button";
+import { MarkClassStartedButton } from "@/components/classes/join-class-button";
 import { classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
 import { intlLocale, type AppLocale } from "@/lib/i18n/locales";
@@ -15,6 +17,7 @@ export type ClassSessionListItem = {
   endsAtUtc: Date;
   type: string;
   status: SessionStatus;
+  startedAt?: Date | null;
   primaryName: string;
   primaryImage?: string | null;
   secondaryName?: string | null;
@@ -26,6 +29,7 @@ export type ClassSessionListItem = {
   detailHref: string;
   completeHref?: string;
   rescheduleHref?: string;
+  canMarkStarted?: boolean;
   canCancelPending?: boolean;
 };
 
@@ -119,6 +123,7 @@ function ClassSessionRow({
   const viewerTime = formatTimeOnly(session.startsAtUtc, session.viewerTimezone, locale);
   const studentTime = formatTimeOnly(session.startsAtUtc, session.studentTimezone, locale);
   const teacherTime = session.teacherTimezone ? formatTimeOnly(session.startsAtUtc, session.teacherTimezone, locale) : null;
+  const showInProgress = Boolean(session.startedAt) && !["COMPLETED", "NO_SHOW", "CANCELLED"].includes(session.status);
 
   return (
     <div className="interactive-lift relative overflow-hidden rounded-[1.25rem] border border-[var(--color-border)] bg-[var(--color-paper-elevated)] p-4 shadow-[0_10px_30px_rgba(90,64,33,0.04)] hover:border-[color-mix(in_srgb,var(--color-gold)_24%,var(--color-border))]">
@@ -151,12 +156,22 @@ function ClassSessionRow({
                 {session.lessonFocus}
               </p>
             ) : null}
+            {showInProgress && session.startedAt ? (
+              <ClassInProgressCard
+                compact
+                startedAt={session.startedAt.toISOString()}
+                startsAtUtc={session.startsAtUtc.toISOString()}
+                endsAtUtc={session.endsAtUtc.toISOString()}
+                locale={locale}
+              />
+            ) : null}
           </div>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
           <Link href={session.detailHref}><Button size="sm" variant="outline">{locale === "es" ? "Detalle" : "Detail"}</Button></Link>
           {session.rescheduleHref ? <Link href={session.rescheduleHref}><Button size="sm" variant="gold">{locale === "es" ? "Reagendar" : "Reschedule"}</Button></Link> : null}
+          {session.canMarkStarted ? <MarkClassStartedButton classId={session.id} locale={locale} label={locale === "es" ? "Marcar como iniciada" : "Mark as started"} /> : null}
           {session.canCancelPending ? <CancelPendingClassButton classId={session.id} locale={locale} /> : null}
           {session.completeHref ? <Link href={session.completeHref}><Button size="sm" variant="gold">{locale === "es" ? "Completar" : "Complete"}</Button></Link> : null}
         </div>

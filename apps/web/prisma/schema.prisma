@@ -315,45 +315,46 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts                 Account[]
-  sessions                 Session[]
-  studentProfile           StudentProfile?
-  teacherProfile           TeacherProfile?
-  parentGuardianProfile    ParentGuardianProfile?
-  sentMessages             Message[]         @relation("MessageSender")
-  notifications            Notification[]
-  progressUpdates          ProgressRecord[]  @relation("ProgressUpdatedBy")
-  triggeredInvoiceSyncRuns InvoiceSyncRun[]  @relation("InvoiceSyncTriggeredBy")
-  nativeInvoiceRecipients   NativeInvoice[]  @relation("NativeInvoiceRecipient")
-  createdNativeInvoices     NativeInvoice[]  @relation("NativeInvoiceCreatedBy")
-  updatedNativeInvoices     NativeInvoice[]  @relation("NativeInvoiceUpdatedBy")
-  createdNativeInvoicePayments NativeInvoicePayment[] @relation("NativeInvoicePaymentCreatedBy")
-  voidedNativeInvoicePayments  NativeInvoicePayment[] @relation("NativeInvoicePaymentVoidedBy")
+  accounts                                Account[]
+  sessions                                Session[]
+  studentProfile                          StudentProfile?
+  teacherProfile                          TeacherProfile?
+  parentGuardianProfile                   ParentGuardianProfile?
+  sentMessages                            Message[]                        @relation("MessageSender")
+  notifications                           Notification[]
+  progressUpdates                         ProgressRecord[]                 @relation("ProgressUpdatedBy")
+  triggeredInvoiceSyncRuns                InvoiceSyncRun[]                 @relation("InvoiceSyncTriggeredBy")
+  nativeInvoiceRecipients                 NativeInvoice[]                  @relation("NativeInvoiceRecipient")
+  createdNativeInvoices                   NativeInvoice[]                  @relation("NativeInvoiceCreatedBy")
+  updatedNativeInvoices                   NativeInvoice[]                  @relation("NativeInvoiceUpdatedBy")
+  createdNativeInvoicePayments            NativeInvoicePayment[]           @relation("NativeInvoicePaymentCreatedBy")
+  voidedNativeInvoicePayments             NativeInvoicePayment[]           @relation("NativeInvoicePaymentVoidedBy")
   uploadedNativeInvoicePaymentAttachments NativeInvoicePaymentAttachment[] @relation("NativeInvoicePaymentAttachmentUploadedBy")
-  createdClassCreditLedgerEntries ClassCreditLedgerEntry[] @relation("ClassCreditLedgerCreatedBy")
-  studentLogEntries        StudentLogEntry[] @relation("StudentLogAuthor")
-  sentInvitations          Invitation[]      @relation("InvitationSender")
-  acceptedInvitations      Invitation[]      @relation("InvitationAcceptedBy")
-  generatedProgressReports ProgressReport[]  @relation("ProgressReportGeneratedBy")
-  publishedProgressReports ProgressReport[]  @relation("ProgressReportPublishedBy")
-  requestedClassRequests   ClassRequest[]    @relation("ClassRequestRequestedBy")
-  reviewedClassRequests    ClassRequest[]    @relation("ClassRequestReviewedBy")
-  historicalImportBatches  HistoricalImportBatch[] @relation("HistoricalImportCreatedBy")
-  studentProvisioningImportBatches StudentProvisioningImportBatch[] @relation("StudentProvisioningImportCreatedBy")
-  reviewedImportRows       HistoricalImportRow[]   @relation("HistoricalImportRowReviewedBy")
-  uploadedRepertoireAttachments RepertoireAttachment[] @relation("RepertoireAttachmentUploadedBy")
-  uploadedClassSessionAttachments ClassSessionAttachment[] @relation("ClassSessionAttachmentUploadedBy")
-  classReminderDeliveries       ClassReminderDelivery[] @relation("ClassReminderRecipient")
-  consentSignatures             ConsentSignature[] @relation("ConsentSignedUser")
-  publishedExamAssessments      StudentExamAssessment[] @relation("StudentExamAssessmentPublishedBy")
-  createdRepertoireCatalogItems RepertoireCatalogItem[] @relation("RepertoireCatalogCreatedBy")
-  emailDeliveryLogs             EmailDeliveryLog[] @relation("EmailDeliveryRecipient")
-  createdAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementCreatedBy")
-  updatedAppAnnouncements       AppAnnouncement[]  @relation("AppAnnouncementUpdatedBy")
-  appAnnouncementDismissals     AppAnnouncementDismissal[]
-  loginActivities               UserLoginActivity[]
-  adminImpersonationSessions    AdminImpersonationSession[] @relation("AdminImpersonationAdmin")
-  teacherImpersonationSessions  AdminImpersonationSession[] @relation("AdminImpersonationTarget")
+  createdClassCreditLedgerEntries         ClassCreditLedgerEntry[]         @relation("ClassCreditLedgerCreatedBy")
+  studentLogEntries                       StudentLogEntry[]                @relation("StudentLogAuthor")
+  sentInvitations                         Invitation[]                     @relation("InvitationSender")
+  acceptedInvitations                     Invitation[]                     @relation("InvitationAcceptedBy")
+  generatedProgressReports                ProgressReport[]                 @relation("ProgressReportGeneratedBy")
+  publishedProgressReports                ProgressReport[]                 @relation("ProgressReportPublishedBy")
+  requestedClassRequests                  ClassRequest[]                   @relation("ClassRequestRequestedBy")
+  reviewedClassRequests                   ClassRequest[]                   @relation("ClassRequestReviewedBy")
+  historicalImportBatches                 HistoricalImportBatch[]          @relation("HistoricalImportCreatedBy")
+  studentProvisioningImportBatches        StudentProvisioningImportBatch[] @relation("StudentProvisioningImportCreatedBy")
+  reviewedImportRows                      HistoricalImportRow[]            @relation("HistoricalImportRowReviewedBy")
+  uploadedRepertoireAttachments           RepertoireAttachment[]           @relation("RepertoireAttachmentUploadedBy")
+  uploadedRepertoireCatalogAttachments    RepertoireCatalogAttachment[]    @relation("RepertoireCatalogAttachmentUploadedBy")
+  uploadedClassSessionAttachments         ClassSessionAttachment[]         @relation("ClassSessionAttachmentUploadedBy")
+  classReminderDeliveries                 ClassReminderDelivery[]          @relation("ClassReminderRecipient")
+  consentSignatures                       ConsentSignature[]               @relation("ConsentSignedUser")
+  publishedExamAssessments                StudentExamAssessment[]          @relation("StudentExamAssessmentPublishedBy")
+  createdRepertoireCatalogItems           RepertoireCatalogItem[]          @relation("RepertoireCatalogCreatedBy")
+  emailDeliveryLogs                       EmailDeliveryLog[]               @relation("EmailDeliveryRecipient")
+  createdAppAnnouncements                 AppAnnouncement[]                @relation("AppAnnouncementCreatedBy")
+  updatedAppAnnouncements                 AppAnnouncement[]                @relation("AppAnnouncementUpdatedBy")
+  appAnnouncementDismissals               AppAnnouncementDismissal[]
+  loginActivities                         UserLoginActivity[]
+  adminImpersonationSessions              AdminImpersonationSession[]      @relation("AdminImpersonationAdmin")
+  teacherImpersonationSessions            AdminImpersonationSession[]      @relation("AdminImpersonationTarget")
 
   @@index([role])
 }
@@ -366,36 +367,36 @@ model StudentProfile {
   preferredInstrument String?
   joinedAt            DateTime @default(now())
 
-  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignment          TeacherAssignment?
-  subscriptions       ActiveSubscription[]
-  sessions            ClassSession[]         @relation("SessionStudent")
-  practiceVideos      PracticeVideo[]
-  progressRecords     ProgressRecord[]
-  learnedSongs        LearnedSong[]
-  goals               Goal[]
-  studentThreads      MessageThread[]        @relation("ThreadStudent")
-  recurringSeries     RecurringClassSeries[]
-  invoices            Invoice[]
-  nativeInvoices      NativeInvoice[]
-  nativeInvoicePayments NativeInvoicePayment[]
-  billingProfile      StudentBillingProfile?
+  user                     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment               TeacherAssignment?
+  subscriptions            ActiveSubscription[]
+  sessions                 ClassSession[]           @relation("SessionStudent")
+  practiceVideos           PracticeVideo[]
+  progressRecords          ProgressRecord[]
+  learnedSongs             LearnedSong[]
+  goals                    Goal[]
+  studentThreads           MessageThread[]          @relation("ThreadStudent")
+  recurringSeries          RecurringClassSeries[]
+  invoices                 Invoice[]
+  nativeInvoices           NativeInvoice[]
+  nativeInvoicePayments    NativeInvoicePayment[]
+  billingProfile           StudentBillingProfile?
   classCreditLedgerEntries ClassCreditLedgerEntry[]
-  invoiceContactLink  InvoiceContactLink?
-  invoiceSyncRuns     InvoiceSyncRun[]
-  logEntries          StudentLogEntry[]
-  invitations         Invitation[]
-  lessonNotes         LessonNote[]
-  repertoireItems     RepertoireItem[]
-  practiceAssignments PracticeAssignment[]
-  practiceLogs        PracticeLog[]
-  progressReports     ProgressReport[]
-  classRequests       ClassRequest[]
-  parentLinks         ParentStudentLink[]
-  consentSignatures   ConsentSignature[]
-  examAssessments     StudentExamAssessment[]
-  historicalImportBatches HistoricalImportBatch[]
-  historicalImportRows    HistoricalImportRow[]
+  invoiceContactLink       InvoiceContactLink?
+  invoiceSyncRuns          InvoiceSyncRun[]
+  logEntries               StudentLogEntry[]
+  invitations              Invitation[]
+  lessonNotes              LessonNote[]
+  repertoireItems          RepertoireItem[]
+  practiceAssignments      PracticeAssignment[]
+  practiceLogs             PracticeLog[]
+  progressReports          ProgressReport[]
+  classRequests            ClassRequest[]
+  parentLinks              ParentStudentLink[]
+  consentSignatures        ConsentSignature[]
+  examAssessments          StudentExamAssessment[]
+  historicalImportBatches  HistoricalImportBatch[]
+  historicalImportRows     HistoricalImportRow[]
 }
 
 model ParentGuardianProfile {
@@ -422,7 +423,7 @@ model ParentStudentLink {
   updatedAt      DateTime @updatedAt
 
   parent  ParentGuardianProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  student StudentProfile         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student StudentProfile        @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([parentId, studentId])
   @@index([studentId])
@@ -439,21 +440,21 @@ model TeacherProfile {
   status          TeacherStatus @default(ACTIVE)
   statusUpdatedAt DateTime      @default(now())
 
-  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   students            TeacherAssignment[]
-  sessions            ClassSession[]         @relation("SessionTeacher")
+  sessions            ClassSession[]          @relation("SessionTeacher")
   availability        TeacherAvailability[]
   blackoutDates       TeacherBlackoutDate[]
-  rescheduleRequests  RescheduleRequest[]    @relation("RequestHandledBy")
-  videosToReview      PracticeVideo[]        @relation("VideoTeacher")
+  rescheduleRequests  RescheduleRequest[]     @relation("RequestHandledBy")
+  videosToReview      PracticeVideo[]         @relation("VideoTeacher")
   videoFeedback       VideoFeedback[]
-  teacherThreads      MessageThread[]        @relation("ThreadTeacher")
+  teacherThreads      MessageThread[]         @relation("ThreadTeacher")
   recurringSeries     RecurringClassSeries[]
   lessonNotes         LessonNote[]
   repertoireItems     RepertoireItem[]
   practiceAssignments PracticeAssignment[]
   progressReports     ProgressReport[]
-  examAssessments      StudentExamAssessment[]
+  examAssessments     StudentExamAssessment[]
   classRequests       ClassRequest[]
 }
 
@@ -516,31 +517,34 @@ model ClassSession {
   lastClassNotes     String?
   internalNote       String?
   studentVisibleNote String?
+  startedAt          DateTime?
+  startedByUserId    String?
   completedAt        DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  student             StudentProfile        @relation("SessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  teacher             TeacherProfile        @relation("SessionTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  recurrence          RecurringClassSeries? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
-  classRequest        ClassRequest?         @relation("ClassRequestCreatedSession", fields: [classRequestId], references: [id], onDelete: SetNull)
-  rescheduleRequests  RescheduleRequest[]
-  lessonNote          LessonNote?
-  practiceAssignments PracticeAssignment[]
-  reminderDeliveries  ClassReminderDelivery[]
-  emailDeliveryLogs    EmailDeliveryLog[]
-  attachments         ClassSessionAttachment[]
+  student                  StudentProfile           @relation("SessionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher                  TeacherProfile           @relation("SessionTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  recurrence               RecurringClassSeries?    @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+  classRequest             ClassRequest?            @relation("ClassRequestCreatedSession", fields: [classRequestId], references: [id], onDelete: SetNull)
+  rescheduleRequests       RescheduleRequest[]
+  lessonNote               LessonNote?
+  practiceAssignments      PracticeAssignment[]
+  reminderDeliveries       ClassReminderDelivery[]
+  emailDeliveryLogs        EmailDeliveryLog[]
+  attachments              ClassSessionAttachment[]
   classCreditLedgerEntries ClassCreditLedgerEntry[]
-  examAssessment      StudentExamAssessment?
+  examAssessment           StudentExamAssessment?
 
   @@index([teacherId, startsAtUtc])
   @@index([studentId, startsAtUtc])
   @@index([recurrenceId, startsAtUtc])
   @@index([type, startsAtUtc])
+  @@index([startedAt])
 }
 
 model RecurringClassSeries {
-  id               String    @id @default(cuid())
+  id               String                @id @default(cuid())
   studentId        String
   teacherId        String
   timezone         String
@@ -554,10 +558,10 @@ model RecurringClassSeries {
   weekdays         Int[]
   meetingUrl       String
   lessonFocus      String?
-  active           Boolean   @default(true)
+  active           Boolean               @default(true)
   stoppedAt        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   student  StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher  TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
@@ -759,11 +763,10 @@ model RepertoireItem {
   id                  String           @id @default(cuid())
   studentId           String
   teacherId           String?
-  catalogItemId        String?
+  catalogItemId       String?
   title               String
   composerOrArtist    String?
   instrument          String
-  level               String?
   status              RepertoireStatus @default(ASSIGNED)
   startDate           DateTime?
   targetDate          DateTime?
@@ -777,9 +780,9 @@ model RepertoireItem {
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
-  student             StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher             TeacherProfile?      @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  catalogItem         RepertoireCatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+  student             StudentProfile               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher             TeacherProfile?              @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  catalogItem         RepertoireCatalogItem?       @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
   practiceAssignments PracticeAssignment[]
   practiceLogs        PracticeLog[]
   practiceVideos      PracticeVideo[]
@@ -795,8 +798,7 @@ model RepertoireCatalogItem {
   id                         String   @id @default(cuid())
   title                      String
   composerOrArtist           String?
-  instrument                  String
-  level                      String?
+  instrument                 String
   defaultFocusSection        String?
   defaultCurrentTempo        Int?
   defaultTargetTempo         Int?
@@ -808,11 +810,31 @@ model RepertoireCatalogItem {
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
-  createdBy       User?            @relation("RepertoireCatalogCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdBy       User?                         @relation("RepertoireCatalogCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   repertoireItems RepertoireItem[]
+  attachments     RepertoireCatalogAttachment[]
 
   @@index([instrument, active, title])
   @@index([createdByUserId, createdAt])
+}
+
+model RepertoireCatalogAttachment {
+  id               String                   @id @default(cuid())
+  catalogItemId    String
+  uploadedByUserId String
+  type             RepertoireAttachmentType @default(SHEET_MUSIC)
+  storageKey       String
+  originalName     String
+  mimeType         String
+  sizeBytes        Int
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  catalogItem RepertoireCatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+  uploadedBy  User                  @relation("RepertoireCatalogAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([catalogItemId, createdAt])
+  @@index([uploadedByUserId, createdAt])
 }
 
 model RepertoireAttachment {
@@ -835,23 +857,23 @@ model RepertoireAttachment {
 }
 
 model StudentExamAssessment {
-  id             String   @id @default(cuid())
-  studentId      String
-  teacherId      String
-  classSessionId String?  @unique
-  examDate       DateTime
-  title          String
-  instrument     String   @default("Piano")
-  notes          String?
-  publishedAt    DateTime?
+  id                String    @id @default(cuid())
+  studentId         String
+  teacherId         String
+  classSessionId    String?   @unique
+  examDate          DateTime
+  title             String
+  instrument        String    @default("Piano")
+  notes             String?
+  publishedAt       DateTime?
   publishedByUserId String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   student          StudentProfile               @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher          TeacherProfile               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   classSession     ClassSession?                @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
-  publishedBy      User?                         @relation("StudentExamAssessmentPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  publishedBy      User?                        @relation("StudentExamAssessmentPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
   repertoireScores StudentExamRepertoireScore[]
   areaScores       StudentExamAreaScore[]
 
@@ -862,7 +884,7 @@ model StudentExamAssessment {
 }
 
 model StudentExamRepertoireScore {
-  id                  String           @id @default(cuid())
+  id                  String   @id @default(cuid())
   assessmentId        String
   repertoireItemId    String?
   titleSnapshot       String
@@ -871,9 +893,9 @@ model StudentExamRepertoireScore {
   executionScore      Float
   overallScore        Float
   comments            String?
-  sortOrder           Int              @default(0)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   assessment     StudentExamAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   repertoireItem RepertoireItem?       @relation(fields: [repertoireItemId], references: [id], onDelete: SetNull)
@@ -883,16 +905,16 @@ model StudentExamRepertoireScore {
 }
 
 model StudentExamAreaScore {
-  id           String                @id @default(cuid())
+  id           String          @id @default(cuid())
   assessmentId String
   area         StudentExamArea
   topic        String
   objective    String
   score        Float
   comments     String?
-  sortOrder    Int                   @default(0)
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   assessment StudentExamAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
@@ -1175,18 +1197,18 @@ model HistoricalImportRow {
 }
 
 model StudentProvisioningImportBatch {
-  id               String                              @id @default(cuid())
+  id               String                               @id @default(cuid())
   filename         String?
   status           StudentProvisioningImportBatchStatus @default(APPLIED)
   totalRows        Int
   validRows        Int
   errorRows        Int
-  appliedRows      Int                                 @default(0)
-  skippedRows      Int                                 @default(0)
-  failedRows       Int                                 @default(0)
-  emailsSuppressed Boolean                             @default(true)
+  appliedRows      Int                                  @default(0)
+  skippedRows      Int                                  @default(0)
+  failedRows       Int                                  @default(0)
+  emailsSuppressed Boolean                              @default(true)
   createdByUserId  String?
-  createdAt        DateTime                            @default(now())
+  createdAt        DateTime                             @default(now())
 
   createdBy User?                          @relation("StudentProvisioningImportCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   rows      StudentProvisioningImportRow[]
@@ -1196,7 +1218,7 @@ model StudentProvisioningImportBatch {
 }
 
 model StudentProvisioningImportRow {
-  id             String                            @id @default(cuid())
+  id             String                             @id @default(cuid())
   batchId        String
   rowNumber      Int
   status         StudentProvisioningImportRowStatus
@@ -1204,12 +1226,12 @@ model StudentProvisioningImportRow {
   studentName    String?
   teacherEmail   String?
   teacherName    String?
-  guardianEmails String[]                          @default([])
+  guardianEmails String[]                           @default([])
   errors         Json?
   warnings       Json?
   normalized     Json?
   studentId      String?
-  createdAt      DateTime                          @default(now())
+  createdAt      DateTime                           @default(now())
 
   batch StudentProvisioningImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
@@ -1302,8 +1324,8 @@ model AppAnnouncement {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 
-  createdBy  User                         @relation("AppAnnouncementCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  updatedBy  User?                        @relation("AppAnnouncementUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  createdBy  User                       @relation("AppAnnouncementCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  updatedBy  User?                      @relation("AppAnnouncementUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
   dismissals AppAnnouncementDismissal[]
 
   @@index([status, startsAt, endsAt])
@@ -1325,7 +1347,7 @@ model AppAnnouncementDismissal {
 }
 
 model ClassReminderDelivery {
-  id              String              @id @default(cuid())
+  id              String               @id @default(cuid())
   classSessionId  String
   recipientUserId String
   channel         ClassReminderChannel @default(EMAIL)
@@ -1335,8 +1357,8 @@ model ClassReminderDelivery {
   resendMessageId String?
   errorMessage    String?
   sentAt          DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   recipient    User         @relation("ClassReminderRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
@@ -1386,9 +1408,9 @@ model ConsentSignature {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  user     User            @relation("ConsentSignedUser", fields: [userId], references: [id], onDelete: Cascade)
-  student  StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  document ConsentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user              User               @relation("ConsentSignedUser", fields: [userId], references: [id], onDelete: Cascade)
+  student           StudentProfile     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  document          ConsentDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
   emailDeliveryLogs EmailDeliveryLog[]
 
   @@unique([studentId, documentId])
@@ -1453,14 +1475,14 @@ model Invoice {
 }
 
 model StudentBillingProfile {
-  id                      String   @id @default(cuid())
-  studentId               String   @unique
-  defaultSessionCount     Int      @default(4)
-  pricePerClassCop        Int      @default(70834)
-  notes                   String?
-  autoGenerateEnabled     Boolean  @default(false)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  studentId           String   @unique
+  defaultSessionCount Int      @default(4)
+  pricePerClassCop    Int      @default(70834)
+  notes               String?
+  autoGenerateEnabled Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -1475,8 +1497,8 @@ model NativeInvoiceSequence {
 }
 
 model NativeInvoice {
-  id                    String              @id @default(cuid())
-  invoiceNumber         String              @unique
+  id                    String               @id @default(cuid())
+  invoiceNumber         String               @unique
   studentId             String
   recipientUserId       String?
   createdByUserId       String?
@@ -1485,8 +1507,8 @@ model NativeInvoice {
   recipientEmail        String
   recipientRole         String?
   studentNameSnapshot   String
-  status                NativeInvoiceStatus @default(DRAFT)
-  currency              String              @default("COP")
+  status                NativeInvoiceStatus  @default(DRAFT)
+  currency              String               @default("COP")
   issueDate             DateTime
   dueDate               DateTime
   periodStart           DateTime
@@ -1495,7 +1517,7 @@ model NativeInvoice {
   cadenceLabel          String
   pricePerClassCop      Int
   subtotalCop           Int
-  taxCop                Int                 @default(0)
+  taxCop                Int                  @default(0)
   totalCop              Int
   balanceCop            Int
   pdfBytes              Bytes?
@@ -1513,15 +1535,15 @@ model NativeInvoice {
   paidAt                DateTime?
   closedAt              DateTime?
   voidedAt              DateTime?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
-  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  recipient   User?          @relation("NativeInvoiceRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
-  createdBy   User?          @relation("NativeInvoiceCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  updatedBy   User?          @relation("NativeInvoiceUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
-  lineItems   NativeInvoiceLineItem[]
-  payments    NativeInvoicePayment[]
+  student             StudentProfile           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recipient           User?                    @relation("NativeInvoiceRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  createdBy           User?                    @relation("NativeInvoiceCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedBy           User?                    @relation("NativeInvoiceUpdatedBy", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  lineItems           NativeInvoiceLineItem[]
+  payments            NativeInvoicePayment[]
   creditLedgerEntries ClassCreditLedgerEntry[]
 
   @@index([studentId, issueDate])
@@ -1562,10 +1584,10 @@ model NativeInvoicePayment {
   createdAt       DateTime                   @default(now())
   updatedAt       DateTime                   @updatedAt
 
-  invoice     NativeInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdBy   User           @relation("NativeInvoicePaymentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
-  voidedBy    User?          @relation("NativeInvoicePaymentVoidedBy", fields: [voidedByUserId], references: [id], onDelete: SetNull)
+  invoice     NativeInvoice                    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  student     StudentProfile                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy   User                             @relation("NativeInvoicePaymentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  voidedBy    User?                            @relation("NativeInvoicePaymentVoidedBy", fields: [voidedByUserId], references: [id], onDelete: SetNull)
   attachments NativeInvoicePaymentAttachment[]
 
   @@index([invoiceId, status, paymentDate])
@@ -1642,20 +1664,20 @@ model UserLoginActivity {
 }
 
 model AdminImpersonationSession {
-  id           String                     @id @default(cuid())
+  id           String                   @id @default(cuid())
   adminUserId  String
   targetUserId String
   targetRole   Role
   reason       String
-  status       AdminImpersonationStatus   @default(ACTIVE)
-  tokenHash    String                     @unique
-  startedAt    DateTime                   @default(now())
+  status       AdminImpersonationStatus @default(ACTIVE)
+  tokenHash    String                   @unique
+  startedAt    DateTime                 @default(now())
   expiresAt    DateTime
   endedAt      DateTime?
   ipAddress    String?
   userAgent    String?
-  createdAt    DateTime                   @default(now())
-  updatedAt    DateTime                   @updatedAt
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 
   adminUser  User @relation("AdminImpersonationAdmin", fields: [adminUserId], references: [id], onDelete: Cascade)
   targetUser User @relation("AdminImpersonationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)

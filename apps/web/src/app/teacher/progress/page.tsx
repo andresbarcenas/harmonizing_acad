@@ -153,6 +153,21 @@ function SelectedStudentProgress({
                     <div key={item.id} className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white/70 p-3">
                       <p className="break-words text-sm font-semibold">{item.title}</p>
                       <p className="text-xs text-[var(--color-ink-soft)]">{item.status} · {item.masteryPercent}% · {item.currentFocusSection ?? "-"}</p>
+                      {item.catalogItem?.attachments.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {item.catalogItem.attachments.map((attachment) => (
+                            <a
+                              key={attachment.id}
+                              href={`/api/media/repertoire-catalog-attachments/${attachment.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-full border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]"
+                            >
+                              {isSpanish ? "Partitura catálogo" : "Catalog sheet"}: {attachment.originalName}
+                            </a>
+                          ))}
+                        </div>
+                      ) : null}
                       <RepertoireAttachmentForm
                         repertoireItemId={item.id}
                         locale={viewer.locale}

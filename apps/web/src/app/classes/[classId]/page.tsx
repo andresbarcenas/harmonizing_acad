@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PracticeAssignmentStatus, RepertoireStatus, Role, SessionStatus, StudentExamArea, VideoStatus } from "@prisma/client";
 
+import { ClassInProgressCard } from "@/components/classes/class-in-progress-card";
+import { JoinClassButton, MarkClassStartedButton } from "@/components/classes/join-class-button";
 import { ExamPublishButton } from "@/components/progress/exam-publish-button";
 import { CancelPendingClassButton } from "@/components/teacher/cancel-pending-class-button";
 import { AppShell } from "@/components/ui/app-shell";
@@ -31,6 +33,8 @@ export default async function ClassDetailPage({ params }: PageProps) {
   const canComplete = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status !== SessionStatus.RESCHEDULE_PENDING;
   const canDirectReschedule = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status === SessionStatus.RESCHEDULE_PENDING;
   const canCancelPending = canDirectReschedule;
+  const canStartClass = viewer.role === Role.TEACHER && viewer.teacherProfileId === session.teacherId && session.status === SessionStatus.SCHEDULED;
+  const showInProgress = Boolean(session.startedAt) && session.status !== SessionStatus.COMPLETED && session.status !== SessionStatus.NO_SHOW && session.status !== SessionStatus.CANCELLED;
 
   return (
     <AppShell
@@ -75,7 +79,24 @@ export default async function ClassDetailPage({ params }: PageProps) {
           {viewer.role !== Role.STUDENT && viewer.role !== Role.PARENT && session.internalNote ? <NoteBlock label={isSpanish ? "Nota interna" : "Internal note"} value={session.internalNote} /> : null}
 
           <div className="mt-5 flex flex-wrap gap-2">
-            <a href={session.meetingUrl} target="_blank" rel="noreferrer"><Button variant="gold" size="sm">{isSpanish ? "Entrar a clase" : "Join class"}</Button></a>
+            <JoinClassButton
+              classId={session.id}
+              meetingUrl={session.meetingUrl}
+              locale={viewer.locale}
+              label={isSpanish ? "Entrar a clase" : "Join class"}
+              teacherCanStart={canStartClass}
+              variant="gold"
+              size="sm"
+            />
+            {canStartClass && !session.startedAt ? (
+              <MarkClassStartedButton
+                classId={session.id}
+                locale={viewer.locale}
+                label={isSpanish ? "Marcar como iniciada" : "Mark as started"}
+                variant="outline"
+                size="sm"
+              />
+            ) : null}
             {canDirectReschedule ? <Link href={`/teacher/classes/${session.id}/reschedule`}><Button variant="gold" size="sm">{isSpanish ? "Reagendar" : "Reschedule"}</Button></Link> : null}
             {canCancelPending ? <CancelPendingClassButton classId={session.id} locale={viewer.locale} redirectHref="/classes/[classId]" /> : null}
             {canComplete ? <Link href={`/teacher/classes/${session.id}/complete`}><Button variant="outline" size="sm">{isSpanish ? "Completar / actualizar" : "Complete / update"}</Button></Link> : null}
@@ -117,6 +138,18 @@ export default async function ClassDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
+      {showInProgress && session.startedAt ? (
+        <div className="mt-4">
+          <ClassInProgressCard
+            startedAt={session.startedAt.toISOString()}
+            startsAtUtc={session.startsAtUtc.toISOString()}
+            endsAtUtc={session.endsAtUtc.toISOString()}
+            locale={viewer.locale}
+            completeHref={canComplete ? `/teacher/classes/${session.id}/complete` : undefined}
+          />
+        </div>
+      ) : null}
+
       {canComplete && session.teacherPrep ? (
         <TeacherPreparationWorkspace session={session} prep={session.teacherPrep} locale={viewer.locale} />
       ) : null}
@@ -128,6 +161,7 @@ function TeacherPreparationWorkspace({ session, prep, locale }: { session: Class
   const copy = prepCopy(locale);
   const previousNote = prep.previousLesson?.lessonNote;
   const repertoireAttachments = prep.activeRepertoire.flatMap((item) => item.attachments.map((attachment) => ({ ...attachment, repertoireTitle: item.title })));
+  const canStartClass = session.status === SessionStatus.SCHEDULED;
 
   return (
     <section className="mt-4 space-y-4" aria-labelledby="teacher-prep-heading">
@@ -139,7 +173,24 @@ function TeacherPreparationWorkspace({ session, prep, locale }: { session: Class
             <CardDescription>{copy.description}</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href={session.meetingUrl} target="_blank" rel="noreferrer"><Button variant="gold" size="sm">{copy.joinClass}</Button></a>
+            <JoinClassButton
+              classId={session.id}
+              meetingUrl={session.meetingUrl}
+              locale={locale}
+              label={copy.joinClass}
+              teacherCanStart={canStartClass}
+              variant="gold"
+              size="sm"
+            />
+            {canStartClass && !session.startedAt ? (
+              <MarkClassStartedButton
+                classId={session.id}
+                locale={locale}
+                label={copy.markStarted}
+                variant="outline"
+                size="sm"
+              />
+            ) : null}
             <Link href={`/teacher/classes/${session.id}/complete`}><Button variant="outline" size="sm">{copy.completeClass}</Button></Link>
           </div>
         </div>
@@ -412,6 +463,7 @@ function prepCopy(locale: "en" | "es") {
         title: "Espacio de preparación",
         description: "Todo lo importante antes de entrar a clase, reunido desde el progreso real del estudiante.",
         joinClass: "Entrar a clase",
+        markStarted: "Marcar como iniciada",
         completeClass: "Completar / actualizar",
         suggestedFocus: "Enfoque sugerido",
         studentSnapshot: "Resumen del estudiante",
@@ -455,6 +507,7 @@ function prepCopy(locale: "en" | "es") {
         title: "Preparation workspace",
         description: "Everything important before class, gathered from the student’s real progress.",
         joinClass: "Join class",
+        markStarted: "Mark as started",
         completeClass: "Complete / update",
         suggestedFocus: "Suggested focus",
         studentSnapshot: "Student snapshot",

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { ClassRequestStatus, RescheduleStatus, SessionStatus, Role } from "@prisma/client";
-import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek, subHours } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import type { AppViewer } from "@/features/auth/server";
@@ -37,8 +37,16 @@ export async function getStudentDashboardDataForProfile(studentProfileId: string
     db.classSession.findFirst({
       where: {
         studentId: studentProfileId,
-        startsAtUtc: { gte: now },
-        status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+        OR: [
+          {
+            startsAtUtc: { gte: now },
+            status: { in: [SessionStatus.SCHEDULED, SessionStatus.RESCHEDULE_PENDING] },
+          },
+          {
+            startedAt: { gte: subHours(now, 6) },
+            status: SessionStatus.SCHEDULED,
+          },
+        ],
       },
       orderBy: { startsAtUtc: "asc" },
     }),

@@ -14,6 +14,7 @@ const familyRepertoireInclude = {
   repertoireItems: {
     include: {
       attachments: { orderBy: { createdAt: "desc" } },
+      catalogItem: { include: { attachments: { orderBy: { createdAt: "desc" } } } },
       practiceAssignments: { orderBy: { createdAt: "desc" }, take: 1 },
       practiceVideos: {
         include: { feedback: { orderBy: { reviewedAt: "desc" }, take: 1 } },

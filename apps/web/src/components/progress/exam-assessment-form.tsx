@@ -37,7 +37,6 @@ type CatalogOption = {
   title: string;
   composerOrArtist?: string | null;
   instrument: string;
-  level?: string | null;
   tags?: string | null;
 };
 
@@ -561,7 +560,7 @@ function RepertoireSection({ c, locale, rows, setRows, repertoireOptions, onSear
                     className="rounded-xl border border-[var(--color-border)] bg-[var(--color-control)] p-3 text-left transition hover:border-[var(--color-gold)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
                   >
                     <span className="block text-sm font-semibold text-[var(--color-ink)]">{item.title}</span>
-                    <span className="block text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, displayInstrument(item.instrument, locale), item.level, item.tags].filter(Boolean).join(" · ")}</span>
+                    <span className="block text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, displayInstrument(item.instrument, locale), item.tags].filter(Boolean).join(" · ")}</span>
                     <span className="mt-2 inline-block text-xs font-semibold text-[var(--color-gold-deep)]">{c.useSong}</span>
                   </button>
                 ))}

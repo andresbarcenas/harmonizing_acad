@@ -35,6 +35,14 @@ const validationTranslations: Record<string, { en: string; es: string }> = {
     en: "End date must be after start date.",
     es: "La fecha final debe ser posterior a la fecha de inicio.",
   },
+  "Invalid skill instrument.": {
+    en: "Invalid skill instrument.",
+    es: "Instrumento de habilidad inválido.",
+  },
+  "Skill name is required.": {
+    en: "Skill name is required.",
+    es: "El nombre de la habilidad es obligatorio.",
+  },
   "Lesson summary is required when completing a class.": {
     en: "Lesson summary is required when completing a class.",
     es: "El resumen de la clase es obligatorio al completar una clase.",

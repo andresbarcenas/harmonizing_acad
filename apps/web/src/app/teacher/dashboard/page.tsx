@@ -1,5 +1,7 @@
 import { Role, SessionStatus } from "@prisma/client";
 
+import { ClassInProgressCard } from "@/components/classes/class-in-progress-card";
+import { JoinClassButton, MarkClassStartedButton } from "@/components/classes/join-class-button";
 import { SeriesActions } from "@/components/teacher/series-actions";
 import { RecurringClassForm } from "@/components/teacher/recurring-class-form";
 import { AppShell } from "@/components/ui/app-shell";
@@ -89,6 +91,15 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                   <span className="font-semibold">{dictionary.teacher.suggestedFocus}:</span> {session.lessonFocus}
                 </p>
               ) : null}
+              {isClassInProgress(session) ? (
+                <ClassInProgressCard
+                  compact
+                  startedAt={session.startedAt!.toISOString()}
+                  startsAtUtc={session.startsAtUtc.toISOString()}
+                  endsAtUtc={session.endsAtUtc.toISOString()}
+                  locale={viewer.locale}
+                />
+              ) : null}
             </div>
           ))}
           {!data.prepSessions.length ? (
@@ -177,10 +188,34 @@ export default async function TeacherDashboardPage({ searchParams }: TeacherDash
                 <p className="text-[11px] text-[var(--color-ink-soft)]">
                   {dictionary.teacher.studentTime}: {formatDateTimeInZone(session.startsAtUtc, session.student.user.timezone, viewer.locale)} ({session.student.user.timezone})
                 </p>
+                {isClassInProgress(session) ? (
+                  <ClassInProgressCard
+                    compact
+                    startedAt={session.startedAt!.toISOString()}
+                    startsAtUtc={session.startsAtUtc.toISOString()}
+                    endsAtUtc={session.endsAtUtc.toISOString()}
+                    locale={viewer.locale}
+                  />
+                ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <a href={session.meetingUrl} target="_blank" rel="noreferrer">
-                    <Button size="sm" variant="gold">{dictionary.common.joinClass}</Button>
-                  </a>
+                  <JoinClassButton
+                    classId={session.id}
+                    meetingUrl={session.meetingUrl}
+                    locale={viewer.locale}
+                    label={dictionary.common.joinClass}
+                    teacherCanStart={session.status === SessionStatus.SCHEDULED}
+                    size="sm"
+                    variant="gold"
+                  />
+                  {session.status === SessionStatus.SCHEDULED && !session.startedAt ? (
+                    <MarkClassStartedButton
+                      classId={session.id}
+                      locale={viewer.locale}
+                      label={viewer.locale === "es" ? "Marcar como iniciada" : "Mark as started"}
+                      size="sm"
+                      variant="outline"
+                    />
+                  ) : null}
                   <a href={withStudentContext("/teacher/requests", data.selectedStudentId)}>
                     <Button size="sm" variant="outline">{dictionary.teacher.viewRequests}</Button>
                   </a>
@@ -286,4 +321,8 @@ function recurringTimezoneModeLabel(mode: string | null | undefined, locale: "en
   if (mode === "TEACHER_TIME") return locale === "es" ? "hora docente" : "teacher time";
   if (mode === "CUSTOM_TIMEZONE") return locale === "es" ? "zona personalizada" : "custom timezone";
   return locale === "es" ? "hora del estudiante" : "student time";
+}
+
+function isClassInProgress(session: { startedAt?: Date | null; status: SessionStatus }) {
+  return Boolean(session.startedAt) && session.status !== SessionStatus.COMPLETED && session.status !== SessionStatus.NO_SHOW && session.status !== SessionStatus.CANCELLED;
 }

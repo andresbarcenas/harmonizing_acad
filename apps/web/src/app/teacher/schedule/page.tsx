@@ -71,6 +71,7 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                 endsAtUtc: session.endsAtUtc,
                 type: session.type,
                 status: session.status,
+                startedAt: session.startedAt,
                 primaryName: session.student.user.name,
                 primaryImage: session.student.user.image,
                 viewerTimezone: viewer.timezone,
@@ -80,6 +81,7 @@ export default async function TeacherSchedulePage({ searchParams }: PageProps) {
                 detailHref: `/classes/${session.id}`,
                 completeHref: session.status === SessionStatus.RESCHEDULE_PENDING ? undefined : `/teacher/classes/${session.id}/complete`,
                 rescheduleHref: session.status === SessionStatus.RESCHEDULE_PENDING ? `/teacher/classes/${session.id}/reschedule` : undefined,
+                canMarkStarted: session.status === SessionStatus.SCHEDULED && !session.startedAt,
                 canCancelPending: session.status === SessionStatus.RESCHEDULE_PENDING,
               }))}
             />

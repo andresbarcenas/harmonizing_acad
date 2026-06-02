@@ -28,7 +28,6 @@ export async function POST(req: Request) {
     title: input.title,
     composerOrArtist: input.composerOrArtist,
     instrument: input.instrument,
-    level: input.level,
     status: input.status,
     startDate: input.startDate ? new Date(input.startDate) : undefined,
     targetDate: input.targetDate ? new Date(input.targetDate) : undefined,

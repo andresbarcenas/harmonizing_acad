@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { assignCatalogItemToStudent, assertCanAssignCatalogToStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
+import { assignCatalogItemToStudent, assertCanAssignCatalogToStudent, findActiveCatalogAssignmentForStudent, getRepertoireCatalogErrorMessage } from "@/lib/data/repertoire-catalog";
 import { validationErrorMessage } from "@/lib/validation-errors";
 import { repertoireCatalogAssignSchema } from "@/lib/validators/repertoire-catalog";
 
@@ -18,6 +18,9 @@ export async function POST(request: Request, { params }: Params) {
   try {
     await assertCanAssignCatalogToStudent(auth.user, parsed.data.studentId);
     const { catalogItemId } = await params;
+    const existing = await findActiveCatalogAssignmentForStudent({ catalogItemId, studentId: parsed.data.studentId });
+    if (existing) return NextResponse.json({ item: existing, alreadyAssigned: true });
+
     const item = await assignCatalogItemToStudent({
       catalogItemId,
       studentId: parsed.data.studentId,

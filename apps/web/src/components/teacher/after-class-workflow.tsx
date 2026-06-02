@@ -36,7 +36,6 @@ type RepertoireCatalogOption = {
   title: string;
   composerOrArtist?: string | null;
   instrument: string;
-  level?: string | null;
   defaultFocusSection?: string | null;
   defaultCurrentTempo?: number | null;
   defaultTargetTempo?: number | null;
@@ -83,7 +82,6 @@ type NewRepertoireState = {
   title: string;
   composerOrArtist: string;
   instrument: string;
-  level: string;
   status: RepertoireStatus;
   masteryPercent: number;
   teacherNotes: string;
@@ -186,14 +184,15 @@ function copy(locale: AppLocale) {
     titleField: "Título",
     artist: "Compositor o artista",
     instrument: "Instrumento",
-    level: "Nivel",
     mastery: "Dominio %",
+    masteryHelp: "Dominio actual después de la clase de hoy.",
     teacherNotes: "Notas docentes",
     studentNotes: "Notas visibles",
     assignmentTitle: "Título de la tarea",
     assignmentInstructions: "Instrucciones de práctica",
     dueDate: "Fecha límite",
     expectedMinutes: "Minutos esperados",
+    expectedMinutesHelp: "Tiempo sugerido de práctica para esta tarea.",
     relatedSong: "Repertorio relacionado",
     relatedSkill: "Habilidad relacionada",
     requiresVideo: "Solicitar video de práctica",
@@ -262,14 +261,15 @@ function copy(locale: AppLocale) {
     titleField: "Title",
     artist: "Composer or artist",
     instrument: "Instrument",
-    level: "Level",
     mastery: "Mastery %",
+    masteryHelp: "Current mastery after today's class.",
     teacherNotes: "Teacher notes",
     studentNotes: "Visible notes",
     assignmentTitle: "Assignment title",
     assignmentInstructions: "Practice instructions",
     dueDate: "Due date",
     expectedMinutes: "Expected minutes",
+    expectedMinutesHelp: "Suggested practice time for this assignment.",
     relatedSong: "Related repertoire",
     relatedSkill: "Related skill",
     requiresVideo: "Request practice video",
@@ -325,7 +325,6 @@ export function AfterClassWorkflow(props: WorkflowProps) {
     title: "",
     composerOrArtist: "",
     instrument: normalizeInstrument(props.student.preferredInstrument) ?? "Piano",
-    level: "",
     status: "ASSIGNED",
     masteryPercent: 0,
     teacherNotes: "",
@@ -415,7 +414,6 @@ export function AfterClassWorkflow(props: WorkflowProps) {
         title: newRepertoire.title,
         composerOrArtist: newRepertoire.composerOrArtist,
         instrument: newRepertoire.instrument,
-        level: newRepertoire.level,
         status: newRepertoire.status,
         masteryPercent: newRepertoire.masteryPercent,
         teacherNotes: newRepertoire.teacherNotes,
@@ -839,7 +837,6 @@ function RepertoireStep({
       title: item.title,
       composerOrArtist: item.composerOrArtist ?? "",
       instrument: normalizeInstrument(item.instrument) ?? "Piano",
-      level: item.level ?? "",
       teacherNotes: item.defaultTeacherNotes ?? "",
       studentVisibleNotes: item.defaultStudentVisibleNotes ?? "",
     });
@@ -853,8 +850,8 @@ function RepertoireStep({
           <div key={item.repertoireItemId} className={cn("rounded-[1.2rem] border p-3", item.selected ? "border-[var(--color-gold)] bg-[var(--color-gold-soft)]/70" : "border-[var(--color-border)] bg-white/72")}>
             <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={item.selected} onChange={(event) => update(item.repertoireItemId, { selected: event.target.checked })} /> {item.title}</label>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
-              <select className={selectClass} value={item.status} onChange={(event) => update(item.repertoireItemId, { status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
-              <Input type="number" min={0} max={100} value={item.masteryPercent} onChange={(event) => update(item.repertoireItemId, { masteryPercent: Number(event.target.value) })} placeholder={c.mastery} />
+              <select className={selectClass} value={item.status} onChange={(event) => update(item.repertoireItemId, { status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{repertoireStatusLabel(status, locale)}</option>)}</select>
+              <MasterySlider label={c.mastery} help={c.masteryHelp} value={item.masteryPercent} onChange={(value) => update(item.repertoireItemId, { masteryPercent: value })} />
               <Input value={item.teacherNotes} onChange={(event) => update(item.repertoireItemId, { teacherNotes: event.target.value })} placeholder={c.teacherNotes} />
               <Input value={item.studentVisibleNotes} onChange={(event) => update(item.repertoireItemId, { studentVisibleNotes: event.target.value })} placeholder={c.studentNotes} />
             </div>
@@ -882,7 +879,7 @@ function RepertoireStep({
                       className="rounded-xl border border-[var(--color-border)] bg-white/76 p-3 text-left transition hover:border-[var(--color-gold)]"
                     >
                       <span className="block text-sm font-semibold text-[var(--color-ink)]">{item.title}</span>
-                      <span className="block text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, displayInstrument(item.instrument, locale), item.level, item.tags].filter(Boolean).join(" · ")}</span>
+                      <span className="block text-xs text-[var(--color-ink-soft)]">{[item.composerOrArtist, displayInstrument(item.instrument, locale), item.tags].filter(Boolean).join(" · ")}</span>
                       <span className="mt-2 inline-block text-xs font-semibold text-[var(--color-gold-deep)]">{c.useSong}</span>
                     </button>
                   ))}
@@ -894,9 +891,8 @@ function RepertoireStep({
             <Input value={newItem.title} onChange={(event) => setNewItem({ ...newItem, title: event.target.value })} placeholder={c.titleField} />
             <Input value={newItem.composerOrArtist} onChange={(event) => setNewItem({ ...newItem, composerOrArtist: event.target.value })} placeholder={c.artist} />
             <InstrumentSelect value={newItem.instrument} onChange={(event) => setNewItem({ ...newItem, instrument: event.target.value })} locale={locale} aria-label={c.instrument} />
-            <Input value={newItem.level} onChange={(event) => setNewItem({ ...newItem, level: event.target.value })} placeholder={c.level} />
-            <select className={selectClass} value={newItem.status} onChange={(event) => setNewItem({ ...newItem, status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
-            <Input type="number" min={0} max={100} value={newItem.masteryPercent} onChange={(event) => setNewItem({ ...newItem, masteryPercent: Number(event.target.value) })} placeholder={c.mastery} />
+            <select className={selectClass} value={newItem.status} onChange={(event) => setNewItem({ ...newItem, status: event.target.value as RepertoireStatus })}>{repertoireStatuses.map((status) => <option key={status} value={status}>{repertoireStatusLabel(status, locale)}</option>)}</select>
+            <MasterySlider label={c.mastery} help={c.masteryHelp} value={newItem.masteryPercent} onChange={(value) => setNewItem({ ...newItem, masteryPercent: value })} />
             <Input value={newItem.teacherNotes} onChange={(event) => setNewItem({ ...newItem, teacherNotes: event.target.value })} placeholder={c.teacherNotes} />
             <Input value={newItem.studentVisibleNotes} onChange={(event) => setNewItem({ ...newItem, studentVisibleNotes: event.target.value })} placeholder={c.studentNotes} />
             </div>
@@ -935,7 +931,10 @@ function PracticeStep({ c, assignments, setAssignments, skills, repertoire, newR
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <Input value={assignment.title} onChange={(event) => update(assignment.id, { title: event.target.value })} placeholder={c.assignmentTitle} />
             <Input type="date" value={assignment.dueDate} onChange={(event) => update(assignment.id, { dueDate: event.target.value })} aria-label={c.dueDate} />
-            <Input type="number" min={1} max={600} value={assignment.expectedMinutes} onChange={(event) => update(assignment.id, { expectedMinutes: event.target.value })} placeholder={c.expectedMinutes} />
+            <div className="space-y-1">
+              <Input type="number" min={1} max={600} value={assignment.expectedMinutes} onChange={(event) => update(assignment.id, { expectedMinutes: event.target.value })} placeholder={c.expectedMinutes} />
+              <p className="px-1 text-xs text-[var(--color-ink-soft)]">{c.expectedMinutesHelp}</p>
+            </div>
             <select className={selectClass} value={assignment.newRepertoireClientId ? `new:${assignment.newRepertoireClientId}` : assignment.repertoireItemId} onChange={(event) => selectRepertoire(assignment.id, event.target.value)}>
               <option value="">{c.relatedSong}</option>
               {repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
@@ -999,6 +998,33 @@ function RatingInput({ label, value, onChange }: { label: string; value?: number
   );
 }
 
+function MasterySlider({ label, help, value, onChange }: { label: string; help: string; value: number; onChange: (value: number) => void }) {
+  const currentValue = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+  return (
+    <label className="rounded-[1rem] border border-[var(--color-border)] bg-white/76 p-3">
+      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--color-ink)]">
+        <span>{label}</span>
+        <Badge variant="gold">{currentValue}%</Badge>
+      </span>
+      <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">{help}</span>
+      <input
+        className="mt-3 w-full accent-[var(--color-gold)]"
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={currentValue}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+        <span>0%</span>
+        <span>50%</span>
+        <span>100%</span>
+      </span>
+    </label>
+  );
+}
+
 function sanitizeLessonNoteForSubmit(note: LessonNoteState): LessonNoteState {
   return {
     ...note,
@@ -1046,6 +1072,18 @@ function numberOrUndefined(value: unknown) {
 function statusLabel(status: CompletionStatus, locale: AppLocale) {
   const option = statusOptions.find((item) => item.value === status);
   return option ? (locale === "es" ? option.es : option.en) : status;
+}
+
+function repertoireStatusLabel(status: RepertoireStatus, locale: AppLocale) {
+  const labels: Record<RepertoireStatus, { en: string; es: string }> = {
+    ASSIGNED: { en: "Assigned", es: "Asignada" },
+    LEARNING: { en: "Learning", es: "En aprendizaje" },
+    IMPROVING: { en: "Improving", es: "Mejorando" },
+    PERFORMANCE_READY: { en: "Performance ready", es: "Lista para presentar" },
+    COMPLETED: { en: "Completed", es: "Completada" },
+    PAUSED: { en: "Paused", es: "Pausada" },
+  };
+  return labels[status][locale === "es" ? "es" : "en"];
 }
 
 function inferLessonInstrument(value?: string | null): LessonInstrument {

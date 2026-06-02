@@ -1,6 +1,6 @@
 {
   "name": "harmonizing-web",
-  "version": "0.10.9",
+  "version": "0.10.10",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -26,6 +26,7 @@
     "import:tommy-history": "node scripts/import-tommy-history.cjs",
     "import:student-history": "node scripts/import-tommy-history.cjs",
     "seed:report-demo": "tsx scripts/seed-monthly-report-demo.ts",
+    "skills:sync": "tsx scripts/sync-default-skills.ts",
     "migrate:protected-media": "tsx scripts/migrate-protected-media.ts",
     "cleanup:login-activity": "tsx scripts/cleanup-login-activity.ts"
   },

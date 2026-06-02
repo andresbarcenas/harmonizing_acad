@@ -74,6 +74,7 @@ export const en = {
       consents: "Consents",
       emails: "Emails",
       repertoire: "Repertoire",
+      skills: "Skills",
       imports: "Imports",
       health: "Health",
       changelog: "Changelog",

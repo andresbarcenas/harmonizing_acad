@@ -329,7 +329,6 @@ export function RepertoireForm({ studentId, locale }: { studentId: string; local
       <Input name="title" required placeholder={c.title} />
       <Input name="composerOrArtist" placeholder={c.composer} />
       <InstrumentSelect name="instrument" locale={locale} required aria-label={c.instrument} />
-      <Input name="level" placeholder={c.level} />
       <select name="status" defaultValue="ASSIGNED" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">{repertoireStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
       <Input name="masteryPercent" type="number" min={0} max={100} defaultValue={0} placeholder={c.mastery} />
       <Input name="targetDate" type="date" />

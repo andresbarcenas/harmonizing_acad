@@ -20,6 +20,8 @@ import {
 import { hash } from "bcryptjs";
 import { addDays, addHours, subDays } from "date-fns";
 
+import { defaultSkillCategories } from "../src/lib/skills/default-skills";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -219,43 +221,14 @@ async function main() {
     ],
   });
 
-  const skillSeed = [
-    ["GENERAL", "Rhythm", "Pulso interno, subdivisión y estabilidad rítmica."],
-    ["GENERAL", "Ear training", "Escucha activa, afinación relativa y reconocimiento musical."],
-    ["GENERAL", "Music theory", "Lenguaje musical, armonía básica y comprensión de estructura."],
-    ["GENERAL", "Practice discipline", "Hábitos de estudio, constancia y preparación semanal."],
-    ["PIANO", "Timing / metronome", "Uso del metrónomo y precisión de tempo."],
-    ["PIANO", "Note reading", "Lectura de notas y reconocimiento en el teclado."],
-    ["PIANO", "Sight reading", "Lectura a primera vista."],
-    ["PIANO", "Hand coordination", "Coordinación entre manos y control simultáneo."],
-    ["PIANO", "Left/right hand independence", "Independencia entre mano izquierda y derecha."],
-    ["PIANO", "Scales", "Escalas, digitación y regularidad técnica."],
-    ["PIANO", "Chords", "Acordes, inversiones y progresiones."],
-    ["PIANO", "Technique", "Control técnico, relajación y articulación."],
-    ["PIANO", "Dynamics", "Control de volumen, contraste y matices."],
-    ["PIANO", "Expression", "Fraseo, intención musical y sensibilidad."],
-    ["PIANO", "Posture", "Postura corporal, manos y ergonomía."],
-    ["PIANO", "Repertoire/song mastery", "Dominio de canciones y piezas asignadas."],
-    ["VOICE", "Pitch accuracy", "Afinación y precisión melódica."],
-    ["VOICE", "Breath control", "Respiración, soporte y control del aire."],
-    ["VOICE", "Vocal tone", "Color, claridad y estabilidad del sonido."],
-    ["VOICE", "Range", "Extensión vocal cómoda y saludable."],
-    ["VOICE", "Support", "Apoyo diafragmático y sostén de frases."],
-    ["VOICE", "Diction", "Claridad de pronunciación e intención textual."],
-    ["VOICE", "Performance confidence", "Seguridad escénica y presencia."],
-    ["VOICE", "Warmup discipline", "Rutina de calentamiento y cuidado vocal."],
-    ["VOICE", "Song interpretation", "Interpretación, emoción y narrativa."],
-    ["VOICE", "Stage presence", "Comunicación escénica y confianza corporal."],
-  ] as const;
-
   const skillCategories = new Map<string, Awaited<ReturnType<typeof prisma.skillCategory.upsert>>>();
-  for (const [index, [instrument, name, description]] of skillSeed.entries()) {
+  for (const skill of defaultSkillCategories) {
     const category = await prisma.skillCategory.upsert({
-      where: { instrument_name: { instrument, name } },
-      update: { description, sortOrder: index + 1, active: true },
-      create: { instrument, name, description, sortOrder: index + 1 },
+      where: { instrument_name: { instrument: skill.instrument, name: skill.name } },
+      update: { description: skill.description, sortOrder: skill.sortOrder, active: true },
+      create: { instrument: skill.instrument, name: skill.name, description: skill.description, sortOrder: skill.sortOrder },
     });
-    skillCategories.set(`${instrument}:${name}`, category);
+    skillCategories.set(`${skill.instrument}:${skill.name}`, category);
   }
 
   const repertoireCatalogSeed = [
@@ -264,7 +237,6 @@ async function main() {
       title: "Moon River",
       composerOrArtist: "Henry Mancini",
       instrument: "Piano",
-      level: "Principiante alto",
       defaultFocusSection: "Melodía principal y cambios de acorde",
       defaultCurrentTempo: 68,
       defaultTargetTempo: 84,
@@ -275,7 +247,6 @@ async function main() {
       title: "Stand by Me",
       composerOrArtist: "Ben E. King",
       instrument: "Voice",
-      level: "Principiante",
       defaultFocusSection: "Afinación del coro y respiración",
       defaultCurrentTempo: 78,
       defaultTargetTempo: 95,
@@ -286,7 +257,6 @@ async function main() {
       title: "Für Elise",
       composerOrArtist: "Ludwig van Beethoven",
       instrument: "Piano",
-      level: "Intermedio",
       defaultFocusSection: "Tema A con digitación estable",
       defaultCurrentTempo: 72,
       defaultTargetTempo: 100,
@@ -297,7 +267,6 @@ async function main() {
       title: "Count on Me",
       composerOrArtist: "Bruno Mars",
       instrument: "Voice",
-      level: "Principiante alto",
       defaultFocusSection: "Fraseo y dicción del verso",
       defaultCurrentTempo: 80,
       defaultTargetTempo: 88,
@@ -308,7 +277,6 @@ async function main() {
       title: "All of Me",
       composerOrArtist: "John Legend",
       instrument: "Piano",
-      level: "Intermedio",
       defaultFocusSection: "Progresión de acordes y dinámica",
       defaultCurrentTempo: 60,
       defaultTargetTempo: 75,
@@ -319,7 +287,6 @@ async function main() {
       title: "Imagine",
       composerOrArtist: "John Lennon",
       instrument: "Piano",
-      level: "Principiante alto",
       defaultFocusSection: "Acompañamiento con mano izquierda",
       defaultCurrentTempo: 70,
       defaultTargetTempo: 86,
@@ -330,7 +297,6 @@ async function main() {
       title: "Hallelujah",
       composerOrArtist: "Leonard Cohen",
       instrument: "Voice",
-      level: "Intermedio",
       defaultFocusSection: "Control de aire en frases largas",
       defaultCurrentTempo: 56,
       defaultTargetTempo: 72,
@@ -341,7 +307,6 @@ async function main() {
       title: "Can You Feel the Love Tonight",
       composerOrArtist: "Elton John",
       instrument: "Voice",
-      level: "Intermedio",
       defaultFocusSection: "Soporte y resonancia en el coro",
       defaultCurrentTempo: 64,
       defaultTargetTempo: 82,
@@ -352,7 +317,6 @@ async function main() {
       title: "Minuet in G",
       composerOrArtist: "Christian Petzold",
       instrument: "Piano",
-      level: "Principiante alto",
       defaultFocusSection: "Articulación y lectura por frases",
       defaultCurrentTempo: 76,
       defaultTargetTempo: 104,
@@ -363,7 +327,6 @@ async function main() {
       title: "Vivir Mi Vida",
       composerOrArtist: "Marc Anthony",
       instrument: "Voice",
-      level: "Intermedio",
       defaultFocusSection: "Ritmo, energía y pronunciación",
       defaultCurrentTempo: 88,
       defaultTargetTempo: 105,
@@ -377,7 +340,6 @@ async function main() {
       title: item.title,
       composerOrArtist: item.composerOrArtist,
       instrument: item.instrument,
-      level: item.level,
       defaultFocusSection: item.defaultFocusSection,
       defaultCurrentTempo: item.defaultCurrentTempo,
       defaultTargetTempo: item.defaultTargetTempo,
@@ -1083,7 +1045,6 @@ async function main() {
       title: "Bésame Mucho",
       composerOrArtist: "Consuelo Velázquez",
       instrument: "Piano",
-      level: "Intermedio inicial",
       status: RepertoireStatus.IMPROVING,
       startDate: subDays(now, 28),
       targetDate: addDays(now, 21),
@@ -1111,7 +1072,6 @@ async function main() {
       title: "Contigo en la distancia",
       composerOrArtist: "César Portillo de la Luz",
       instrument: "Voice",
-      level: "Principiante alto",
       status: RepertoireStatus.LEARNING,
       startDate: subDays(now, 10),
       targetDate: addDays(now, 30),

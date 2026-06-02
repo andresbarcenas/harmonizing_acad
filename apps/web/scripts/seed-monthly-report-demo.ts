@@ -37,7 +37,6 @@ type DemoStudent = {
   repertoire: {
     title: string;
     composerOrArtist: string;
-    level: string;
     status: RepertoireStatus;
     previousMastery: number;
     currentMastery: number;
@@ -89,7 +88,6 @@ const students: DemoStudent[] = [
     repertoire: {
       title: "Bésame Mucho",
       composerOrArtist: "Consuelo Velázquez",
-      level: "Intermedio inicial",
       status: RepertoireStatus.IMPROVING,
       previousMastery: 72,
       currentMastery: 82,
@@ -108,7 +106,6 @@ const students: DemoStudent[] = [
     repertoire: {
       title: "Contigo en la Distancia",
       composerOrArtist: "César Portillo de la Luz",
-      level: "Principiante alto",
       status: RepertoireStatus.LEARNING,
       previousMastery: 48,
       currentMastery: 57,
@@ -125,7 +122,6 @@ const students: DemoStudent[] = [
     repertoire: {
       title: "Para Elisa",
       composerOrArtist: "Ludwig van Beethoven",
-      level: "Intermedio",
       status: RepertoireStatus.IMPROVING,
       previousMastery: 64,
       currentMastery: 74,
@@ -430,7 +426,6 @@ async function seedStudentPeriod({
       title: demoStudent.repertoire.title,
       composerOrArtist: demoStudent.repertoire.composerOrArtist,
       instrument: demoStudent.instrument,
-      level: demoStudent.repertoire.level,
       status: demoStudent.repertoire.status,
       startDate: subDays(range.startDate, 20),
       targetDate: addDays(range.endDate, 20),
