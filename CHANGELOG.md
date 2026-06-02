@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.11] - 2026-06-02
+
+### Changed
+- Complete-class skill ratings now use `0-5` sliders with localized `Not rated` states, keeping unrated skills out of submissions while preserving notes and quick rating shortcuts.
+
 ## [0.10.10] - 2026-06-02
 
 ### Added

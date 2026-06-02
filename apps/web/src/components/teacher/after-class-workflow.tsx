@@ -167,6 +167,8 @@ function copy(locale: AppLocale) {
     quickImproving: "Mejorando",
     quickPractice: "Necesita práctica",
     skillNote: "Nota breve sobre esta habilidad",
+    skillRatingHelp: "Califica solo las habilidades trabajadas hoy.",
+    notRated: "Sin calificación",
     prep: "Preparación",
     focus: "Enfoque/actitud",
     effort: "Esfuerzo",
@@ -244,6 +246,8 @@ function copy(locale: AppLocale) {
     quickImproving: "Improving",
     quickPractice: "Needs practice",
     skillNote: "Brief note about this skill",
+    skillRatingHelp: "Rate only the skills worked today.",
+    notRated: "Not rated",
     prep: "Preparedness",
     focus: "Focus/attitude",
     effort: "Effort",
@@ -762,7 +766,9 @@ function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy
     onChange(ratings.map((rating) => rating.skillCategoryId === skillCategoryId ? { ...rating, ...patch } : rating));
   }
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="space-y-3">
+      <CardDescription>{c.skillRatingHelp}</CardDescription>
+      <div className="grid gap-3 lg:grid-cols-2">
       {skills.map((skill) => {
         const rating = ratings.find((item) => item.skillCategoryId === skill.id) ?? { skillCategoryId: skill.id, rating: 0, note: "" };
         return (
@@ -779,11 +785,12 @@ function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy
               <Button type="button" size="sm" variant={rating.rating === 4 ? "gold" : "outline"} onClick={() => update(rating.skillCategoryId, { rating: 4 })}>{c.quickImproving}</Button>
               <Button type="button" size="sm" variant={rating.rating === 2 ? "gold" : "outline"} onClick={() => update(rating.skillCategoryId, { rating: 2 })}>{c.quickPractice}</Button>
             </div>
-            <Input className="mt-3" type="number" min={1} max={5} value={rating.rating || ""} onChange={(event) => update(rating.skillCategoryId, { rating: Number(event.target.value) })} placeholder="1-5" />
+            <SkillRatingSlider notRatedLabel={c.notRated} value={rating.rating} onChange={(value) => update(rating.skillCategoryId, { rating: value })} />
             <Input className="mt-2" value={rating.note} onChange={(event) => update(rating.skillCategoryId, { note: event.target.value })} placeholder={c.skillNote} />
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -992,6 +999,32 @@ function RatingInput({ label, value, onChange }: { label: string; value?: number
       />
       <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
         <span>1</span>
+        <span>5</span>
+      </span>
+    </label>
+  );
+}
+
+function SkillRatingSlider({ notRatedLabel, value, onChange }: { notRatedLabel: string; value: number; onChange: (value: number) => void }) {
+  const currentValue = Math.max(0, Math.min(5, Number.isFinite(value) ? value : 0));
+  return (
+    <label className="mt-3 block rounded-[1rem] border border-[var(--color-border)] bg-white/76 p-3">
+      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-[var(--color-ink)]">
+        <span>{notRatedLabel}</span>
+        <Badge variant={currentValue > 0 ? "gold" : "default"}>{currentValue > 0 ? `${currentValue}/5` : notRatedLabel}</Badge>
+      </span>
+      <input
+        className="mt-3 w-full accent-[var(--color-gold)]"
+        type="range"
+        min={0}
+        max={5}
+        step={1}
+        value={currentValue}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <span className="mt-1 flex justify-between text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+        <span>0</span>
+        <span>3</span>
         <span>5</span>
       </span>
     </label>

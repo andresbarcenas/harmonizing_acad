@@ -11,6 +11,18 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.11",
+    date: "2026-06-02",
+    sections: [
+      {
+        title: "Changed",
+        items: [
+          "Complete-class skill ratings now use 0-5 sliders with localized Not rated states, keeping unrated skills out of submissions while preserving notes and quick rating shortcuts.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.10",
     date: "2026-06-02",
     sections: [
