@@ -4,6 +4,7 @@ import { RepertoireStatus, StudentExamArea } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { FormattedNoteText } from "@/components/ui/formatted-note-text";
 import { formatDate } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { instrumentLabel } from "@/lib/instruments";
@@ -163,7 +164,7 @@ function RepertoireSection({ title, description, items, locale }: { title: strin
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-border)]"><div className="h-full rounded-full bg-[var(--color-gold)]" style={{ width: `${Math.max(0, Math.min(100, item.masteryPercent))}%` }} /></div>
             <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Dominio" : "Mastery"}: {item.masteryPercent}% · {isSpanish ? "Foco" : "Focus"}: {item.currentFocusSection ?? "-"}</p>
             <p className="text-xs text-[var(--color-ink-soft)]">Tempo: {item.currentTempo ?? "-"} / {item.targetTempo ?? "-"}</p>
-            {item.studentVisibleNotes ? <p className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{item.studentVisibleNotes}</p> : null}
+            {item.studentVisibleNotes ? <FormattedNoteText className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{item.studentVisibleNotes}</FormattedNoteText> : null}
             {item.attachments.length || catalogAttachments.length ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {catalogAttachments.map((attachment) => <a key={`catalog-${attachment.id}`} href={`/api/media/repertoire-catalog-attachments/${attachment.id}`} target="_blank" rel="noreferrer" className="rounded-full border border-[var(--color-border)] bg-[var(--color-control)] px-3 py-1 text-xs font-semibold text-[var(--color-gold-deep)]">{isSpanish ? "Partitura catálogo" : "Catalog sheet"}: {attachment.originalName}</a>)}
@@ -171,7 +172,7 @@ function RepertoireSection({ title, description, items, locale }: { title: strin
               </div>
             ) : null}
             {item.practiceAssignments[0] ? <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Última tarea" : "Latest assignment"}: {item.practiceAssignments[0].title}</p> : null}
-            {item.practiceVideos[0]?.feedback[0]?.comment ? <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Comentario de video" : "Video feedback"}: {item.practiceVideos[0].feedback[0].comment}</p> : null}
+            {item.practiceVideos[0]?.feedback[0]?.comment ? <FormattedNoteText className="mt-1 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Comentario de video" : "Video feedback"}: {item.practiceVideos[0].feedback[0].comment}</FormattedNoteText> : null}
           </div>
           );
         })}

@@ -11,6 +11,18 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.13",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Fixed",
+        items: [
+          "Student, family, class-detail, and admin progress note displays now preserve teacher-entered line breaks while still wrapping long text safely.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.12",
     date: "2026-06-03",
     sections: [

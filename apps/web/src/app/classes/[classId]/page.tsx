@@ -10,6 +10,7 @@ import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { FormattedNoteText } from "@/components/ui/formatted-note-text";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getClassDetailData } from "@/lib/data";
@@ -333,7 +334,7 @@ function Info({ label, value }: { label: string; value: string }) {
 }
 
 function NoteBlock({ label, value }: { label: string; value: string }) {
-  return <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white/70 p-4"><p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{label}</p><p className="mt-2 text-sm leading-6 text-[var(--color-ink-soft)]">{value}</p></div>;
+  return <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white/70 p-4"><p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-gold-deep)]">{label}</p><FormattedNoteText className="mt-2 text-sm leading-6 text-[var(--color-ink-soft)]">{value}</FormattedNoteText></div>;
 }
 
 function RatingMetric({ label, value }: { label: string; value: number | null | undefined }) {

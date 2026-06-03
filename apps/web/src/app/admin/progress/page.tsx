@@ -6,6 +6,7 @@ import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { FormattedNoteText } from "@/components/ui/formatted-note-text";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getAdminProgressData } from "@/lib/data";
@@ -104,7 +105,7 @@ export default async function AdminProgressPage() {
                   {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)}
                   {session.completedAt ? ` · ${isSpanish ? "completada" : "completed"} ${formatDateTimeInZone(session.completedAt, viewer.timezone, viewer.locale)}` : ""}
                 </p>
-                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonNote?.summary ?? session.lastClassNotes ?? (isSpanish ? "Sin nota visible." : "No visible note.")}</p>
+                <FormattedNoteText className="mt-1 text-xs text-[var(--color-ink-soft)]">{session.lessonNote?.summary ?? session.lastClassNotes ?? (isSpanish ? "Sin nota visible." : "No visible note.")}</FormattedNoteText>
               </div>
             ))}
             {!data.recentCompletedSessions.length ? <CardDescription>{isSpanish ? "Aún no hay clases actualizadas." : "No updated classes yet."}</CardDescription> : null}

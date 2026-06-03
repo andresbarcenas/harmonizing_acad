@@ -6,6 +6,7 @@ import { AppShell } from "@/components/ui/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { FormattedNoteText } from "@/components/ui/formatted-note-text";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentProgressData } from "@/lib/data";
@@ -210,7 +211,7 @@ function RepertoireCard({ items, locale }: { items: StudentRepertoire[]; locale:
               </div>
               <p className="mt-2 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Dominio" : "Mastery"}: {item.masteryPercent}% · {isSpanish ? "Foco" : "Focus"}: {item.currentFocusSection ?? "-"}</p>
               <p className="text-xs text-[var(--color-ink-soft)]">Tempo: {item.currentTempo ?? "-"} / {item.targetTempo ?? "-"}</p>
-              {item.studentVisibleNotes ? <p className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{item.studentVisibleNotes}</p> : null}
+              {item.studentVisibleNotes ? <FormattedNoteText className="mt-2 text-xs leading-5 text-[var(--color-ink-soft)]">{item.studentVisibleNotes}</FormattedNoteText> : null}
               {item.attachments.length ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {item.attachments.map((attachment) => (
@@ -311,7 +312,7 @@ function MetricCard({ label, value, detail }: { label: string; value: string; de
 }
 
 function InfoBlock({ label, value }: { label: string; value?: string | null }) {
-  return <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{label}</p><p className="mt-1 text-sm leading-6 text-[var(--color-ink)]">{value || "-"}</p></div>;
+  return <div className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-deep)]">{label}</p><FormattedNoteText className="mt-1 text-sm leading-6 text-[var(--color-ink)]">{value || "-"}</FormattedNoteText></div>;
 }
 
 function EmptyState({ text }: { text: string }) {

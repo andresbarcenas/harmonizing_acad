@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { FormattedNoteText } from "@/components/ui/formatted-note-text";
 import { PageIntro } from "@/components/ui/page-intro";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { requireViewer } from "@/features/auth/server";
@@ -112,7 +113,7 @@ export default async function StudentDashboardPage() {
           {data.latestCompleted?.lessonNote?.studentVisibleNote || data.latestCompleted?.lastClassNotes ? (
             <div className="mt-5 rounded-[1.35rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] p-4">
               <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--color-gold-deep)]">{dictionary.student.lastNote}</p>
-              <p className="mt-2 text-sm leading-6">{data.latestCompleted.lessonNote?.studentVisibleNote ?? data.latestCompleted.lastClassNotes}</p>
+              <FormattedNoteText className="mt-2 text-sm leading-6">{data.latestCompleted.lessonNote?.studentVisibleNote ?? data.latestCompleted.lastClassNotes}</FormattedNoteText>
             </div>
           ) : null}
         </Card>

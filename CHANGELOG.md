@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.13] - 2026-06-03
+
+### Fixed
+- Student, family, class-detail, and admin progress note displays now preserve teacher-entered line breaks while still wrapping long text safely.
+
 ## [0.10.12] - 2026-06-03
 
 ### Added
