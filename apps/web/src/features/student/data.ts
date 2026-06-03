@@ -2,11 +2,12 @@ import { SessionStatus } from "@prisma/client";
 import { endOfMonth, startOfMonth } from "date-fns";
 
 import { db } from "@/lib/db";
+import { getStudentClassCreditSummary } from "@/lib/native-invoices/ledger";
 
 export async function getStudentDashboard(studentProfileId: string) {
   const now = new Date();
 
-  const [student, upcomingClass, latestCompleted, activeSubscription, progress, songs, goals] = await Promise.all([
+  const [student, upcomingClass, latestCompleted, activeSubscription, progress, songs, goals, creditSummary] = await Promise.all([
     db.studentProfile.findUnique({
       where: { id: studentProfileId },
       include: {
@@ -53,6 +54,7 @@ export async function getStudentDashboard(studentProfileId: string) {
       orderBy: { targetDate: "asc" },
       take: 3,
     }),
+    getStudentClassCreditSummary(studentProfileId, 8),
   ]);
 
   const usedClasses = await db.classSession.count({
@@ -66,8 +68,6 @@ export async function getStudentDashboard(studentProfileId: string) {
     },
   });
 
-  const monthlyLimit = activeSubscription?.monthlyClassLimit ?? 4;
-
   return {
     student,
     upcomingClass,
@@ -77,6 +77,7 @@ export async function getStudentDashboard(studentProfileId: string) {
     songs,
     goals,
     usedClasses,
-    remainingClasses: Math.max(monthlyLimit - usedClasses, 0),
+    creditSummary,
+    remainingClasses: creditSummary.balance,
   };
 }

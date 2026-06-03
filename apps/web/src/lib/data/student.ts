@@ -7,6 +7,7 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import type { AppViewer } from "@/features/auth/server";
 import { db } from "@/lib/db";
 import { normalizeIanaTimezone } from "@/lib/iana-timezones";
+import { getStudentClassCreditSummary } from "@/lib/native-invoices/ledger";
 import { overlapsRange } from "@/lib/scheduling";
 
 export async function getStudentDashboardData(viewer: AppViewer) {
@@ -20,7 +21,7 @@ export async function getStudentDashboardData(viewer: AppViewer) {
 export async function getStudentDashboardDataForProfile(studentProfileId: string) {
   const now = new Date();
 
-  const [student, upcomingClass, latestCompleted, activeSubscription, progress, songs, goals] = await Promise.all([
+  const [student, upcomingClass, latestCompleted, activeSubscription, progress, songs, goals, creditSummary] = await Promise.all([
     db.studentProfile.findUnique({
       where: { id: studentProfileId },
       include: {
@@ -76,6 +77,7 @@ export async function getStudentDashboardDataForProfile(studentProfileId: string
       orderBy: { targetDate: "asc" },
       take: 3,
     }),
+    getStudentClassCreditSummary(studentProfileId, 8),
   ]);
 
   const usedClasses = await db.classSession.count({
@@ -89,8 +91,6 @@ export async function getStudentDashboardDataForProfile(studentProfileId: string
     },
   });
 
-  const monthlyLimit = activeSubscription?.monthlyClassLimit ?? 4;
-
   return {
     student,
     upcomingClass,
@@ -100,7 +100,8 @@ export async function getStudentDashboardDataForProfile(studentProfileId: string
     songs,
     goals,
     usedClasses,
-    remainingClasses: Math.max(monthlyLimit - usedClasses, 0),
+    creditSummary,
+    remainingClasses: creditSummary.balance,
   };
 }
 

@@ -2,6 +2,8 @@
 
 Deploy Harmonizing from `apps/web`, not from the repository root. That directory is the Vercel project for the Next.js app.
 
+For future customer deployments, use the white-label strategy in [White-Label Productization And Customer Feature Strategy](./white-label-productization.md): keep one shared codebase, but give each academy its own Vercel project/environment, database, storage, email sender, payment credentials, and academy configuration.
+
 ## Production Environment
 
 Configure these variables in the `apps/web` Vercel project for Production:

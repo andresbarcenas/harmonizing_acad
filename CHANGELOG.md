@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.11.4] - 2026-06-03
+
+### Added
+- Added white-label productization and customer feature strategy documentation for future academy deployments, shared-codebase policy, feature categories, and multi-tenant readiness.
+
+### Fixed
+- Student and parent dashboards now show available class credits from the class-credit ledger, so admin adjustments, invoice grants, class consumption, and reversals appear consistently outside the invoice pages.
+
 ## [0.11.3] - 2026-06-03
 
 ### Added

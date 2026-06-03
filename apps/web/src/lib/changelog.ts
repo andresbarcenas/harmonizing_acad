@@ -11,6 +11,24 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.11.4",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Added white-label productization and customer feature strategy documentation for future academy deployments, shared-codebase policy, feature categories, and multi-tenant readiness.",
+        ],
+      },
+      {
+        title: "Fixed",
+        items: [
+          "Student and parent dashboards now show available class credits from the class-credit ledger, so admin adjustments, invoice grants, class consumption, and reversals appear consistently outside the invoice pages.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.11.3",
     date: "2026-06-03",
     sections: [

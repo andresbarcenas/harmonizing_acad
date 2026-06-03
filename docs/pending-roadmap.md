@@ -4,6 +4,9 @@ This is the single quick-reference list of the main pending Harmonizing Academy 
 
 ## Product Features
 
+### White-Label Academy Productization
+Make the app configurable for other music academies through a shared codebase, isolated deployments, academy-level branding/configuration, and a customer feature strategy. See [White-Label Productization And Customer Feature Strategy](./white-label-productization.md).
+
 ### Timestamped Video Feedback
 Let teachers leave feedback tied to exact video timestamps, such as `0:32` or `1:14`, so student video review feels music-specific and premium.
 

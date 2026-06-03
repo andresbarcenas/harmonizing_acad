@@ -36,6 +36,8 @@ Core entities:
 - `RepertoireAttachment`, `ClassReminderDelivery`
 - `MessageThread`, `Message`, `Notification`
 
+The current data model is single-academy by design. Commercializing for other academies should start with isolated white-label deployments and academy configuration before attempting shared-database multi-tenancy. See [White-Label Productization And Customer Feature Strategy](./white-label-productization.md).
+
 ## Scheduling Model
 - Canonical times stored in UTC (`ClassSession.startsAtUtc` / `endsAtUtc`)
 - Teacher availability stored as weekday + local-minute windows + timezone

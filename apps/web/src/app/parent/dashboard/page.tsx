@@ -95,7 +95,7 @@ export default async function ParentDashboardPage({ searchParams }: { searchPara
 
       <div className="card-grid">
         <MetricCard title={dictionary.student.currentPlan} value={data.activeSubscription ? planLabel({ monthlyClassCount: data.activeSubscription.monthlyClassLimit }, viewer.locale) : dictionary.admin.noActivePlan} subtitle={dictionary.student.planSubtitle} />
-        <MetricCard title={dictionary.student.remainingClasses} value={`${data.remainingClasses}`} subtitle={`${data.usedClasses} ${dictionary.student.usedThisMonth}`} />
+        <MetricCard title={dictionary.student.remainingClasses} value={`${data.creditSummary.balance}`} subtitle={dictionary.student.creditLedgerSubtitle} />
         <MetricCard title={dictionary.student.currentLevel} value={studentLevelLabel(data.progress?.level, viewer.locale)} subtitle={dictionary.student.updatedByTeacher} />
       </div>
 
