@@ -11,6 +11,24 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.11.3",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Admins can now manage class credits for a single student from /admin/students, including student search, current balance, recent ledger history, negative-balance warnings, and positive or negative manual adjustments.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Class-credit manual adjustments now require an audit reason, and invalid student IDs return a safe 404 response from the admin credit ledger API.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.11.2",
     date: "2026-06-03",
     sections: [

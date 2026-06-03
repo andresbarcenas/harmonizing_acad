@@ -635,7 +635,7 @@ export function NativeInvoiceAdminPanel({
                   {invoice.creditBalance < 0 ? <p className="mt-2 text-xs text-rose-700">{t.negativeCredits}</p> : null}
                   <form onSubmit={(event) => submitCreditAdjustment(event, invoice.studentId)} className="mt-3 grid gap-2 md:grid-cols-[7rem_1fr_auto]">
                     <Input name="delta" type="number" defaultValue="1" aria-label={t.adjustment} />
-                    <Input name="reason" placeholder={t.reason} />
+                    <Input name="reason" placeholder={t.reason} required />
                     <Button size="sm" variant="outline" type="submit" disabled={pending === `credit-${invoice.studentId}`}>{t.addAdjustment}</Button>
                     <Textarea name="note" placeholder={t.notes} rows={2} className="md:col-span-3" />
                   </form>

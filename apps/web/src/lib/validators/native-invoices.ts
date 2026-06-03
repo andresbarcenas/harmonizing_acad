@@ -79,9 +79,9 @@ export const classCreditAdjustmentSchema = z.object({
     return value;
   }, z.number().int().min(-100).max(100).refine((value) => value !== 0, "Delta cannot be zero.")),
   reason: z.preprocess((value) => {
-    if (typeof value !== "string") return undefined;
+    if (typeof value !== "string") return "";
     const trimmed = value.trim();
-    return trimmed.length ? trimmed : undefined;
-  }, z.string().max(160).optional()),
+    return trimmed.length ? trimmed : "";
+  }, z.string().min(1, "Reason is required.").max(160)),
   note: optionalTrimmed,
 });

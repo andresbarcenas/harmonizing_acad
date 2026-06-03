@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.11.3] - 2026-06-03
+
+### Added
+- Admins can now manage class credits for a single student from `/admin/students`, including student search, current balance, recent ledger history, negative-balance warnings, and positive/negative manual adjustments.
+
+### Changed
+- Class-credit manual adjustments now require an audit reason, and invalid student IDs return a safe `404` response from the admin credit ledger API.
+
 ## [0.11.2] - 2026-06-03
 
 ### Changed

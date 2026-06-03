@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
+import { ClassCreditManager } from "@/components/admin/class-credit-manager";
 import { StudentEditForm } from "@/components/admin/student-edit-form";
 import { StudentOnboardingForm } from "@/components/admin/student-onboarding-form";
 import { AppShell } from "@/components/ui/app-shell";
@@ -18,7 +19,7 @@ export default async function AdminStudentsPage() {
   const viewer = await requireViewer([Role.ADMIN]);
   const dictionary = getDictionary(viewer.locale);
 
-  const [teachers, recentStudents] = await Promise.all([
+  const [teachers, recentStudents, creditStudents] = await Promise.all([
     db.teacherProfile.findMany({
       include: { user: true },
       orderBy: { user: { name: "asc" } },
@@ -46,6 +47,14 @@ export default async function AdminStudentsPage() {
       },
       orderBy: { joinedAt: "desc" },
       take: 12,
+    }),
+    db.studentProfile.findMany({
+      select: {
+        id: true,
+        user: { select: { name: true, email: true } },
+        assignment: { select: { teacher: { select: { user: { select: { name: true } } } } } },
+      },
+      orderBy: { user: { name: "asc" } },
     }),
   ]);
 
@@ -83,6 +92,16 @@ export default async function AdminStudentsPage() {
           )}
         </div>
       </Card>
+
+      <ClassCreditManager
+        locale={viewer.locale}
+        students={creditStudents.map((student) => ({
+          id: student.id,
+          name: student.user.name,
+          email: student.user.email,
+          teacherName: student.assignment?.teacher.user.name ?? null,
+        }))}
+      />
 
       <Card>
         <CardTitle>{dictionary.admin.recentStudents}</CardTitle>
