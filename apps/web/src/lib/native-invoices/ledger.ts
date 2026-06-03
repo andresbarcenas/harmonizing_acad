@@ -12,10 +12,10 @@ import {
 
 import { db } from "@/lib/db";
 
+// Makeup classes fulfill a previously missed/owed lesson and should not reduce purchased class credits again.
 const billableClassTypes = new Set<ClassSessionType>([
   ClassSessionType.RECURRING,
   ClassSessionType.SINGLE,
-  ClassSessionType.MAKEUP,
   ClassSessionType.EXTRA,
   ClassSessionType.REPLACEMENT,
 ]);

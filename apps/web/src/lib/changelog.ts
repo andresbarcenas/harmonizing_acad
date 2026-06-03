@@ -11,6 +11,18 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.11.2",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Changed",
+        items: [
+          "Makeup classes no longer consume purchased class credits or reduce a student's remaining class balance; existing ledger reversal behavior can restore prior makeup consumption when those sessions are re-synced.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.11.1",
     date: "2026-06-03",
     sections: [

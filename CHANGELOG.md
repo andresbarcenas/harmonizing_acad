@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.11.2] - 2026-06-03
+
+### Changed
+- Makeup classes no longer consume purchased class credits or reduce a student’s remaining class balance; existing ledger reversal behavior can restore prior makeup consumption when those sessions are re-synced.
+
 ## [0.11.1] - 2026-06-03
 
 ### Added
