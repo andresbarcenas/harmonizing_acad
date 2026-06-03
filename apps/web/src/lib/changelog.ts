@@ -11,6 +11,25 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.10.12",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Teacher Lesson notes now has its own /teacher/lesson-notes menu item and workflow with assigned-student cards, selected-student context, lesson-note editing, and practice assignment creation.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Teacher Progress now focuses on progress overview, repertoire, practice, exam assessments, and reports, with a quick link into the dedicated Lesson notes workspace.",
+          "Completing or updating a class now returns teachers to the Lesson notes workflow for the selected student.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.11",
     date: "2026-06-02",
     sections: [

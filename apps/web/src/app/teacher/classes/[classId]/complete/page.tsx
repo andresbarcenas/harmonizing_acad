@@ -29,7 +29,7 @@ export default async function TeacherClassCompletionPage({ params }: PageProps) 
   const isPianoEvaluation = session.type === ClassSessionType.EVALUATION && normalizeInstrument(session.instrument ?? session.student.preferredInstrument) === "Piano";
 
   return (
-    <AppShell role={viewer.role} activePath="/teacher/progress" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={session.studentId}>
+    <AppShell role={viewer.role} activePath="/teacher/lesson-notes" userName={viewer.name} locale={viewer.locale} selectedTeacherStudentId={session.studentId}>
       {isPianoEvaluation ? (
         <ExamAssessmentForm
           locale={viewer.locale}

@@ -74,6 +74,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
       items: [
         { href: "/teacher/videos", label: nav.videos, icon: "video" },
         { href: "/teacher/progress", label: nav.progress, icon: "trending" },
+        { href: "/teacher/lesson-notes", label: nav.lessonNotes, icon: "clipboard" },
         { href: "/teacher/progress/exams", label: nav.examAssessments, icon: "clipboard" },
         { href: "/teacher/progress/reports", label: nav.progressReports, icon: "scroll" },
         { href: "/teacher/repertoire", label: nav.repertoire, icon: "music" },
@@ -407,7 +408,7 @@ function homeHrefForRole(role: Role, teacherStudentId?: string | null, parentStu
 function withTeacherStudentContext(href: string, role: Role, studentId?: string | null) {
   if (role !== Role.TEACHER || !studentId) return href;
 
-  const contextualRoutes = ["/teacher/dashboard", "/teacher/schedule", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/teacher/progress/exams", "/teacher/progress/reports", "/messages"];
+  const contextualRoutes = ["/teacher/dashboard", "/teacher/schedule", "/teacher/requests", "/teacher/videos", "/teacher/progress", "/teacher/lesson-notes", "/teacher/progress/exams", "/teacher/progress/reports", "/messages"];
   if (!contextualRoutes.includes(href)) return href;
 
   const separator = href.includes("?") ? "&" : "?";

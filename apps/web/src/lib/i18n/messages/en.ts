@@ -60,6 +60,7 @@ export const en = {
       reschedules: "Reschedules",
       videos: "Videos",
       overview: "Overview",
+      lessonNotes: "Lesson notes",
       examAssessments: "Exam assessments",
       progressReports: "Progress reports",
       billing: "Billing",

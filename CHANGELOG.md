@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.10.12] - 2026-06-03
+
+### Added
+- Teacher Lesson notes now has its own `/teacher/lesson-notes` menu item and workflow with assigned-student cards, selected-student context, lesson-note editing, and practice assignment creation.
+
+### Changed
+- Teacher Progress now focuses on progress overview, repertoire, practice, exam assessments, and reports, with a quick link into the dedicated Lesson notes workspace.
+- Completing or updating a class now returns teachers to the Lesson notes workflow for the selected student.
+
 ## [0.10.11] - 2026-06-02
 
 ### Changed

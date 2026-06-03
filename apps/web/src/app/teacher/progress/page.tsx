@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
 
-import { LessonNoteForm, PracticeAssignmentForm, RepertoireAttachmentForm, RepertoireForm, StudentLevelForm } from "@/components/progress/progress-forms";
+import { RepertoireAttachmentForm, RepertoireForm, StudentLevelForm } from "@/components/progress/progress-forms";
 import { AppShell } from "@/components/ui/app-shell";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherProgressData } from "@/lib/data";
-import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
-import { instrumentLabel, instrumentToSkillInstrument } from "@/lib/instruments";
+import { formatDate } from "@/lib/i18n";
+import { instrumentLabel } from "@/lib/instruments";
 import { studentLevelLabel } from "@/lib/student-levels";
 
 type PageProps = { searchParams?: Promise<{ studentId?: string }> };
@@ -27,7 +26,7 @@ export default async function TeacherProgressPage({ searchParams }: PageProps) {
       <PageIntro
         eyebrow={isSpanish ? "Inteligencia de progreso" : "Progress intelligence"}
         title={isSpanish ? "Convierte cada clase en evidencia de avance." : "Turn every lesson into progress evidence."}
-        description={isSpanish ? "Registra notas estructuradas, habilidades, repertorio, tareas y reportes sin romper tu flujo docente." : "Capture structured notes, skills, repertoire, assignments, and reports without breaking your teaching flow."}
+        description={isSpanish ? "Revisa nivel, repertorio, práctica, evaluaciones y reportes sin romper tu flujo docente." : "Review level, repertoire, practice, assessments, and reports without breaking your teaching flow."}
       />
 
       {!data.selected ? (
@@ -82,6 +81,7 @@ function SelectedStudentProgress({
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Link href={`/teacher/lesson-notes?studentId=${data.selected.id}`}><Button variant="outline" size="sm">{isSpanish ? "Notas de clase" : "Lesson notes"}</Button></Link>
                 <Link href={`/teacher/progress/exams?studentId=${data.selected.id}`}><Button variant="outline" size="sm">{isSpanish ? "Evaluaciones" : "Exam assessments"}</Button></Link>
                 <Link href={`/teacher/progress/reports?studentId=${data.selected.id}`}><Button variant="gold" size="sm">{isSpanish ? "Reportes" : "Progress reports"}</Button></Link>
                 <Link href="/teacher/progress"><Button variant="outline" size="sm">{isSpanish ? "Ver todos" : "All students"}</Button></Link>
@@ -101,47 +101,6 @@ function SelectedStudentProgress({
                 currentSummary={data.selected.progressRecords[0]?.summary}
                 locale={viewer.locale}
               />
-            </div>
-          </Card>
-
-          <Card className="min-w-0 overflow-hidden">
-            <CardTitle>{isSpanish ? "Notas de clase" : "Lesson notes"}</CardTitle>
-            <CardDescription>{isSpanish ? "Abre una clase y registra evidencia estructurada." : "Open a class and capture structured evidence."}</CardDescription>
-            <div className="mt-4 space-y-4">
-              {data.selected.sessions.map((session) => (
-                <details key={session.id} className="min-w-0 rounded-[1.2rem] border border-[var(--color-border)] bg-white/68 p-4" open={!session.lessonNote}>
-                  <summary className="cursor-pointer break-words text-sm font-semibold">
-                    {formatDateTimeInZone(session.startsAtUtc, viewer.timezone, viewer.locale)} · {session.lessonFocus ?? (isSpanish ? "Clase" : "Lesson")}
-                    {!session.lessonNote ? <Badge className="ml-2">{isSpanish ? "Falta nota" : "Missing note"}</Badge> : null}
-                  </summary>
-                  <div className="mt-3">
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      <Link href={`/teacher/classes/${session.id}/complete`}>
-                        <Button size="sm" variant="gold">{isSpanish ? "Completar / actualizar clase" : "Complete / update class"}</Button>
-                      </Link>
-                    </div>
-                    <LessonNoteForm
-                      sessionId={session.id}
-                      initial={session.lessonNote}
-                      skillCategories={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
-                      locale={viewer.locale}
-                    />
-                    {session.lessonNote ? (
-                      <div className="mt-3">
-                        <PracticeAssignmentForm
-                          studentId={data.selected.id}
-                          lessonNoteId={session.lessonNote.id}
-                          classSessionId={session.id}
-                          repertoire={data.selected.repertoireItems}
-                          skills={skillCategoriesForInstrument(data.skillCategories, session.instrument ?? data.selected.preferredInstrument)}
-                          locale={viewer.locale}
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </details>
-              ))}
-              {!data.selected.sessions.length ? <CardDescription>{isSpanish ? "Aún no hay clases para documentar." : "No classes to document yet."}</CardDescription> : null}
             </div>
           </Card>
 
@@ -248,9 +207,4 @@ function SelectedStudentProgress({
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return <div className="rounded-xl border border-[var(--color-border)] bg-white/70 p-3"><p className="font-display text-3xl">{value}</p><p className="text-xs text-[var(--color-ink-soft)]">{label}</p></div>;
-}
-
-function skillCategoriesForInstrument<T extends { instrument: string }>(skills: T[], instrument?: string | null) {
-  const lessonInstrument = instrumentToSkillInstrument(instrument);
-  return skills.filter((skill) => skill.instrument === "GENERAL" || skill.instrument === lessonInstrument);
 }

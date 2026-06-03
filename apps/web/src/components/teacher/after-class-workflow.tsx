@@ -450,7 +450,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
 
     window.localStorage.removeItem(draftKey);
     setMessage({ kind: "success", text: c.saved });
-    startTransition(() => router.push(`/teacher/progress?studentId=${props.student.id}`));
+    startTransition(() => router.push(`/teacher/lesson-notes?studentId=${props.student.id}`));
   }
 
   return (
@@ -536,7 +536,7 @@ export function AfterClassWorkflow(props: WorkflowProps) {
       <div className="sticky bottom-3 z-10 rounded-[1.4rem] border border-[var(--color-border)] bg-white/88 p-3 shadow-[var(--shadow-card)] backdrop-blur-xl">
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => (step === 0 ? router.push(`/teacher/progress?studentId=${props.student.id}`) : setStep((current) => Math.max(0, current - 1)))}>
+            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => (step === 0 ? router.push(`/teacher/lesson-notes?studentId=${props.student.id}`) : setStep((current) => Math.max(0, current - 1)))}>
               {step === 0 ? c.exit : c.back}
             </Button>
           </div>
