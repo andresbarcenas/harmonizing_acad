@@ -1,6 +1,6 @@
 {
   "name": "harmonizing-web",
-  "version": "0.10.13",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -27,6 +27,7 @@
     "import:student-history": "node scripts/import-tommy-history.cjs",
     "seed:report-demo": "tsx scripts/seed-monthly-report-demo.ts",
     "skills:sync": "tsx scripts/sync-default-skills.ts",
+    "wompi:webhook:test": "tsx scripts/wompi-sandbox-webhook.ts",
     "migrate:protected-media": "tsx scripts/migrate-protected-media.ts",
     "cleanup:login-activity": "tsx scripts/cleanup-login-activity.ts"
   },

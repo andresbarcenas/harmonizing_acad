@@ -19,7 +19,10 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
-function invoiceEmailHtml(input: { recipientName: string; studentName: string; invoiceNumber: string; totalCop: number }) {
+function invoiceEmailHtml(input: { recipientName: string; studentName: string; invoiceNumber: string; totalCop: number; paymentUrl?: string | null }) {
+  const paymentButton = input.paymentUrl
+    ? `<p style="margin:22px 0 0;"><a href="${escapeHtml(input.paymentUrl)}" style="display:inline-block;background:#c47a22;color:#fff;text-decoration:none;border-radius:999px;padding:13px 22px;font-weight:700;">Pagar ahora / Pay now</a></p>`
+    : "";
   return `<!doctype html>
 <html>
   <body style="margin:0;background:#f7f2ea;font-family:Arial,sans-serif;color:#211f1c;">
@@ -29,6 +32,7 @@ function invoiceEmailHtml(input: { recipientName: string; studentName: string; i
         <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:32px;line-height:1.05;font-weight:400;">Harmonizing Academy</h1>
         <p style="margin:0 0 14px;color:#6d675f;line-height:1.6;">Hola ${escapeHtml(input.recipientName)}, adjuntamos la factura ${escapeHtml(input.invoiceNumber)} para ${escapeHtml(input.studentName)} por ${escapeHtml(formatCop(input.totalCop, "es"))}.</p>
         <p style="margin:0;color:#6d675f;line-height:1.6;">Hi ${escapeHtml(input.recipientName)}, attached is invoice ${escapeHtml(input.invoiceNumber)} for ${escapeHtml(input.studentName)}.</p>
+        ${paymentButton}
       </div>
     </div>
   </body>
@@ -44,6 +48,7 @@ export async function sendNativeInvoiceEmail(input: {
   studentName: string;
   totalCop: number;
   pdfBytes: Buffer;
+  paymentUrl?: string | null;
 }) {
   const subject = `Factura Harmonizing ${input.invoiceNumber}`;
   const logInput = {
@@ -56,6 +61,7 @@ export async function sendNativeInvoiceEmail(input: {
       invoiceNumber: input.invoiceNumber,
       totalCop: input.totalCop,
       studentName: input.studentName,
+      hasPaymentUrl: Boolean(input.paymentUrl),
     },
   };
 
@@ -71,13 +77,15 @@ export async function sendNativeInvoiceEmail(input: {
       `Hola ${input.recipientName},`,
       "",
       `Adjuntamos la factura ${input.invoiceNumber} para ${input.studentName} por ${formatCop(input.totalCop, "es")}.`,
+      input.paymentUrl ? `Puedes pagar aquí: ${input.paymentUrl}` : "",
       "",
       `Hi ${input.recipientName},`,
       "",
       `Attached is invoice ${input.invoiceNumber} for ${input.studentName}.`,
+      input.paymentUrl ? `You can pay here: ${input.paymentUrl}` : "",
       "",
       "Harmonizing Academy",
-    ].join("\n");
+    ].filter(Boolean).join("\n");
 
     logId = await createEmailDeliveryLog(logInput);
     const result = await resend.emails.send({

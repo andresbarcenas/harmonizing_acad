@@ -12,6 +12,7 @@ import { getStudentInvoicesView } from "@/features/invoices/data";
 import { formatDate, formatMoney, intlLocale } from "@/lib/i18n";
 import { formatCop } from "@/lib/native-invoices/shared";
 import { resolveParentStudentSelection } from "@/lib/parents";
+import { isWompiEnabled } from "@/lib/wompi/config";
 
 function statusVariant(status: NativeInvoiceStatus) {
   if (status === NativeInvoiceStatus.PAID) return "success" as const;
@@ -26,6 +27,7 @@ export default async function ParentInvoicesPage({ searchParams }: { searchParam
   const selection = await resolveParentStudentSelection(viewer.parentGuardianProfileId!, params?.studentId);
   const selectedStudentId = selection.selectedStudentId;
   const isSpanish = viewer.locale === "es";
+  const showWompiPayments = isWompiEnabled();
 
   if (!selectedStudentId) {
     return (
@@ -84,7 +86,16 @@ export default async function ParentInvoicesPage({ searchParams }: { searchParam
                   </div>
                 </div>
               ) : null}
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row"><Link href={`/api/invoices/native/${invoice.id}/pdf`} target="_blank" className="w-full sm:w-auto"><Button size="sm" variant="gold" className="w-full sm:w-auto">{isSpanish ? "Descargar PDF" : "Download PDF"}</Button></Link></div>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                {showWompiPayments && invoice.paymentUrl && invoice.status === NativeInvoiceStatus.OPEN && invoice.balanceCop > 0 ? (
+                  <a href={invoice.paymentUrl} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+                    <Button size="sm" variant="gold" className="w-full sm:w-auto">{isSpanish ? "Pagar en línea" : "Pay online"}</Button>
+                  </a>
+                ) : null}
+                <Link href={`/api/invoices/native/${invoice.id}/pdf`} target="_blank" className="w-full sm:w-auto">
+                  <Button size="sm" variant={showWompiPayments && invoice.paymentUrl && invoice.status === NativeInvoiceStatus.OPEN && invoice.balanceCop > 0 ? "outline" : "gold"} className="w-full sm:w-auto">{isSpanish ? "Descargar PDF" : "Download PDF"}</Button>
+                </Link>
+              </div>
             </div>
           ))}
           {!data.nativeInvoices.length ? <p className="rounded-[1.1rem] border border-dashed border-[var(--color-border)] px-4 py-5 text-sm text-[var(--color-ink-soft)]">{isSpanish ? "Aún no hay facturas emitidas por Harmonizing." : "No Harmonizing invoices have been issued yet."}</p> : null}

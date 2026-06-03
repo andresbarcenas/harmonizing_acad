@@ -25,6 +25,9 @@ See root `.env.example` and `apps/web/.env.example`.
 ## Class reminders
 Production class reminder emails use Resend. Set `RESEND_API_KEY`, a verified `RESEND_FROM_EMAIL`, `CLASS_EMAIL_REMINDERS_ENABLED=true`, and `CRON_SECRET`. Vercel Cron calls `/api/cron/class-reminders`; local development can trigger the endpoint manually.
 
+## Wompi payments
+Native invoices can create hosted Wompi payment links when `WOMPI_PAYMENTS_ENABLED=true` and sandbox/production keys are configured. Local webhook testing is available with `npm run wompi:webhook:test`. See [`docs/wompi-payment-provider.md`](../../docs/wompi-payment-provider.md).
+
 ## Historical imports
 With Docker running, use `docker compose exec web npm run import:student-history -- --student-email "student@example.com" --student-name "Student Name" --teacher-email "maria@harmonizing.com" --instrument "Piano" --pdf "/imports/student-history.pdf"` to stage any student's historical PDF into the admin review queue. The Tommy shortcut remains available with `docker compose exec web npm run import:tommy-history`. See [`docs/historical-imports.md`](../../docs/historical-imports.md).
 

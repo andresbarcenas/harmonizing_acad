@@ -24,8 +24,8 @@ Add aging buckets, family balance, overdue totals, and downloadable account stat
 ### 6. Invoice Reminder Automation
 Send friendly reminder emails and in-app notifications before due date, on due date, and after overdue, with admin controls to pause reminders per family.
 
-### 7. Payment Provider Integration
-Add hosted payment links through a provider such as Wompi, Mercado Pago, Stripe, or another Colombia-friendly provider. Keep card and bank data outside Harmonizing.
+### 7. Payment Provider Integration — Completed
+Wompi hosted payment links now connect native Harmonizing invoices to online payments. The integration is env-gated, supports sandbox setup on localhost, verifies signed webhooks, and records approved Wompi transactions into the payment ledger without storing card or bank data.
 
 ### 8. WhatsApp Billing Helper
 Generate prefilled WhatsApp copy for invoice links, overdue reminders, and payment confirmations without storing WhatsApp message history.
@@ -42,10 +42,9 @@ Show billing risks: overdue invoices, failed invoice emails, missing billing con
 2. Monthly Billing Review Queue
 3. Invoice Aging And Statements
 4. Invoice Reminder Automation
-5. Payment Provider Integration
-6. WhatsApp Billing Helper
-7. Tax/DIAN Readiness Layer
-8. Billing Health Dashboard
+5. WhatsApp Billing Helper
+6. Tax/DIAN Readiness Layer
+7. Billing Health Dashboard
 
 ## Security Hardening Recommendations
 
@@ -98,7 +97,7 @@ Show billing risks: overdue invoices, failed invoice emails, missing billing con
 ## Current Defaults And Assumptions
 
 - Native Harmonizing invoices are internal billing documents for now, not certified Colombian electronic invoices.
-- Payment provider integration remains future work and should avoid direct handling of card or bank data.
+- Wompi payment provider integration is implemented with hosted payment links; future provider expansion should keep avoiding direct handling of card or bank data.
 - Harmonizing does not store card numbers, bank credentials, or payment instrument secrets.
 - Alegra remains an external reference during transition.
 - Security priority is practical pilot hardening first, then compliance-grade controls as real payment and tax workflows expand.

@@ -45,6 +45,14 @@ type NativeInvoiceRow = {
   emailStatus: EmailDeliveryStatus | null;
   emailError: string | null;
   pdfGeneratedAt: string | null;
+  paymentProvider: string | null;
+  paymentUrl: string | null;
+  paymentProviderStatus: string | null;
+  paymentProviderLinkId: string | null;
+  paymentProviderEnvironment: string | null;
+  paymentProviderAmountCop: number | null;
+  paymentProviderTransactionId: string | null;
+  paymentProviderLastSyncedAt: string | null;
   payments: Array<{
     id: string;
     amountCop: number;
@@ -76,6 +84,15 @@ type SummaryRow = {
   balanceCop: number;
 };
 
+type WompiSummary = {
+  enabled: boolean;
+  configured: boolean;
+  environment: "sandbox" | "production";
+  webhookUrl: string;
+  returnUrl: string;
+  missing: string[];
+};
+
 const copy = {
   en: {
     create: "Create invoice",
@@ -99,8 +116,19 @@ const copy = {
     nextMonth: "Next month",
     pdf: "PDF",
     noInvoices: "No native invoices yet.",
-    paymentProvider: "Payment provider placeholder",
-    paymentHint: "Manual payments are tracked here. Online payment links can connect later without storing card or bank data.",
+    paymentProvider: "Wompi online payments",
+    paymentHint: "Hosted Wompi payment links keep card and bank data outside Harmonizing.",
+    wompiEnabled: "Wompi enabled",
+    wompiDisabled: "Wompi disabled",
+    wompiConfigured: "Configured",
+    wompiMissing: "Missing setup",
+    wompiSandbox: "Sandbox",
+    wompiProduction: "Production",
+    webhookUrl: "Webhook URL",
+    createWompiLink: "Create Wompi link",
+    openWompiLink: "Open payment link",
+    payLink: "Payment link",
+    providerStatus: "Provider status",
     paid: "Paid",
     balance: "Balance",
     addPayment: "Add payment",
@@ -149,8 +177,19 @@ const copy = {
     nextMonth: "Siguiente mes",
     pdf: "PDF",
     noInvoices: "Aún no hay facturas nativas.",
-    paymentProvider: "Espacio para proveedor de pagos",
-    paymentHint: "Los pagos manuales se registran aquí. Los enlaces de pago se conectarán después sin guardar datos de tarjetas o bancos.",
+    paymentProvider: "Pagos en línea con Wompi",
+    paymentHint: "Los links de pago hospedados por Wompi mantienen datos de tarjetas y bancos fuera de Harmonizing.",
+    wompiEnabled: "Wompi activo",
+    wompiDisabled: "Wompi inactivo",
+    wompiConfigured: "Configurado",
+    wompiMissing: "Falta configuración",
+    wompiSandbox: "Sandbox",
+    wompiProduction: "Producción",
+    webhookUrl: "URL de webhook",
+    createWompiLink: "Crear link Wompi",
+    openWompiLink: "Abrir link de pago",
+    payLink: "Link de pago",
+    providerStatus: "Estado proveedor",
     paid: "Pagado",
     balance: "Saldo",
     addPayment: "Agregar pago",
@@ -216,11 +255,13 @@ export function NativeInvoiceAdminPanel({
   students,
   invoices,
   summary,
+  wompi,
   locale,
 }: {
   students: StudentOption[];
   invoices: NativeInvoiceRow[];
   summary: SummaryRow[];
+  wompi: WompiSummary | null;
   locale: AppLocale;
 }) {
   const router = useRouter();
@@ -462,6 +503,32 @@ export function NativeInvoiceAdminPanel({
         </div>
       </Card>
 
+      {wompi ? (
+        <Card variant="inset">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>{t.paymentProvider}</CardTitle>
+              <CardDescription>{t.paymentHint}</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={wompi.enabled ? "success" : "default"}>{wompi.enabled ? t.wompiEnabled : t.wompiDisabled}</Badge>
+              <Badge variant={wompi.configured ? "success" : "warning"}>{wompi.configured ? t.wompiConfigured : t.wompiMissing}</Badge>
+              <Badge variant="gold">{wompi.environment === "production" ? t.wompiProduction : t.wompiSandbox}</Badge>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">{t.webhookUrl}</p>
+              <p className="mt-2 break-all text-sm font-semibold text-[var(--color-ink)]">{wompi.webhookUrl || "-"}</p>
+            </div>
+            <div className="rounded-[1rem] border border-[var(--color-border)] bg-white/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">{wompi.configured ? t.wompiConfigured : t.wompiMissing}</p>
+              <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{wompi.missing.length ? wompi.missing.join(", ") : "OK"}</p>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       <Card>
         <CardTitle>{t.invoiceList}</CardTitle>
         <div className="mt-4 space-y-3">
@@ -474,6 +541,7 @@ export function NativeInvoiceAdminPanel({
                     <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
                     {new Date(invoice.dueDate) < new Date() && invoice.status === NativeInvoiceStatus.OPEN ? <Badge variant="danger">OVERDUE</Badge> : null}
                     {invoice.emailStatus ? <Badge variant={emailVariant(invoice.emailStatus)}>Email {invoice.emailStatus}</Badge> : null}
+                    {wompi && invoice.paymentProvider === "WOMPI" ? <Badge variant={invoice.paymentProviderStatus === "APPROVED" ? "success" : "gold"}>Wompi {invoice.paymentProviderStatus ?? ""}</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{invoice.studentNameSnapshot} · {t.recipient}: {invoice.recipientName}</p>
                   <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{t.period}: {formatDate(invoice.periodStart, locale)} - {formatDate(invoice.periodEnd, locale)} · {invoice.sessionCount} {t.sessions.toLowerCase()}</p>
@@ -485,8 +553,21 @@ export function NativeInvoiceAdminPanel({
                   <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
                     {t.paid}: {formatCop(Math.max(invoice.totalCop - invoice.balanceCop, 0), locale)} · {t.balance}: {formatCop(invoice.balanceCop, locale)}
                   </p>
+                  {wompi && invoice.paymentProvider === "WOMPI" && invoice.paymentProviderAmountCop ? (
+                    <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                      Wompi: {formatCop(invoice.paymentProviderAmountCop, locale)} · {invoice.paymentProviderEnvironment ?? wompi.environment}
+                    </p>
+                  ) : null}
                 </div>
               </div>
+              {wompi && invoice.paymentUrl ? (
+                <div className="mt-3 rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] px-3 py-2 text-xs text-[var(--color-ink-soft)]">
+                  <span className="font-semibold text-[var(--color-ink)]">{t.payLink}: </span>
+                  <a href={invoice.paymentUrl} target="_blank" rel="noreferrer" className="break-all font-semibold text-[var(--color-gold-deep)] underline-offset-4 hover:underline">{invoice.paymentUrl}</a>
+                  {invoice.paymentProviderTransactionId ? <p className="mt-1">{t.providerStatus}: {invoice.paymentProviderStatus} · {invoice.paymentProviderTransactionId}</p> : null}
+                  {invoice.paymentProviderLastSyncedAt ? <p className="mt-1">{new Date(invoice.paymentProviderLastSyncedAt).toLocaleString(intlLocale(locale))}</p> : null}
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-3 xl:grid-cols-[1.1fr_1fr]">
                 <div className="rounded-[1.1rem] border border-[var(--color-border)] bg-[var(--color-surface-inset)] p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -575,6 +656,12 @@ export function NativeInvoiceAdminPanel({
               <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="gold" onClick={() => action(`/api/admin/native-invoices/${invoice.id}/open-send`, `send-${invoice.id}`)} disabled={pending === `send-${invoice.id}` || nonSendableStatuses.includes(invoice.status)}>{t.openSend}</Button>
+                  {wompi ? (
+                    <Button size="sm" variant="outline" onClick={() => action(`/api/admin/native-invoices/${invoice.id}/wompi-link`, `wompi-${invoice.id}`)} disabled={pending === `wompi-${invoice.id}` || !wompi.configured || invoice.status !== NativeInvoiceStatus.OPEN || invoice.balanceCop <= 0}>
+                      {t.createWompiLink}
+                    </Button>
+                  ) : null}
+                  {wompi && invoice.paymentUrl ? <a href={invoice.paymentUrl} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">{t.openWompiLink}</Button></a> : null}
                   <Link href={`/api/invoices/native/${invoice.id}/pdf`} target="_blank"><Button size="sm" variant="outline">{t.pdf}</Button></Link>
                   <Button size="sm" variant="outline" onClick={() => action(`/api/admin/native-invoices/${invoice.id}/next-month`, `next-${invoice.id}`)} disabled={pending === `next-${invoice.id}`}>{t.nextMonth}</Button>
                 </div>
@@ -588,10 +675,6 @@ export function NativeInvoiceAdminPanel({
         </div>
       </Card>
 
-      <Card variant="inset">
-        <CardTitle>{t.paymentProvider}</CardTitle>
-        <CardDescription>{t.paymentHint}</CardDescription>
-      </Card>
     </div>
   );
 }

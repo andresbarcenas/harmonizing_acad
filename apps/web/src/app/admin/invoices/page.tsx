@@ -84,6 +84,14 @@ export default async function AdminInvoicesPage() {
           emailStatus: invoice.emailStatus,
           emailError: invoice.emailError,
           pdfGeneratedAt: invoice.pdfGeneratedAt?.toISOString() ?? null,
+          paymentProvider: invoice.paymentProvider,
+          paymentUrl: invoice.paymentUrl,
+          paymentProviderStatus: invoice.paymentProviderStatus,
+          paymentProviderLinkId: invoice.paymentProviderLinkId,
+          paymentProviderEnvironment: invoice.paymentProviderEnvironment,
+          paymentProviderAmountCop: invoice.paymentProviderAmountCop,
+          paymentProviderTransactionId: invoice.paymentProviderTransactionId,
+          paymentProviderLastSyncedAt: invoice.paymentProviderLastSyncedAt?.toISOString() ?? null,
           payments: invoice.payments.map((payment) => ({
             id: payment.id,
             amountCop: payment.amountCop,
@@ -111,6 +119,7 @@ export default async function AdminInvoicesPage() {
           })),
         }))}
         summary={summary}
+        wompi={nativeData.wompi.enabled ? nativeData.wompi : null}
       />
 
       <Card>

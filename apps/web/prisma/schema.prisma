@@ -1497,46 +1497,52 @@ model NativeInvoiceSequence {
 }
 
 model NativeInvoice {
-  id                    String               @id @default(cuid())
-  invoiceNumber         String               @unique
-  studentId             String
-  recipientUserId       String?
-  createdByUserId       String?
-  updatedByUserId       String?
-  recipientName         String
-  recipientEmail        String
-  recipientRole         String?
-  studentNameSnapshot   String
-  status                NativeInvoiceStatus  @default(DRAFT)
-  currency              String               @default("COP")
-  issueDate             DateTime
-  dueDate               DateTime
-  periodStart           DateTime
-  periodEnd             DateTime
-  sessionCount          Int
-  cadenceLabel          String
-  pricePerClassCop      Int
-  subtotalCop           Int
-  taxCop                Int                  @default(0)
-  totalCop              Int
-  balanceCop            Int
-  pdfBytes              Bytes?
-  pdfSha256             String?
-  pdfGeneratedAt        DateTime?
-  emailedAt             DateTime?
-  emailStatus           EmailDeliveryStatus?
-  emailError            String?
-  paymentProvider       String?
-  paymentUrl            String?
-  paymentProviderStatus String?
-  legalFooter           String?
-  notes                 String?
-  openedAt              DateTime?
-  paidAt                DateTime?
-  closedAt              DateTime?
-  voidedAt              DateTime?
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  id                           String               @id @default(cuid())
+  invoiceNumber                String               @unique
+  studentId                    String
+  recipientUserId              String?
+  createdByUserId              String?
+  updatedByUserId              String?
+  recipientName                String
+  recipientEmail               String
+  recipientRole                String?
+  studentNameSnapshot          String
+  status                       NativeInvoiceStatus  @default(DRAFT)
+  currency                     String               @default("COP")
+  issueDate                    DateTime
+  dueDate                      DateTime
+  periodStart                  DateTime
+  periodEnd                    DateTime
+  sessionCount                 Int
+  cadenceLabel                 String
+  pricePerClassCop             Int
+  subtotalCop                  Int
+  taxCop                       Int                  @default(0)
+  totalCop                     Int
+  balanceCop                   Int
+  pdfBytes                     Bytes?
+  pdfSha256                    String?
+  pdfGeneratedAt               DateTime?
+  emailedAt                    DateTime?
+  emailStatus                  EmailDeliveryStatus?
+  emailError                   String?
+  paymentProvider              String?
+  paymentUrl                   String?
+  paymentProviderStatus        String?
+  paymentProviderLinkId        String?
+  paymentProviderEnvironment   String?
+  paymentProviderTransactionId String?
+  paymentProviderAmountCop     Int?
+  paymentProviderExpiresAt     DateTime?
+  paymentProviderLastSyncedAt  DateTime?
+  legalFooter                  String?
+  notes                        String?
+  openedAt                     DateTime?
+  paidAt                       DateTime?
+  closedAt                     DateTime?
+  voidedAt                     DateTime?
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
 
   student             StudentProfile           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   recipient           User?                    @relation("NativeInvoiceRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
@@ -1549,6 +1555,7 @@ model NativeInvoice {
   @@index([studentId, issueDate])
   @@index([status, dueDate])
   @@index([recipientUserId, issueDate])
+  @@index([paymentProvider, paymentProviderLinkId])
 }
 
 model NativeInvoiceLineItem {
@@ -1568,31 +1575,60 @@ model NativeInvoiceLineItem {
 }
 
 model NativeInvoicePayment {
-  id              String                     @id @default(cuid())
-  invoiceId       String
-  studentId       String
-  amountCop       Int
-  method          NativeInvoicePaymentMethod
-  paymentDate     DateTime
-  reference       String?
-  notes           String?
-  status          NativeInvoicePaymentStatus @default(ACTIVE)
-  createdByUserId String
-  voidedByUserId  String?
-  voidedAt        DateTime?
-  voidReason      String?
-  createdAt       DateTime                   @default(now())
-  updatedAt       DateTime                   @updatedAt
+  id                    String                     @id @default(cuid())
+  invoiceId             String
+  studentId             String
+  amountCop             Int
+  method                NativeInvoicePaymentMethod
+  paymentDate           DateTime
+  reference             String?
+  notes                 String?
+  status                NativeInvoicePaymentStatus @default(ACTIVE)
+  createdByUserId       String?
+  voidedByUserId        String?
+  voidedAt              DateTime?
+  voidReason            String?
+  provider              String?
+  providerTransactionId String?
+  providerStatus        String?
+  providerPayload       Json?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
 
   invoice     NativeInvoice                    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   student     StudentProfile                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdBy   User                             @relation("NativeInvoicePaymentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdBy   User?                            @relation("NativeInvoicePaymentCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
   voidedBy    User?                            @relation("NativeInvoicePaymentVoidedBy", fields: [voidedByUserId], references: [id], onDelete: SetNull)
   attachments NativeInvoicePaymentAttachment[]
 
+  @@unique([provider, providerTransactionId])
   @@index([invoiceId, status, paymentDate])
   @@index([studentId, paymentDate])
   @@index([createdByUserId, createdAt])
+  @@index([provider, providerStatus])
+}
+
+model PaymentProviderWebhookEvent {
+  id               String    @id @default(cuid())
+  provider         String
+  environment      String?
+  eventType        String
+  checksum         String?
+  transactionId    String?
+  invoiceId        String?
+  status           String?
+  processingStatus String    @default("RECEIVED")
+  error            String?
+  payload          Json
+  receivedAt       DateTime  @default(now())
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([provider, checksum])
+  @@index([provider, eventType, receivedAt])
+  @@index([provider, transactionId])
+  @@index([invoiceId, receivedAt])
 }
 
 model NativeInvoicePaymentAttachment {

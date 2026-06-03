@@ -11,6 +11,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getStudentInvoicesView } from "@/features/invoices/data";
 import { formatDate, formatMoney, getDictionary, intlLocale } from "@/lib/i18n";
 import { formatCop } from "@/lib/native-invoices/shared";
+import { isWompiEnabled } from "@/lib/wompi/config";
 
 function statusVariant(status: NativeInvoiceStatus) {
   if (status === NativeInvoiceStatus.PAID) return "success" as const;
@@ -24,6 +25,7 @@ export default async function StudentInvoicesPage() {
   const dictionary = getDictionary(viewer.locale);
   const data = await getStudentInvoicesView(viewer.studentProfileId!);
   const isSpanish = viewer.locale === "es";
+  const showWompiPayments = isWompiEnabled();
 
   return (
     <AppShell role={viewer.role} activePath="/invoices" userName={viewer.name} locale={viewer.locale}>
@@ -79,8 +81,13 @@ export default async function StudentInvoicesPage() {
                 </div>
               ) : null}
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                {showWompiPayments && invoice.paymentUrl && invoice.status === NativeInvoiceStatus.OPEN && invoice.balanceCop > 0 ? (
+                  <a href={invoice.paymentUrl} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+                    <Button size="sm" variant="gold" className="w-full sm:w-auto">{isSpanish ? "Pagar en línea" : "Pay online"}</Button>
+                  </a>
+                ) : null}
                 <Link href={`/api/invoices/native/${invoice.id}/pdf`} target="_blank" className="w-full sm:w-auto">
-                  <Button size="sm" variant="gold" className="w-full sm:w-auto">{isSpanish ? "Descargar PDF" : "Download PDF"}</Button>
+                  <Button size="sm" variant={showWompiPayments && invoice.paymentUrl && invoice.status === NativeInvoiceStatus.OPEN && invoice.balanceCop > 0 ? "outline" : "gold"} className="w-full sm:w-auto">{isSpanish ? "Descargar PDF" : "Download PDF"}</Button>
                 </Link>
               </div>
             </div>

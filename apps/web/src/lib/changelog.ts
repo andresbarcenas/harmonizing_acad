@@ -11,6 +11,29 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.11.0",
+    date: "2026-06-03",
+    sections: [
+      {
+        title: "Added",
+        items: [
+          "Native invoice Wompi payment-provider integration with hosted payment links, sandbox and production configuration, signed webhook processing, and automatic WOMPI payment ledger entries for approved transactions.",
+          "Admin invoice controls for creating Wompi payment links, viewing provider status, and copying the configured webhook URL when the provider is enabled.",
+          "Student and parent invoice payment buttons for open invoices with active Wompi links.",
+          "Local Wompi sandbox webhook test tooling and setup documentation for localhost and tunnel testing.",
+        ],
+      },
+      {
+        title: "Changed",
+        items: [
+          "Invoice emails include online payment links only when Wompi is enabled and configured.",
+          "WOMPI_PAYMENTS_ENABLED=false now fully hides Wompi UI, links, buttons, badges, email payment links, and provider actions while preserving historical provider metadata.",
+          "Wompi configuration validation now rejects obvious placeholder or too-short sandbox and production keys instead of showing a false configured state.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.10.13",
     date: "2026-06-03",
     sections: [

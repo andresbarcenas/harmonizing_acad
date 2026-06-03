@@ -36,9 +36,6 @@ Add aging buckets, family balance, overdue totals, and downloadable account stat
 ### Invoice Reminder Automation
 Send friendly reminder emails and in-app notifications before due date, on due date, and after overdue, with admin controls to pause reminders per family.
 
-### Payment Provider Integration
-Add hosted payment links through a provider such as Wompi, Mercado Pago, Stripe, or another Colombia-friendly provider. Keep card and bank data outside Harmonizing.
-
 ### WhatsApp Billing Helper
 Generate prefilled WhatsApp copy for invoice links, overdue reminders, and payment confirmations without storing WhatsApp message history.
 
@@ -103,3 +100,4 @@ Use hosted checkout/payment links, store only provider IDs/status/timestamps/amo
 - Payment Tracking Ledger
 - Class Credit Ledger
 - Admin Health Dashboard
+- Payment Provider Integration: Wompi hosted payment links

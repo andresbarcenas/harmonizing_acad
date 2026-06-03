@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { sendNativeInvoiceEmail } from "@/lib/email/native-invoice";
 import { generateNativeInvoicePdf } from "@/lib/native-invoices/pdf";
 import { markNativeInvoiceEmailResult, markNativeInvoicePdf, nativeInvoiceInclude, notifyNativeInvoiceRecipient, setNativeInvoiceStatus } from "@/lib/native-invoices/service";
+import { getWompiAdminSummary, ensureWompiPaymentLinkForInvoice } from "@/lib/wompi/service";
 
 const sendableStatuses: NativeInvoiceStatus[] = [NativeInvoiceStatus.DRAFT, NativeInvoiceStatus.OPEN];
 
@@ -44,6 +45,11 @@ export async function openAndSendNativeInvoice(invoiceId: string, adminUserId: s
     await setNativeInvoiceStatus(invoiceId, NativeInvoiceStatus.OPEN, adminUserId);
   }
 
+  const wompi = getWompiAdminSummary();
+  if (wompi.enabled && wompi.configured) {
+    await ensureWompiPaymentLinkForInvoice(invoiceId);
+  }
+
   const { invoice, pdfBytes } = await regenerateNativeInvoicePdf(invoiceId);
   const emailResult = await sendNativeInvoiceEmail({
     invoiceId: invoice.id,
@@ -54,6 +60,7 @@ export async function openAndSendNativeInvoice(invoiceId: string, adminUserId: s
     studentName: invoice.studentNameSnapshot,
     totalCop: invoice.totalCop,
     pdfBytes,
+    paymentUrl: wompi.enabled ? invoice.paymentUrl : null,
   });
 
   await markNativeInvoiceEmailResult(invoice.id, {

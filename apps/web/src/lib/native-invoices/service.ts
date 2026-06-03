@@ -8,6 +8,7 @@ import { grantCreditsForOpenedInvoice, recalculateNativeInvoicePaymentStatus, re
 import { DEFAULT_PRICE_PER_CLASS_COP, DEFAULT_SESSION_COUNT, sessionCadenceLabel, VALID_NATIVE_SESSION_COUNTS, type NativeSessionCount } from "@/lib/native-invoices/shared";
 import { createNotification } from "@/lib/notifications";
 import { parentCanAccessStudent } from "@/lib/parents";
+import { getWompiAdminSummary } from "@/lib/wompi/service";
 
 const viewerVisibleStatuses: NativeInvoiceStatus[] = [
   NativeInvoiceStatus.OPEN,
@@ -186,7 +187,7 @@ export async function getAdminNativeInvoiceWorkspace() {
     }),
   ]);
 
-  return { students, invoices, summary, creditBalances, creditEntries };
+  return { students, invoices, summary, creditBalances, creditEntries, wompi: getWompiAdminSummary() };
 }
 
 export async function createNativeInvoice(input: InvoiceCreateInput, adminUserId: string) {
