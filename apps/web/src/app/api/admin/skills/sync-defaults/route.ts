@@ -14,6 +14,9 @@ export async function POST(request: Request) {
   if (auth.user.role !== Role.ADMIN) {
     return NextResponse.json({ error: auth.user.locale === "es" ? "No autorizado." : "Forbidden." }, { status: 403 });
   }
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: auth.user.locale === "es" ? "La sincronización de habilidades base solo está disponible en desarrollo local." : "Default skill sync is only available in local development." }, { status: 404 });
+  }
 
   const parsed = syncDefaultSkillsSchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) {

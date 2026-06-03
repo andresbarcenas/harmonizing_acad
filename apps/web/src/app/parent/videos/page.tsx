@@ -9,6 +9,7 @@ import { requireViewer } from "@/features/auth/server";
 import { getStudentVideosDataForProfile } from "@/lib/data";
 import { formatDate } from "@/lib/i18n";
 import { resolveParentStudentSelection } from "@/lib/parents";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 export default async function ParentVideosPage({ searchParams }: { searchParams?: Promise<{ studentId?: string; assignmentId?: string; repertoireItemId?: string; skillCategoryId?: string }> }) {
   const viewer = await requireViewer([Role.PARENT]);
@@ -54,7 +55,7 @@ export default async function ParentVideosPage({ searchParams }: { searchParams?
                   <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>{video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? (isSpanish ? "Revisado" : "Reviewed") : (isSpanish ? "En revisión" : "In review")}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, viewer.locale)}</p>
-                <p className="text-xs text-[var(--color-ink-soft)]">{[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ")}</p>
+                <p className="text-xs text-[var(--color-ink-soft)]">{[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory ? getSkillDisplayName(video.skillCategory.name, viewer.locale) : null].filter(Boolean).join(" · ")}</p>
                 <div className="mt-2"><video controls preload="metadata" className="w-full rounded-xl border border-[var(--color-border)] bg-black/90" src={`/api/media/videos/${video.id}`}><track kind="captions" /></video></div>
                 {video.feedback[0] ? <p className="mt-2 text-sm text-[var(--color-ink)]">{video.feedback[0].comment}</p> : null}
               </div>

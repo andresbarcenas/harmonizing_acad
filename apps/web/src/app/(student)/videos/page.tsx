@@ -8,6 +8,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getStudentVideosData } from "@/lib/data";
 import { formatDate, getDictionary } from "@/lib/i18n";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 type StudentVideosPageProps = {
   searchParams?: Promise<{
@@ -56,7 +57,7 @@ export default async function StudentVideosPage({ searchParams }: StudentVideosP
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, viewer.locale)}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ")}
+                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory ? getSkillDisplayName(video.skillCategory.name, viewer.locale) : null].filter(Boolean).join(" · ")}
                 </p>
                 <div className="mt-2">
                   <video

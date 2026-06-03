@@ -11,6 +11,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getAdminProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 export default async function AdminProgressPage() {
   const viewer = await requireViewer([Role.ADMIN]);
@@ -121,7 +122,7 @@ export default async function AdminProgressPage() {
             <Link href="/admin/skills"><Button size="sm" variant="outline">{isSpanish ? "Gestionar habilidades" : "Manage skills"}</Button></Link>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {data.skillCategories.map((skill) => <Badge key={skill.id} variant={skill.active ? "gold" : "default"}>{skill.instrument} · {skill.name}</Badge>)}
+            {data.skillCategories.map((skill) => <Badge key={skill.id} variant={skill.active ? "gold" : "default"}>{skill.instrument} · {getSkillDisplayName(skill.name, viewer.locale)}</Badge>)}
           </div>
         </Card>
       </div>

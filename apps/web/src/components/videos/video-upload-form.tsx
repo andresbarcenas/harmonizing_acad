@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
 const ALLOWED_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -230,7 +231,7 @@ export function VideoUploadForm({
           </select>
           <select data-video-upload-skill defaultValue={defaultSkillCategoryId ?? ""} className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
             <option value="">{locale === "es" ? "Relacionar habilidad" : "Link skill"}</option>
-            {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
+            {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>)}
           </select>
         </div>
       ) : null}

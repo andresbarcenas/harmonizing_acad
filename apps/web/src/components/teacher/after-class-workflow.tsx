@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { instrumentToSkillInstrument, normalizeInstrument } from "@/lib/instruments";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 import { cn } from "@/lib/utils";
 
 type CompletionStatus = "COMPLETED" | "NO_SHOW" | "CANCELLED" | "RESCHEDULE_PENDING";
@@ -121,6 +122,19 @@ type WorkflowProps = {
   attachments: ClassAttachmentOption[];
 };
 
+type AfterClassDraft = Partial<{
+  status: CompletionStatus;
+  lessonInstrument: LessonInstrument;
+  notifyStudent: boolean;
+  lessonNote: LessonNoteState;
+  skillRatings: SkillRatingState[];
+  repertoireUpdates: RepertoireUpdateState[];
+  newRepertoire: NewRepertoireState;
+  assignments: AssignmentState[];
+}>;
+
+type DraftSaveState = "idle" | "saving" | "saved" | "error";
+
 const selectClass = "h-[3.35rem] w-full rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm text-[var(--color-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_20px_rgba(90,64,33,0.04)] focus:border-[color-mix(in_srgb,var(--color-gold)_52%,white)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--color-gold)_12%,white)]";
 
 const repertoireStatuses: RepertoireStatus[] = ["ASSIGNED", "LEARNING", "IMPROVING", "PERFORMANCE_READY", "COMPLETED", "PAUSED"];
@@ -211,6 +225,11 @@ function copy(locale: AppLocale) {
     noAssignment: "No crear tareas desde este flujo.",
     existingAssignments: "Tareas ya creadas desde esta nota",
     draftRestored: "Borrador local restaurado.",
+    serverDraftRestored: "Borrador guardado restaurado.",
+    saveDraft: "Guardar borrador",
+    draftSaving: "Guardando borrador...",
+    draftSaved: "Borrador guardado.",
+    draftError: "No se pudo guardar el borrador.",
     exit: "Volver a progreso",
   } : {
     eyebrow: "After-class workflow",
@@ -290,6 +309,11 @@ function copy(locale: AppLocale) {
     noAssignment: "Do not create assignments from this workflow.",
     existingAssignments: "Assignments already created from this note",
     draftRestored: "Local draft restored.",
+    serverDraftRestored: "Saved draft restored.",
+    saveDraft: "Save draft",
+    draftSaving: "Saving draft...",
+    draftSaved: "Draft saved.",
+    draftError: "Could not save draft.",
     exit: "Back to progress",
   };
 }
@@ -298,8 +322,10 @@ export function AfterClassWorkflow(props: WorkflowProps) {
   const router = useRouter();
   const c = copy(props.locale);
   const draftKey = `harmonizing:after-class:${props.classId}`;
+  const lastServerDraftRef = useRef<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<DraftSaveState>("idle");
   const [message, setMessage] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
   const [notifyStudent, setNotifyStudent] = useState(true);
   const [status, setStatus] = useState<CompletionStatus>(props.initialStatus === "SCHEDULED" ? "COMPLETED" : props.initialStatus);
@@ -336,6 +362,16 @@ export function AfterClassWorkflow(props: WorkflowProps) {
   }));
   const [assignments, setAssignments] = useState<AssignmentState[]>(() => [newAssignment()]);
   const [attachments, setAttachments] = useState<ClassAttachmentOption[]>(props.attachments);
+  const draftSnapshot = useMemo<AfterClassDraft>(() => ({
+    status,
+    lessonInstrument,
+    notifyStudent,
+    lessonNote,
+    skillRatings,
+    repertoireUpdates,
+    newRepertoire,
+    assignments,
+  }), [assignments, lessonInstrument, lessonNote, newRepertoire, notifyStudent, repertoireUpdates, skillRatings, status]);
 
   const steps = status === "COMPLETED"
     ? [c.status, c.note, c.skills, c.repertoire, c.practice, c.review]
@@ -348,43 +384,105 @@ export function AfterClassWorkflow(props: WorkflowProps) {
   const validAssignments = assignments.filter((assignment) => assignment.title.trim() && assignment.instructions.trim());
   const videoRequested = validAssignments.some((assignment) => assignment.requiresVideo);
 
+  const applyDraft = useCallback((draft: AfterClassDraft) => {
+    if (draft.status) setStatus(draft.status);
+    if (draft.lessonInstrument) setLessonInstrument(draft.lessonInstrument);
+    if (typeof draft.notifyStudent === "boolean") setNotifyStudent(draft.notifyStudent);
+    if (draft.lessonNote) setLessonNote((current) => ({ ...current, ...draft.lessonNote }));
+    if (draft.skillRatings) setSkillRatings(draft.skillRatings);
+    if (draft.repertoireUpdates) setRepertoireUpdates(draft.repertoireUpdates);
+    if (draft.newRepertoire) setNewRepertoire((current) => ({ ...current, ...draft.newRepertoire, clientId: draft.newRepertoire?.clientId ?? current.clientId ?? crypto.randomUUID() }));
+    if (draft.assignments) setAssignments(draft.assignments);
+  }, []);
+
   useEffect(() => {
-    const stored = window.localStorage.getItem(draftKey);
-    if (!stored) {
-      setHydratedDraft(true);
-      return;
+    let cancelled = false;
+
+    async function restoreDraft() {
+      try {
+        const response = await fetch(`/api/teacher/classes/${props.classId}/complete/draft`, { cache: "no-store" });
+        if (response.ok) {
+          const body = await response.json().catch(() => null) as { draft?: { payload?: AfterClassDraft } | null } | null;
+          if (!cancelled && body?.draft?.payload) {
+            applyDraft(body.draft.payload);
+            setMessage({ kind: "info", text: c.serverDraftRestored });
+            setHydratedDraft(true);
+            return;
+          }
+        }
+      } catch {
+        // Local drafts are still a useful fallback when the network is unavailable.
+      }
+
+      const stored = window.localStorage.getItem(draftKey);
+      if (!stored) {
+        if (!cancelled) setHydratedDraft(true);
+        return;
+      }
+      try {
+        const draft = JSON.parse(stored) as AfterClassDraft;
+        if (!cancelled) {
+          applyDraft(draft);
+          setMessage({ kind: "info", text: c.draftRestored });
+        }
+      } catch {
+        window.localStorage.removeItem(draftKey);
+      } finally {
+        if (!cancelled) setHydratedDraft(true);
+      }
     }
-    try {
-      const draft = JSON.parse(stored) as Partial<{
-        status: CompletionStatus;
-        lessonInstrument: LessonInstrument;
-        notifyStudent: boolean;
-        lessonNote: LessonNoteState;
-        skillRatings: SkillRatingState[];
-        repertoireUpdates: RepertoireUpdateState[];
-        newRepertoire: NewRepertoireState;
-        assignments: AssignmentState[];
-      }>;
-      if (draft.status) setStatus(draft.status);
-      if (draft.lessonInstrument) setLessonInstrument(draft.lessonInstrument);
-      if (typeof draft.notifyStudent === "boolean") setNotifyStudent(draft.notifyStudent);
-      if (draft.lessonNote) setLessonNote(draft.lessonNote);
-      if (draft.skillRatings) setSkillRatings(draft.skillRatings);
-      if (draft.repertoireUpdates) setRepertoireUpdates(draft.repertoireUpdates);
-      if (draft.newRepertoire) setNewRepertoire({ ...draft.newRepertoire, clientId: draft.newRepertoire.clientId ?? crypto.randomUUID() });
-      if (draft.assignments) setAssignments(draft.assignments);
-      setMessage({ kind: "info", text: c.draftRestored });
-    } catch {
-      window.localStorage.removeItem(draftKey);
-    } finally {
-      setHydratedDraft(true);
-    }
-  }, [c.draftRestored, draftKey]);
+
+    void restoreDraft();
+    return () => {
+      cancelled = true;
+    };
+  }, [applyDraft, c.draftRestored, c.serverDraftRestored, draftKey, props.classId]);
 
   useEffect(() => {
     if (!hydratedDraft) return;
-    window.localStorage.setItem(draftKey, JSON.stringify({ status, lessonInstrument, notifyStudent, lessonNote, skillRatings, repertoireUpdates, newRepertoire, assignments }));
-  }, [assignments, draftKey, hydratedDraft, lessonInstrument, lessonNote, newRepertoire, notifyStudent, repertoireUpdates, skillRatings, status]);
+    window.localStorage.setItem(draftKey, JSON.stringify(draftSnapshot));
+  }, [draftKey, draftSnapshot, hydratedDraft]);
+
+  const saveServerDraft = useCallback(async (showMessage = false, signal?: AbortSignal) => {
+    const serialized = JSON.stringify(draftSnapshot);
+    setDraftSaveState("saving");
+    try {
+      const response = await fetch(`/api/teacher/classes/${props.classId}/complete/draft`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: serialized,
+        signal,
+      });
+      if (!response.ok) throw new Error(c.draftError);
+      lastServerDraftRef.current = serialized;
+      setDraftSaveState("saved");
+      if (showMessage) setMessage({ kind: "success", text: c.draftSaved });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setDraftSaveState("error");
+      if (showMessage) setMessage({ kind: "error", text: c.draftError });
+    }
+  }, [c.draftError, c.draftSaved, draftSnapshot, props.classId]);
+
+  useEffect(() => {
+    if (!hydratedDraft) return;
+    const serialized = JSON.stringify(draftSnapshot);
+    if (lastServerDraftRef.current === null) {
+      lastServerDraftRef.current = serialized;
+      return;
+    }
+    if (lastServerDraftRef.current === serialized) return;
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      void saveServerDraft(false, controller.signal);
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [draftSnapshot, hydratedDraft, saveServerDraft]);
 
   useEffect(() => {
     if (step > steps.length - 1) setStep(steps.length - 1);
@@ -492,9 +590,9 @@ export function AfterClassWorkflow(props: WorkflowProps) {
           ) : null}
           {activeStepLabel === c.status ? <StatusStep locale={props.locale} status={status} onChange={setStatus} /> : null}
           {activeStepLabel === c.note && status === "COMPLETED" ? <LessonNoteStep c={c} classId={props.classId} attachments={attachments} setAttachments={setAttachments} note={lessonNote} onChange={setLessonNote} /> : null}
-          {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} skills={filteredSkills} ratings={skillRatings} onChange={setSkillRatings} /> : null}
+          {activeStepLabel === c.skills && status === "COMPLETED" ? <SkillStep c={c} locale={props.locale} skills={filteredSkills} ratings={skillRatings} onChange={setSkillRatings} /> : null}
           {activeStepLabel === c.repertoire && status === "COMPLETED" ? <RepertoireStep c={c} locale={props.locale} items={repertoireUpdates} setItems={setRepertoireUpdates} newItem={newRepertoire} setNewItem={setNewRepertoire} /> : null}
-          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} newRepertoire={newRepertoire} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
+          {activeStepLabel === c.practice && status === "COMPLETED" ? <PracticeStep c={c} locale={props.locale} assignments={assignments} setAssignments={setAssignments} skills={filteredSkills} repertoire={props.repertoireItems} newRepertoire={newRepertoire} existingAssignments={props.lessonNote?.practiceAssignments ?? []} /> : null}
           {activeStepLabel === c.review ? (
             <ReviewStep
               c={c}
@@ -520,6 +618,9 @@ export function AfterClassWorkflow(props: WorkflowProps) {
             <div className="mt-4 space-y-2 text-sm text-[var(--color-ink-soft)]">
               <p>{c.summary}: {lessonNote.summary || "-"}</p>
               <p>{c.requiresVideo}: {videoRequested ? (props.locale === "es" ? "Sí" : "Yes") : "No"}</p>
+              {draftSaveState !== "idle" ? (
+                <p>{draftSaveState === "saving" ? c.draftSaving : draftSaveState === "saved" ? c.draftSaved : c.draftError}</p>
+              ) : null}
             </div>
           </Card>
           {message ? (
@@ -538,6 +639,9 @@ export function AfterClassWorkflow(props: WorkflowProps) {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => (step === 0 ? router.push(`/teacher/lesson-notes?studentId=${props.student.id}`) : setStep((current) => Math.max(0, current - 1)))}>
               {step === 0 ? c.exit : c.back}
+            </Button>
+            <Button className="w-full sm:w-auto" type="button" variant="outline" disabled={saving || draftSaveState === "saving"} onClick={() => void saveServerDraft(true)}>
+              {draftSaveState === "saving" ? c.draftSaving : c.saveDraft}
             </Button>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -760,7 +864,7 @@ function ClassAttachmentsBlock({
   );
 }
 
-function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy>; skills: SkillOption[]; ratings: SkillRatingState[]; onChange: (ratings: SkillRatingState[]) => void }) {
+function SkillStep({ c, locale, skills, ratings, onChange }: { c: ReturnType<typeof copy>; locale: AppLocale; skills: SkillOption[]; ratings: SkillRatingState[]; onChange: (ratings: SkillRatingState[]) => void }) {
   if (!skills.length) return <CardDescription>{c.noSkills}</CardDescription>;
   function update(skillCategoryId: string, patch: Partial<SkillRatingState>) {
     onChange(ratings.map((rating) => rating.skillCategoryId === skillCategoryId ? { ...rating, ...patch } : rating));
@@ -775,7 +879,7 @@ function SkillStep({ c, skills, ratings, onChange }: { c: ReturnType<typeof copy
           <div key={rating.skillCategoryId} className="rounded-[1.2rem] border border-[var(--color-border)] bg-white/72 p-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-semibold text-[var(--color-ink)]">{skill.name}</p>
+                <p className="font-semibold text-[var(--color-ink)]">{getSkillDisplayName(skill.name, locale)}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">{skill.instrument}</p>
               </div>
               {rating.rating ? <Badge variant="gold">{rating.rating}/5</Badge> : null}
@@ -910,7 +1014,7 @@ function RepertoireStep({
   );
 }
 
-function PracticeStep({ c, assignments, setAssignments, skills, repertoire, newRepertoire, existingAssignments }: { c: ReturnType<typeof copy>; assignments: AssignmentState[]; setAssignments: (assignments: AssignmentState[]) => void; skills: SkillOption[]; repertoire: RepertoireOption[]; newRepertoire: NewRepertoireState; existingAssignments: Array<{ id: string; title: string; requiresVideo: boolean }> }) {
+function PracticeStep({ c, locale, assignments, setAssignments, skills, repertoire, newRepertoire, existingAssignments }: { c: ReturnType<typeof copy>; locale: AppLocale; assignments: AssignmentState[]; setAssignments: (assignments: AssignmentState[]) => void; skills: SkillOption[]; repertoire: RepertoireOption[]; newRepertoire: NewRepertoireState; existingAssignments: Array<{ id: string; title: string; requiresVideo: boolean }> }) {
   function update(id: string, patch: Partial<AssignmentState>) {
     setAssignments(assignments.map((assignment) => assignment.id === id ? { ...assignment, ...patch } : assignment));
   }
@@ -947,7 +1051,7 @@ function PracticeStep({ c, assignments, setAssignments, skills, repertoire, newR
               {repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
               {newRepertoire.enabled && newRepertoire.title.trim() ? <option value={`new:${newRepertoire.clientId}`}>{newRepertoire.title}</option> : null}
             </select>
-            <select className={selectClass} value={assignment.skillCategoryId} onChange={(event) => update(assignment.id, { skillCategoryId: event.target.value })}><option value="">{c.relatedSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
+            <select className={selectClass} value={assignment.skillCategoryId} onChange={(event) => update(assignment.id, { skillCategoryId: event.target.value })}><option value="">{c.relatedSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>)}</select>
             <label className="flex h-[3.35rem] items-center gap-2 rounded-[1.2rem] border border-[var(--color-border-strong)] bg-white/84 px-4 text-sm"><input type="checkbox" checked={assignment.requiresVideo} onChange={(event) => update(assignment.id, { requiresVideo: event.target.checked })} /> {c.requiresVideo}</label>
             <Textarea className="md:col-span-2" value={assignment.instructions} onChange={(event) => update(assignment.id, { instructions: event.target.value })} placeholder={c.assignmentInstructions} />
           </div>
@@ -966,7 +1070,10 @@ function ReviewStep({ c, locale, status, summary, ratings, skills, repertoire, n
       <div className="grid gap-3 md:grid-cols-2">
         <SummaryBlock label={c.status} value={statusLabel(status, locale)} />
         <SummaryBlock label={c.summary} value={summary || "-"} />
-        <SummaryBlock label={c.skills} value={ratings.length ? ratings.map((rating) => `${skills.find((skill) => skill.id === rating.skillCategoryId)?.name ?? "Skill"}: ${rating.rating}/5`).join(" · ") : "-"} />
+        <SummaryBlock label={c.skills} value={ratings.length ? ratings.map((rating) => {
+          const skill = skills.find((item) => item.id === rating.skillCategoryId);
+          return `${skill ? getSkillDisplayName(skill.name, locale) : locale === "es" ? "Habilidad" : "Skill"}: ${rating.rating}/5`;
+        }).join(" · ") : "-"} />
         <SummaryBlock label={c.repertoire} value={repertoireCount ? `${repertoireCount}` : "-"} />
         <SummaryBlock label={c.practice} value={assignments.length ? assignments.map((assignment) => assignment.title).join(" · ") : c.noAssignment} />
         <SummaryBlock label={c.requiresVideo} value={videoRequested ? (locale === "es" ? "Sí" : "Yes") : "No"} />

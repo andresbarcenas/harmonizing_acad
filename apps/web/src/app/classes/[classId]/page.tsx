@@ -17,6 +17,7 @@ import { getClassDetailData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import { instrumentLabel } from "@/lib/instruments";
 import { classStatusLabel, classTypeLabel } from "@/lib/class-session-labels";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 import { studentLevelLabel } from "@/lib/student-levels";
 
 type PageProps = { params: Promise<{ classId: string }> };
@@ -309,7 +310,7 @@ function TeacherPreparationWorkspace({ session, prep, locale }: { session: Class
                   <p className="break-words text-sm font-semibold text-[var(--color-ink)]">{video.originalName}</p>
                   <Badge variant={video.status === VideoStatus.PENDING ? "warning" : "success"}>{videoStatusLabel(video.status, locale)}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, locale)} · {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ") || copy.generalPractice}</p>
+                <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{formatDate(video.submittedAt, locale)} · {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory ? getSkillDisplayName(video.skillCategory.name, locale) : null].filter(Boolean).join(" · ") || copy.generalPractice}</p>
                 {video.feedback[0]?.comment ? <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{video.feedback[0].comment}</p> : null}
               </div>
             ))}

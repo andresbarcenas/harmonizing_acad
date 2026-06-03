@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import type { SkillCategoryInput } from "@/lib/validators/skills";
 
 export const skillCategoryUsageInclude = {
   _count: {
@@ -47,4 +48,53 @@ export async function getAdminSkillCategories() {
   });
 
   return skills.map(serializeSkillCategory);
+}
+
+export async function createSkillCategory(input: SkillCategoryInput) {
+  const duplicate = await findDuplicateSkill(input);
+  if (duplicate) throw new Error("DUPLICATE_SKILL");
+
+  const skill = await db.skillCategory.create({
+    data: toSkillData(input),
+    include: skillCategoryUsageInclude,
+  });
+
+  return serializeSkillCategory(skill);
+}
+
+export async function updateSkillCategory(skillId: string, input: SkillCategoryInput) {
+  const existing = await db.skillCategory.findUnique({ where: { id: skillId }, select: { id: true } });
+  if (!existing) throw new Error("SKILL_NOT_FOUND");
+
+  const duplicate = await findDuplicateSkill(input, skillId);
+  if (duplicate) throw new Error("DUPLICATE_SKILL");
+
+  const skill = await db.skillCategory.update({
+    where: { id: skillId },
+    data: toSkillData(input),
+    include: skillCategoryUsageInclude,
+  });
+
+  return serializeSkillCategory(skill);
+}
+
+function toSkillData(input: SkillCategoryInput) {
+  return {
+    instrument: input.instrument,
+    name: input.name,
+    description: input.description ?? null,
+    sortOrder: input.sortOrder,
+    active: input.active,
+  };
+}
+
+async function findDuplicateSkill(input: SkillCategoryInput, excludeId?: string) {
+  return db.skillCategory.findFirst({
+    where: {
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+      instrument: input.instrument,
+      name: { equals: input.name, mode: "insensitive" },
+    },
+    select: { id: true },
+  });
 }

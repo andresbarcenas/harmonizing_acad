@@ -10,6 +10,7 @@ import { InstrumentSelect } from "@/components/instrument-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 import { studentLevelLabel, studentLevelOptions, type StudentLevelValue } from "@/lib/student-levels";
 
 type SkillOption = { id: string; name: string; instrument: string };
@@ -300,7 +301,7 @@ export function LessonNoteForm({ sessionId, initial, skillCategories, locale }: 
             <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.8fr)]">
               <select name={`skillCategoryId-${index}`} defaultValue={existingRatings[index]?.skillCategoryId ?? ""} className="h-[3.05rem] min-w-0 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]">
                 <option value="">{c.chooseSkill}</option>
-                {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}
+                {skillCategories.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>)}
               </select>
               <RatingInput name={`skillRating-${index}`} label={c.skillScore} defaultValue={existingRatings[index]?.rating} notRatedLabel={c.notRated} />
               <Input name={`skillNote-${index}`} defaultValue={existingRatings[index]?.note ?? ""} placeholder={c.note} className="lg:col-span-2" />
@@ -417,7 +418,7 @@ export function PracticeAssignmentForm({ studentId, lessonNoteId, classSessionId
       <Input name="title" required placeholder={c.title} />
       <Input name="dueDate" type="date" aria-label={c.dueDate} />
       <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseRepertoire}</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
-      <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
+      <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>)}</select>
       <Input name="expectedMinutes" type="number" min={1} max={600} placeholder={c.expectedMinutes} />
       <label className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><input name="requiresVideo" type="checkbox" /> {c.requiresVideo}</label>
       <Textarea name="instructions" required placeholder={c.instructions} className="md:col-span-2" />
@@ -443,7 +444,7 @@ export function PracticeLogForm({ assignments, repertoire, skills, locale, stude
       <Input name="minutesPracticed" type="number" required min={1} max={600} placeholder={c.minutes} />
       <select name="assignmentId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseAssignment}</option>{assignments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
       <select name="repertoireItemId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseRepertoire}</option>{repertoire.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
-      <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>)}</select>
+      <select name="skillCategoryId" className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"><option value="">{c.chooseSkill}</option>{skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>)}</select>
       <Input name="moodRating" type="number" min={1} max={5} placeholder={c.mood} />
       <Input name="difficultyRating" type="number" min={1} max={5} placeholder={c.difficulty} />
       <Textarea name="notes" placeholder={c.note} className="md:col-span-2" />

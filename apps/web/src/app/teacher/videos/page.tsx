@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/ui/page-intro";
 import { requireViewer } from "@/features/auth/server";
 import { getTeacherVideosData } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 import { cn } from "@/lib/utils";
 
 type TeacherVideosPageProps = {
@@ -76,7 +77,7 @@ export default async function TeacherVideosPage({ searchParams }: TeacherVideosP
                 <p className="text-sm font-semibold">{video.student.user.name}</p>
                 <p className="break-all text-xs text-[var(--color-ink-soft)]">{video.originalName} · {Math.floor(video.durationSec / 60)}:{`${video.durationSec % 60}`.padStart(2, "0")}</p>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory?.name].filter(Boolean).join(" · ")}
+                  {[video.practiceAssignment?.title, video.repertoireItem?.title, video.skillCategory ? getSkillDisplayName(video.skillCategory.name, viewer.locale) : null].filter(Boolean).join(" · ")}
                 </p>
               </div>
               <Badge variant={video.status === VideoStatus.REVIEWED || video.status === VideoStatus.FEEDBACK_GIVEN ? "success" : "warning"}>

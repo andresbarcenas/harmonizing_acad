@@ -13,6 +13,7 @@ import { getStudentProgressData } from "@/lib/data";
 import { formatDate, formatDateTimeInZone } from "@/lib/i18n";
 import type { AppLocale } from "@/lib/i18n/locales";
 import { instrumentLabel, skillInstrumentToInstrument } from "@/lib/instruments";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 type StudentProgressData = NonNullable<Awaited<ReturnType<typeof getStudentProgressData>>["student"]>;
 type StudentAssignment = StudentProgressData["practiceAssignments"][number];
@@ -143,7 +144,7 @@ function AssignmentItem({ assignment, locale, compact = false }: { assignment: S
           <p className="text-sm font-semibold text-[var(--color-ink)]">{assignment.title}</p>
           <p className="mt-1 text-xs leading-5 text-[var(--color-ink-soft)]">{assignment.instructions}</p>
           <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
-            {[assignment.repertoireItem?.title, assignment.skillCategory?.name].filter(Boolean).join(" · ") || (isSpanish ? "Práctica general" : "General practice")}
+            {[assignment.repertoireItem?.title, assignment.skillCategory ? getSkillDisplayName(assignment.skillCategory.name, locale) : null].filter(Boolean).join(" · ") || (isSpanish ? "Práctica general" : "General practice")}
           </p>
         </div>
         <Badge variant={assignment.status === PracticeAssignmentStatus.COMPLETED || assignment.status === PracticeAssignmentStatus.REVIEWED ? "success" : assignment.status === PracticeAssignmentStatus.OVERDUE ? "danger" : "gold"}>{assignmentStatusLabel(assignment.status, locale)}</Badge>
@@ -250,7 +251,7 @@ function SkillSnapshotCard({ skills, locale }: { skills: SkillSnapshot[]; locale
         {skills.map((skill) => (
           <div key={skill.id} className="rounded-xl border border-[var(--color-border)] bg-white/72 p-3">
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-semibold text-[var(--color-ink)]">{skill.name}</p>
+              <p className="text-sm font-semibold text-[var(--color-ink)]">{getSkillDisplayName(skill.name, locale)}</p>
               <Badge variant={skill.latest >= 4 ? "success" : skill.latest <= 2 ? "warning" : "gold"}>{skillLabel(skill.latest, locale)}</Badge>
             </div>
             <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{instrumentLabel(skillInstrumentToInstrument(skill.instrument), locale)} · {skill.latest}/5 {skill.previous ? trendLabel(skill.latest, skill.previous, locale) : ""}</p>
@@ -259,7 +260,7 @@ function SkillSnapshotCard({ skills, locale }: { skills: SkillSnapshot[]; locale
         ))}
       </div>
       {!skills.length ? <EmptyState text={isSpanish ? "Aún no hay calificaciones de habilidades." : "No skill ratings yet."} /> : null}
-      {skills.length ? <p className="mt-3 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Áreas fuertes" : "Strong areas"}: {strong.map((skill) => skill.name).join(", ") || "-"} · {isSpanish ? "Necesitan práctica" : "Need practice"}: {needsPractice.map((skill) => skill.name).join(", ") || "-"}</p> : null}
+      {skills.length ? <p className="mt-3 text-xs text-[var(--color-ink-soft)]">{isSpanish ? "Áreas fuertes" : "Strong areas"}: {strong.map((skill) => getSkillDisplayName(skill.name, locale)).join(", ") || "-"} · {isSpanish ? "Necesitan práctica" : "Need practice"}: {needsPractice.map((skill) => getSkillDisplayName(skill.name, locale)).join(", ") || "-"}</p> : null}
     </Card>
   );
 }

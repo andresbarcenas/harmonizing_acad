@@ -121,6 +121,84 @@ export const completeClassWorkflowSchema = z.object({
   }
 });
 
+const draftString = (max = 2000) => z.preprocess((value) => {
+  if (typeof value !== "string") return "";
+  return value.slice(0, max);
+}, z.string().max(max));
+
+const draftOptionalString = (max = 2000) => z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.slice(0, max);
+  return trimmed.length ? trimmed : undefined;
+}, z.string().max(max).optional());
+
+const draftRatingSchema = z.preprocess((value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}, z.number().int().min(0).max(5));
+
+const draftPercentSchema = z.preprocess((value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}, z.number().int().min(0).max(100));
+
+export const completeClassWorkflowDraftSchema = z.object({
+  status: z.enum(completionStatuses).optional(),
+  notifyStudent: z.boolean().optional(),
+  lessonInstrument: lessonInstrumentSchema.optional(),
+  lessonNote: z.object({
+    summary: draftString(2000),
+    taughtToday: draftString(2000),
+    studentDidWell: draftString(2000),
+    needsImprovement: draftString(2000),
+    homework: draftString(2000),
+    nextLessonFocus: draftString(1000),
+    teacherPrivateNote: draftString(2000),
+    studentVisibleNote: draftString(2000),
+    preparednessRating: draftRatingSchema.optional(),
+    focusRating: draftRatingSchema.optional(),
+    effortRating: draftRatingSchema.optional(),
+    overallLessonRating: draftRatingSchema.optional(),
+  }).partial().optional(),
+  skillRatings: z.array(z.object({
+    skillCategoryId: z.string().max(120),
+    rating: draftRatingSchema,
+    note: draftString(500),
+  })).max(48).optional(),
+  repertoireUpdates: z.array(z.object({
+    repertoireItemId: z.string().max(120),
+    title: draftString(180),
+    selected: z.boolean().default(false),
+    status: z.nativeEnum(RepertoireStatus).optional(),
+    masteryPercent: draftPercentSchema,
+    teacherNotes: draftString(2000),
+    studentVisibleNotes: draftString(2000),
+  }).partial()).max(50).optional(),
+  newRepertoire: z.object({
+    clientId: draftOptionalString(120),
+    enabled: z.boolean().default(false),
+    catalogItemId: draftOptionalString(120),
+    title: draftString(180),
+    composerOrArtist: draftString(160),
+    instrument: draftString(80),
+    status: z.nativeEnum(RepertoireStatus).optional(),
+    masteryPercent: draftPercentSchema,
+    teacherNotes: draftString(2000),
+    studentVisibleNotes: draftString(2000),
+  }).partial().optional(),
+  assignments: z.array(z.object({
+    id: z.string().max(120),
+    title: draftString(180),
+    instructions: draftString(3000),
+    dueDate: draftString(40),
+    expectedMinutes: draftString(20),
+    repertoireItemId: draftString(120),
+    newRepertoireClientId: draftString(120),
+    skillCategoryId: draftString(120),
+    requiresVideo: z.boolean().default(false),
+  }).partial()).max(12).optional(),
+});
+
 export const upsertLessonNoteSchema = z.object({
   sessionId: z.string().min(1),
   summary: z.string().min(3).max(2000),

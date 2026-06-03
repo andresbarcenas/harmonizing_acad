@@ -13,7 +13,7 @@ type RouteContext = {
 export async function PATCH(request: Request, context: RouteContext) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  if (auth.user.role !== Role.ADMIN) return forbidden(auth.user.locale);
+  if (auth.user.role !== Role.TEACHER) return forbidden(auth.user.locale);
 
   const { skillId } = await context.params;
   const parsed = skillCategorySchema.safeParse(await request.json());

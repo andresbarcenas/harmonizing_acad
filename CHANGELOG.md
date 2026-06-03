@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.11.1] - 2026-06-03
+
+### Added
+- Teacher Skills management at `/teacher/skills`, reusing the shared academy skill catalog controls with teacher create/edit/deactivate/reorder support.
+- Server-saved post-class workflow drafts so teachers can preserve in-progress lesson notes, skill ratings, repertoire updates, and practice assignments across browsers/devices.
+
+### Changed
+- Built-in skill names now display in Spanish across skill management, lesson notes, complete-class workflows, practice forms, videos, and progress summaries while keeping stored canonical names unchanged.
+- Default skill synchronization is now local-development only in the admin UI and API; production operators can still use the explicit `skills:sync` script when needed.
+- The post-class workflow now restores server drafts first, falls back to local browser drafts, autosaves changes to the server, and clears drafts after final class completion.
+
 ## [0.11.0] - 2026-06-03
 
 ### Added

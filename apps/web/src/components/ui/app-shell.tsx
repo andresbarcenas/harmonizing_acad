@@ -78,6 +78,7 @@ function navGroupsByRole(role: Role, shell: ReturnType<typeof getDictionary>["sh
         { href: "/teacher/progress/exams", label: nav.examAssessments, icon: "clipboard" },
         { href: "/teacher/progress/reports", label: nav.progressReports, icon: "scroll" },
         { href: "/teacher/repertoire", label: nav.repertoire, icon: "music" },
+        { href: "/teacher/skills", label: nav.skills, icon: "clipboard" },
       ],
     },
     {

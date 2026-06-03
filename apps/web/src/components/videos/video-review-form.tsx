@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLocale } from "@/lib/i18n/locales";
+import { getSkillDisplayName } from "@/lib/skills/default-skills";
 
 export function VideoReviewForm({
   videoId,
@@ -69,7 +70,7 @@ export function VideoReviewForm({
               <select data-video-skill={`${videoId}-${index}`} className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-2 text-xs">
                 <option value="">{locale === "es" ? "Habilidad" : "Skill"}</option>
                 {skillCategories.map((skill) => (
-                  <option key={skill.id} value={skill.id}>{skill.instrument} · {skill.name}</option>
+                  <option key={skill.id} value={skill.id}>{skill.instrument} · {getSkillDisplayName(skill.name, locale)}</option>
                 ))}
               </select>
               <input data-video-rating={`${videoId}-${index}`} type="number" min={1} max={5} placeholder="1-5" className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-2 text-xs" />

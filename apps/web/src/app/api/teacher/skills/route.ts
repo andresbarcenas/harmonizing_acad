@@ -2,33 +2,33 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { updateSkillCategory } from "@/lib/skills/admin";
+import { createSkillCategory, getAdminSkillCategories } from "@/lib/skills/admin";
 import { validationErrorMessage } from "@/lib/validation-errors";
 import { skillCategorySchema } from "@/lib/validators/skills";
 
-type RouteContext = {
-  params: Promise<{ skillId: string }>;
-};
-
-export async function PATCH(request: Request, context: RouteContext) {
+export async function GET() {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  if (auth.user.role !== Role.ADMIN) return forbidden(auth.user.locale);
+  if (auth.user.role !== Role.TEACHER) return forbidden(auth.user.locale);
 
-  const { skillId } = await context.params;
+  return NextResponse.json({ skills: await getAdminSkillCategories() });
+}
+
+export async function POST(request: Request) {
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  if (auth.user.role !== Role.TEACHER) return forbidden(auth.user.locale);
+
   const parsed = skillCategorySchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale, auth.user.locale === "es" ? "Habilidad inválida." : "Invalid skill.") }, { status: 400 });
   }
 
   try {
-    const skill = await updateSkillCategory(skillId, parsed.data);
-    return NextResponse.json({ skill });
+    const skill = await createSkillCategory(parsed.data);
+    return NextResponse.json({ skill }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "UNKNOWN";
-    if (message === "SKILL_NOT_FOUND") {
-      return NextResponse.json({ error: auth.user.locale === "es" ? "Habilidad no encontrada." : "Skill not found." }, { status: 404 });
-    }
     if (message === "DUPLICATE_SKILL") {
       return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe una habilidad con ese nombre para ese instrumento." : "A skill with that name already exists for that instrument." }, { status: 409 });
     }

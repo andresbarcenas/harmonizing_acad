@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
 import { requireApiUser } from "@/lib/api-auth";
-import { db } from "@/lib/db";
-import { getAdminSkillCategories, serializeSkillCategory, skillCategoryUsageInclude } from "@/lib/skills/admin";
+import { createSkillCategory, getAdminSkillCategories } from "@/lib/skills/admin";
 import { validationErrorMessage } from "@/lib/validation-errors";
-import { skillCategorySchema, type SkillCategoryInput } from "@/lib/validators/skills";
+import { skillCategorySchema } from "@/lib/validators/skills";
 
 export async function GET() {
   const auth = await requireApiUser();
@@ -25,37 +24,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: validationErrorMessage(parsed.error, auth.user.locale, auth.user.locale === "es" ? "Habilidad inválida." : "Invalid skill.") }, { status: 400 });
   }
 
-  const duplicate = await findDuplicateSkill(parsed.data);
-  if (duplicate) {
-    return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe una habilidad con ese nombre para ese instrumento." : "A skill with that name already exists for that instrument." }, { status: 409 });
+  try {
+    const skill = await createSkillCategory(parsed.data);
+    return NextResponse.json({ skill }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "UNKNOWN";
+    if (message === "DUPLICATE_SKILL") {
+      return NextResponse.json({ error: auth.user.locale === "es" ? "Ya existe una habilidad con ese nombre para ese instrumento." : "A skill with that name already exists for that instrument." }, { status: 409 });
+    }
+    return NextResponse.json({ error: auth.user.locale === "es" ? "No se pudo guardar la habilidad." : "Could not save skill." }, { status: 400 });
   }
-
-  const skill = await db.skillCategory.create({
-    data: toSkillData(parsed.data),
-    include: skillCategoryUsageInclude,
-  });
-
-  return NextResponse.json({ skill: serializeSkillCategory(skill) }, { status: 201 });
-}
-
-function toSkillData(input: SkillCategoryInput) {
-  return {
-    instrument: input.instrument,
-    name: input.name,
-    description: input.description ?? null,
-    sortOrder: input.sortOrder,
-    active: input.active,
-  };
-}
-
-async function findDuplicateSkill(input: SkillCategoryInput) {
-  return db.skillCategory.findFirst({
-    where: {
-      instrument: input.instrument,
-      name: { equals: input.name, mode: "insensitive" },
-    },
-    select: { id: true },
-  });
 }
 
 function forbidden(locale: string) {

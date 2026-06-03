@@ -135,6 +135,7 @@ export async function POST(req: Request, { params }: Params) {
         },
       });
       await syncClassSessionCreditConsumption(session.id, auth.user.id, tx);
+      await tx.postClassWorkflowDraft.deleteMany({ where: { classSessionId: session.id } });
 
     let savedLessonNote = session.lessonNote;
     const createdRepertoire = [];

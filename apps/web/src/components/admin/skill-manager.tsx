@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { skillInstruments, type SkillInstrument } from "@/lib/skills/default-skills";
+import { getSkillDisplayName, skillInstruments, type SkillInstrument } from "@/lib/skills/default-skills";
 import type { AppLocale } from "@/lib/i18n/locales";
 
 type SkillRow = {
@@ -48,7 +48,17 @@ const emptyForm: SkillFormState = {
   active: true,
 };
 
-export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRow[]; locale: AppLocale }) {
+export function SkillManager({
+  initialSkills,
+  locale,
+  apiBasePath = "/api/admin/skills",
+  canSyncDefaults = true,
+}: {
+  initialSkills: SkillRow[];
+  locale: AppLocale;
+  apiBasePath?: string;
+  canSyncDefaults?: boolean;
+}) {
   const [skills, setSkills] = useState(initialSkills);
   const [form, setForm] = useState<SkillFormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -93,7 +103,7 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
     setSuccess(null);
 
     const payload = toPayload(form);
-    const url = editingId ? `/api/admin/skills/${editingId}` : "/api/admin/skills";
+    const url = editingId ? `${apiBasePath}/${editingId}` : apiBasePath;
     const method = editingId ? "PATCH" : "POST";
 
     try {
@@ -135,7 +145,7 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
     setError(null);
     setSuccess(null);
     try {
-      const response = await fetch(`/api/admin/skills/${skillId}`, {
+      const response = await fetch(`${apiBasePath}/${skillId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(toPayload(state)),
@@ -193,7 +203,7 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
         <SummaryCard label={copy.inactive} value={counts.inactive} tone="muted" />
       </div>
 
-      <Card>
+      {canSyncDefaults ? <Card>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <CardTitle>{copy.syncTitle}</CardTitle>
@@ -214,7 +224,7 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
         </div>
         {error ? <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
         {success ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p> : null}
-      </Card>
+      </Card> : null}
 
       <Card>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -240,6 +250,13 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
           <Button type="submit" variant="gold" disabled={pending}>{pending ? copy.saving : editingId ? copy.saveChanges : copy.create}</Button>
         </form>
       </Card>
+
+      {!canSyncDefaults && (error || success) ? (
+        <div>
+          {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+          {success ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p> : null}
+        </div>
+      ) : null}
 
       <Card>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -269,7 +286,7 @@ export function SkillManager({ initialSkills, locale }: { initialSkills: SkillRo
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold text-[var(--color-ink)]">{skill.name}</p>
+                          <p className="font-semibold text-[var(--color-ink)]">{getSkillDisplayName(skill.name, locale)}</p>
                           <Badge variant={skill.active ? "success" : "default"}>{skill.active ? copy.active : copy.inactive}</Badge>
                           <Badge>{copy.orderShort} {skill.sortOrder}</Badge>
                           <Badge>{copy.used} {skill.usageCount}</Badge>
